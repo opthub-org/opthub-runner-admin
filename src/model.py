@@ -11,7 +11,8 @@ LOGGER = logging.getLogger(__name__)
 
 class EvaluationTrial:
     """
-    
+    Evaluate trial.
+
     """
     def __init__(self):
         pass
@@ -49,11 +50,11 @@ class EvaluationTrial:
         """
         self.__evaluation = {} # mock
         # output evaluation to DB
-        
 
 
 class ScoreTrial:
     """
+    Calculating score of trial.
     
     """
     def __init__(self):
@@ -73,11 +74,11 @@ class ScoreTrial:
 
         # self.__evaluations = {{}}
         # self.__scores = {{}}
-
+        
         self.current = json.dumps({"objective" : [0.5, 0.5], "constraint" : None, "info" : 10}) + "\n"
         self.history = json.dumps([{"objective" : [0.75, 0.25], "constraint" : None, "score" : 5, "info" : 10}, {"objective" : [0.25, 0.75], "constraint" : None, "score" : 4, "info" : 10}]) + "\n"
 
-        self.image = "opthub/hypervolume:latest" # use self.evaluation[indicator ID] or use cache
+        self.image = "opthub/best:latest" # use self.evaluation[indicator ID] or use cache
         self.environment = [{"key" : "HV_REF_POINT", "value" : "[2,2]"}]# self.__solution["environment"]
     
     def save_succeeded_score(self, started_at, finished_at, score):

@@ -1,26 +1,24 @@
 """
-Evaluate solutions.
+Evaluate solution.
 
 """
 import logging
 import signal
-import docker
-import json
-import sys
-import math
 from time import time
 from traceback import format_exc
 
 from model import EvaluationTrial
+from utils.docker import calculate_with_docker
 
 
 LOGGER = logging.getLogger(__name__)
 
-def evaluator(ctx, **kwargs):
 
-    LOGGER.info("Connect to docker daemon...")
-    client = docker.from_env()
-    LOGGER.info("...Connected")
+def evaluator(ctx, **kwargs):
+    """
+    Fetch solution and evaluate it.
+
+    """
 
     model = EvaluationTrial()
 
@@ -47,61 +45,25 @@ def evaluator(ctx, **kwargs):
             LOGGER.error(format_exc())
             continue
 
-        # start to evaluate solution
         started_at = time()
         try:
-            # run container to evaluate solution
-            LOGGER.info("Start container...")
-            client.images.pull(model.image) # imageをpull
-            LOGGER.debug(model.image)
-            container = client.containers.run(
-                image=model.image,
-                command=kwargs["command"],
-                environment={
-                    v["key"]: v["value"] for v in model.environment
-                },
-                stdin_open=True,
-                detach=True,
-            )
-            LOGGER.info("...Started: %s", container.name)
-
-            LOGGER.info("Send variable...")
-            socket = container.attach_socket(
-                params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1}
-            )
-            socket._sock.sendall(
-                model.variable.encode("utf-8")
-            )  # pylint: disable=protected-access
-            LOGGER.info("...Send")
-
-            LOGGER.info("Wait for Evaluation...")
-            container.wait(timeout=kwargs["timeout"])
-            LOGGER.info("...Evaluated")
-
-            LOGGER.info("Receive stdout...")
-            stdout = container.logs(stdout=True, stderr=False).decode("utf-8")
-            LOGGER.debug(stdout)
-            LOGGER.info("...Received")
-
-            if kwargs["rm"]:
-                LOGGER.info("Remove container...")
-                container.remove()
-                LOGGER.info("...Removed")
-
-            LOGGER.info("Parse stdout...")
-            out = parse_stdout(stdout)
-            LOGGER.debug(out)
-            LOGGER.info("...Parsed")
+            # evaluate solution by using docker image
+            std_out = calculate_with_docker(model.image,
+                                            {v["key"]: v["value"] for v in model.environment},
+                                            kwargs["command"], kwargs["timeout"], kwargs["rm"],
+                                            model.variable)
+            
+            objective = std_out["objective"]
+            constraint = std_out["constraints"] if "constraints" in std_out else None
 
             LOGGER.info("Push evaluation...")
-
             # succeeded in evaluating solution
             finished_at = time()
-            model.save_succeeded_evaluation(started_at, finished_at, to_json_float(out.get("objective")), to_json_float(out.get("constraint")))
+            model.save_succeeded_evaluation(started_at, finished_at, objective, constraint)
             LOGGER.info("...Pushed")
 
         except KeyboardInterrupt:
-            # KeyboardInterrupt while evaluating solutions
+            # KeyboardInterrupt while evaluating solution
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.error("Keyboard Interrupt")
@@ -112,7 +74,7 @@ def evaluator(ctx, **kwargs):
             ctx.exit(0)
 
         except Exception:
-            # Exception while evaluating solutions
+            # Exception while evaluating solution
             LOGGER.error(format_exc())
             LOGGER.info("Finish evaluation...")
             finished_at = time()
@@ -126,33 +88,3 @@ def evaluator(ctx, **kwargs):
         )
         if n_evaluation == 5:
             break
-
-def parse_stdout(stdout: str):
-    lines = stdout.split("\n")
-    lines.reverse()
-    for line in lines:
-        if line:
-            return json.loads(line)
-
-def to_json_float(value):
-    """Convert a float value to a JSON float value.
-
-    :param value: float value
-    :return float: JSON float value
-    """
-    if isinstance(value, list):
-        return [to_json_float(v) for v in value]
-    if isinstance(value, dict):
-        return {k: to_json_float(v) for k, v in value.items()}
-    if not isinstance(value, float):
-        return value
-    if value == math.inf:
-        LOGGER.warning("math.inf is converted to sys.float_info.max")
-        return sys.float_info.max
-    if value == -math.inf:
-        LOGGER.warning("-math.inf is converted to -sys.float_info.max")
-        return -sys.float_info.max
-    if math.isnan(value):
-        LOGGER.warning("math.nan is converted to None")
-        return None
-    return value

@@ -1,15 +1,13 @@
 """
-Score evaluations.
+Calculate score.
 
 """
 from time import time
 from traceback import format_exc
 import logging
 import signal
-import docker
-import json
-import sys
-import math
+from utils.docker import calculate_with_docker
+
 
 from model import ScoreTrial
 
@@ -18,19 +16,18 @@ LOGGER = logging.getLogger(__name__)
 
 
 def scorer(ctx, **kwargs):
+    """
+    Fetch evaluations and calculate score.
 
-    LOGGER.info("Connect to docker daemon...")
-    client = docker.from_env()
-    LOGGER.info("...Connected")
-
+    """
     model = ScoreTrial()
 
     n_score = 1
     LOGGER.info("==================== Calculating score: %d ====================", n_score)
     while True:
-        # start to fetch evaluations
         try:
-            LOGGER.info("Find evaluation to evaluate...")
+            # fetch evaluation
+            LOGGER.info("Find evaluation...")
             model.fetch_evaluation(kwargs["interval"])
             LOGGER.info("...Found")
 
@@ -48,63 +45,19 @@ def scorer(ctx, **kwargs):
             LOGGER.error(format_exc())
             continue
 
-        # start to calculate score of evaluation
         started_at = time()
         try:
-            LOGGER.info("Pull image...")
-            client.images.pull(model.image) # imageをpull
-            LOGGER.debug(model.image)
-            LOGGER.info("...Pulled")
-            # run container to evaluate solution
-            LOGGER.info("Start container...")
-            container = client.containers.run(
-                image=model.image,
-                command=kwargs["command"],
-                environment={
-                    v["key"]: v["value"] for v in model.environment
-                },
-                stdin_open=True,
-                detach=True,
-            )
-            LOGGER.info("...Started: %s", container.name)
-
-            LOGGER.info("Send variable...")
-            socket = container.attach_socket(
-                params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1}
-            )
-            socket._sock.sendall(
-                model.current.encode("utf-8")
-            )  # pylint: disable=protected-access
-            socket._sock.sendall(
-                model.history.encode("utf-8")
-            )  # pylint: disable=protected-access
-            LOGGER.info("...Send")
-
-            LOGGER.info("Wait for Score...")
-            container.wait(timeout=kwargs["timeout"])
-            LOGGER.info("...Calculated")
-
-            LOGGER.info("Receive stdout...")
-            stdout = container.logs(stdout=True, stderr=False).decode("utf-8")
-            LOGGER.debug(stdout)
-            LOGGER.info("...Received")
-
-            if kwargs["rm"]:
-                LOGGER.info("Remove container...")
-                container.remove()
-                LOGGER.info("...Removed")
-
-            LOGGER.info("Parse stdout...")
-            out = parse_stdout(stdout)
-            
-            LOGGER.debug(out)
-            LOGGER.info("...Parsed")
-
+            # calculate score with docker image
+            std_out = calculate_with_docker(model.image,
+                                            {v["key"]: v["value"] for v in model.environment},
+                                            kwargs["command"], kwargs["timeout"], kwargs["rm"],
+                                            model.current, model.history)
+            score = std_out
             LOGGER.info("Push score...")
 
             # succeeded in evaluating solution
             finished_at = time()
-            model.save_succeeded_score(started_at, finished_at, to_json_float(out))
+            model.save_succeeded_score(started_at, finished_at, score)
             LOGGER.info("...Pushed")
 
         except KeyboardInterrupt:
@@ -134,33 +87,3 @@ def scorer(ctx, **kwargs):
         )
         if n_score == 5:
             break
-
-def parse_stdout(stdout: str):
-    lines = stdout.split("\n")
-    lines.reverse()
-    for line in lines:
-        if line:
-            return json.loads(line)
-
-def to_json_float(value):
-    """Convert a float value to a JSON float value.
-
-    :param value: float value
-    :return float: JSON float value
-    """
-    if isinstance(value, list):
-        return [to_json_float(v) for v in value]
-    if isinstance(value, dict):
-        return {k: to_json_float(v) for k, v in value.items()}
-    if not isinstance(value, float):
-        return value
-    if value == math.inf:
-        LOGGER.warning("math.inf is converted to sys.float_info.max")
-        return sys.float_info.max
-    if value == -math.inf:
-        LOGGER.warning("-math.inf is converted to -sys.float_info.max")
-        return -sys.float_info.max
-    if math.isnan(value):
-        LOGGER.warning("math.nan is converted to None")
-        return None
-    return value

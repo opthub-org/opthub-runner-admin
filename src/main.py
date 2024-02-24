@@ -1,5 +1,6 @@
 """
 Definition of CLI commands.
+
 """
 import logging
 import signal
@@ -15,7 +16,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class AliasedGroup(click.Group):
-    """A Click group with short subcommands.
+    """
+    A Click group with short subcommands.
 
     Example
     -------
@@ -43,10 +45,7 @@ class StrLength(StringParamType):
 
     This is basically the same as `str`, except for additional
     functionalities of length validation.
-
-    :param min: Minimum length
-    :param max: Maximum length
-    :param clamp: Clamp the input if exceeded
+    
     """
 
     def __init__(
@@ -97,12 +96,9 @@ class StrLength(StringParamType):
         return "StrLength(%d, %d)" % (self.min, self.max)
 
 def load_config(ctx, self, value):  # pylint:disable=unused-argument
-    """Load `ctx.default_map` from a file.
+    """
+    Load `ctx.default_map` from a file.
 
-    :param ctx: Click context
-    :param self: Self object
-    :param value: File name
-    :return dict: Loaded config
     """
 
     if not path.exists(value):
@@ -113,7 +109,8 @@ def load_config(ctx, self, value):  # pylint:disable=unused-argument
 
 
 def save_config(ctx, value):
-    """Save `ctx.default_map` to a file.
+    """
+    Save `ctx.default_map` to a file.
 
     :param ctx: Click context
     :param value: File name
@@ -202,18 +199,17 @@ signal.signal(signal.SIGTERM, signal_handler)
 @click.argument("command", envvar="OPTHUB_COMMAND", type=str, nargs=-1)
 @click.pass_context
 def run(ctx, **kwargs):
-    """The entrypoint of CLI.
+    """
+    The entrypoint of CLI.
 
-    :param ctx: Click context
-    :param kwargs: GraphQL variables
     """
     if kwargs["backend"] == "docker":
         run_docker(ctx, **kwargs)
     elif kwargs["backend"] == "singularity":
-        raise NotImplementedError
+        raise NotImplementedError("Singularity is not implemented.")
     else:
         raise ValueError(f'Illegal backend: {kwargs["backend"]}')
-
+    
 def run_docker(ctx, **kwargs):
     # set loglevel
     verbosity = 10 * (kwargs["quiet"] - kwargs["verbose"])
@@ -229,5 +225,8 @@ def run_docker(ctx, **kwargs):
         evaluator(ctx, **kwargs)
     elif kwargs["mode"] == "scorer":
         scorer(ctx, **kwargs)
+    else:
+        raise ValueError(f'Illegal mode: {kwargs["mode"]}')
+
 
 run()
