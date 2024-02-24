@@ -2,15 +2,16 @@
 Evaluate solutions.
 
 """
-from time import time
-from traceback import format_exc
-from model import EvaluationTrial
 import logging
 import signal
 import docker
 import json
 import sys
 import math
+from time import time
+from traceback import format_exc
+
+from model import EvaluationTrial
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,8 +24,8 @@ def evaluator(ctx, **kwargs):
 
     model = EvaluationTrial()
 
-    n_solution = 1
-    LOGGER.info("==================== Solution: %d ====================", n_solution)
+    n_evaluation = 1
+    LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
     while True:
         # start to fetch solutions
         try:
@@ -117,14 +118,14 @@ def evaluator(ctx, **kwargs):
             finished_at = time()
             model.save_failed_evaluation(started_at, finished_at, format_exc())
             LOGGER.info("...Finished")
-            break
             continue
 
-        break
-        n_solution += 1
+        n_evaluation += 1
         LOGGER.info(
-            "==================== Solution: %d ====================", n_solution
+            "==================== Evaluation: %d ====================", n_evaluation
         )
+        if n_evaluation == 5:
+            break
 
 def parse_stdout(stdout: str):
     lines = stdout.split("\n")

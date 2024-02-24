@@ -10,13 +10,9 @@ def sphere(variable):
 
 
 def main():
-    print("start")
     x = input()
-    print("x", x)
     variable = json.loads(x)
-    print("variable", variable)
     objective = sphere(variable)
-    print("objective", objective)
     print(json.dumps({"objective": objective, "constraint": None}))
 
 
