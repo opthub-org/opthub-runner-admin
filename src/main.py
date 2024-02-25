@@ -9,8 +9,8 @@ from os import path
 import click
 import yaml
 from click.types import StringParamType
-from evaluator import evaluator
-from scorer import scorer
+from evaluator.main import evaluate
+from scorer.main import calculate_score
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class StrLength(StringParamType):
 
     This is basically the same as `str`, except for additional
     functionalities of length validation.
-    
+
     """
 
     def __init__(
@@ -178,7 +178,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     "-b",
     "--backend",
     envvar="OPTHUB_BACKEND",
-    type=click.Choice(["docker", "singularity"]),
+    type=click.Choice(["docker"]),
     default="docker",
     help="Container backend.",
 )
@@ -203,17 +203,9 @@ def run(ctx, **kwargs):
     The entrypoint of CLI.
 
     """
-    if kwargs["backend"] == "docker":
-        run_docker(ctx, **kwargs)
-    elif kwargs["backend"] == "singularity":
-        raise NotImplementedError("Singularity is not implemented.")
-    else:
-        raise ValueError(f'Illegal backend: {kwargs["backend"]}')
-    
-def run_docker(ctx, **kwargs):
     # set loglevel
     verbosity = 10 * (kwargs["quiet"] - kwargs["verbose"])
-    log_level = 0#logging.WARNING + verbosity
+    log_level = 0 #logging.WARNING + verbosity
     logging.basicConfig(
         level=log_level,
         format="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s",
@@ -222,9 +214,9 @@ def run_docker(ctx, **kwargs):
     LOGGER.debug("run(%s)", kwargs)
 
     if kwargs["mode"] == "evaluator":
-        evaluator(ctx, **kwargs)
+        evaluate(ctx, **kwargs)
     elif kwargs["mode"] == "scorer":
-        scorer(ctx, **kwargs)
+        calculate_score(ctx, **kwargs)
     else:
         raise ValueError(f'Illegal mode: {kwargs["mode"]}')
 

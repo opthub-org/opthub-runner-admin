@@ -1,13 +1,12 @@
 import docker
 import json
-import sys
-import math
+from utils.converter import float_to_json_float
 import logging
 
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_with_docker(image, environment, command, timeout, rm, *std_in):
+def execute_in_docker(image, environment, command, timeout, rm, *std_in):
 
     LOGGER.info("Connect to docker daemon...")
     client = docker.from_env()
@@ -38,9 +37,9 @@ def calculate_with_docker(image, environment, command, timeout, rm, *std_in):
         )  # pylint: disable=protected-access
     LOGGER.info("...Send")
 
-    LOGGER.info("Wait for calculation...")
+    LOGGER.info("Wait for execution...")
     container.wait(timeout=timeout)
-    LOGGER.info("...Calculated")
+    LOGGER.info("...Executed")
 
     LOGGER.info("Receive stdout...")
     stdout = container.logs(stdout=True, stderr=False).decode("utf-8")
@@ -58,7 +57,7 @@ def calculate_with_docker(image, environment, command, timeout, rm, *std_in):
     LOGGER.debug(out)
     LOGGER.info("...Parsed")
 
-    return to_json_float(out)
+    return float_to_json_float(out)
 
 
 def parse_stdout(stdout: str):
@@ -68,26 +67,3 @@ def parse_stdout(stdout: str):
         if line:
             return json.loads(line)
 
-
-def to_json_float(value):
-    """Convert a float value to a JSON float value.
-
-    :param value: float value
-    :return float: JSON float value
-    """
-    if isinstance(value, list):
-        return [to_json_float(v) for v in value]
-    if isinstance(value, dict):
-        return {k: to_json_float(v) for k, v in value.items()}
-    if not isinstance(value, float):
-        return value
-    if value == math.inf:
-        LOGGER.warning("math.inf is converted to sys.float_info.max")
-        return sys.float_info.max
-    if value == -math.inf:
-        LOGGER.warning("-math.inf is converted to -sys.float_info.max")
-        return -sys.float_info.max
-    if math.isnan(value):
-        LOGGER.warning("math.nan is converted to None")
-        return None
-    return value

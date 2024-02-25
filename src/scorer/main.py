@@ -6,16 +6,16 @@ from time import time
 from traceback import format_exc
 import logging
 import signal
-from utils.docker import calculate_with_docker
+from utils.docker import execute_in_docker
 
 
-from model import ScoreTrial
+from scorer.model import ScoreTrial
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-def scorer(ctx, **kwargs):
+def calculate_score(ctx, **kwargs):
     """
     Fetch evaluations and calculate score.
 
@@ -48,7 +48,7 @@ def scorer(ctx, **kwargs):
         started_at = time()
         try:
             # calculate score with docker image
-            std_out = calculate_with_docker(model.image,
+            std_out = execute_in_docker(model.image,
                                             {v["key"]: v["value"] for v in model.environment},
                                             kwargs["command"], kwargs["timeout"], kwargs["rm"],
                                             model.current, model.history)
@@ -85,5 +85,8 @@ def scorer(ctx, **kwargs):
         LOGGER.info(
             "==================== Calculating score: %d ====================", n_score
         )
-        if n_score == 5:
+        if n_score == 1:
             break
+
+def make_history(eval, score):
+    pass
