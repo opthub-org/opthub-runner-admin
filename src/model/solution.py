@@ -1,37 +1,52 @@
-from time import sleep
+"""
+Solutionの取得
+
+"""
 import logging
-import json
 
 from utils.dynamoDB import DynamoDB
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SolutionModel:
+def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb : DynamoDB):
+    """
+    Primary Keyを使ってDynamo DBからSolutionを取ってくる関数．
 
-    def __init__(self, interval):
-        self.variable = None
-        self.image = None
-        self.environment = None
-        self.interval = interval
-        self.keys = [{"ID": "Solutions#Match#1#User#1", "Trial" : "1"},
-                     {"ID": "Solutions#Match#1#User#1", "Trial" : "2"},
-                     {"ID": "Solutions#Match#1#User#2", "Trial" : "1"}]
-        self.dynamoDB = DynamoDB()
+    Parameters
+    ----------
+    match_id : str
+        Matchのid．
+    participant_id : str
+        UserIDまたはTeamID．
+    trial_no : int
+        試行番号．
+    dynamodb : DynamoDB
+        dynamo DBと通信するためのラッパークラスのオブジェクト．
+    
+    Return
+    ------
+    solution : dict
+        取ってきたSolution．
+    """
+    primary_key = {"ID" : f"Solutions#{match_id}#{participant_id}",
+                   "Trial" : str(trial_no)}
+    solution = dynamodb.get_item(primary_key)
+
+    return solution
 
 
-    def fetch_item(self):
-        while True:
-            response = {"solutions" : self.keys} # mock, fetch by SQS
-            if response["solutions"]:
-                break  # solution found
-            sleep(self.interval)
-        LOGGER.debug(response["solutions"][0])
+def main():
+    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+                        "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
+    solution = fetch_solution_by_primary_key("Match#1", "Team#1", 1, dynamodb)
+    print("----- solution -----")
+    print(solution)
 
-        solution = self.dynamoDB.fetch_item(response["solutions"][0])
-        self.keys = self.keys[1:]
 
-        self.variable = json.dumps(solution["Variable"]) + "\n"
-        self.image = "opthub/sphere:latest" # use self.solution[problem ID] or use cache
-        self.environment = solution["ProblemEnvironments"]
-        return solution, context
+if __name__ == "__main__":
+    main()
+
+
+
+
