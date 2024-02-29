@@ -2,11 +2,9 @@
 Solutionの取得
 
 """
-import logging
-
 from utils.dynamoDB import DynamoDB
+from utils.converter import decimal_to_float
 
-LOGGER = logging.getLogger(__name__)
 
 
 def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb : DynamoDB):
@@ -32,6 +30,9 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb :
     primary_key = {"ID" : f"Solutions#{match_id}#{participant_id}",
                    "Trial" : str(trial_no)}
     solution = dynamodb.get_item(primary_key)
+
+    # "Variable"がdecimalのままだと，Solutionの評価で扱いにくくなるため，変換
+    solution["Variable"] = decimal_to_float(solution["Variable"])
 
     return solution
 

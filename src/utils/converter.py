@@ -30,19 +30,20 @@ def float_to_json_float(value):
     return value
 
 
-def decimal_to_number(value):
+def decimal_to_float(value):
     """
     decimal型の数をfloatに変換する．
 
     """
     if isinstance(value, list):
-        return [decimal_to_number(v) for v in value]
+        return [decimal_to_float(v) for v in value]
     if isinstance(value, dict):
-        return {k: decimal_to_number(v) for k, v in value.items()}
+        return {k: decimal_to_float(v) for k, v in value.items()}
     if isinstance(value, decimal.Decimal):
         return float(value)
     else:
         return value
+    
 
 def number_to_decimal(value):
     if isinstance(value, list):
@@ -50,6 +51,6 @@ def number_to_decimal(value):
     if isinstance(value, dict):
         return {k: number_to_decimal(v) for k, v in value.items()}
     if isinstance(value, int) or isinstance(value, float):
-        return decimal.Decimal(value)
+        return decimal.Decimal(str(value))
     else:
         return value

@@ -2,9 +2,7 @@
 GraphQL経由でMatchの情報を取得
 
 """
-import logging
 
-LOGGER = logging.getLogger(__name__)
 
 
 def fetch_match_problem_by_id(match_id):
