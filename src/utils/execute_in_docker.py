@@ -7,6 +7,25 @@ LOGGER = logging.getLogger(__name__)
 
 
 def execute_in_docker(image, environment, command, timeout, rm, *std_in):
+    """
+    Solutionの評価とEvaluationのScore計算をDocker Imageを使って行う関数．
+
+    Parameters
+    ----------
+    image : str
+        Docker Imageの名前．
+    environment : dict
+        環境変数のdict．ProblemEnvironmentやIndicatorEnvironmentを表す．
+    command : str
+        Dockerで実行するコマンド．
+    timeout : int
+        Dockerの実行の制限時間．
+    rm : bool
+        Dockerコンテナを削除するかどうか．Trueなら削除．
+    std_in : list[str]
+        Dockerへの標準入力のリスト．各列に改行文字をつけることに注意．
+
+    """
 
     LOGGER.info("Connect to docker daemon...")
     client = docker.from_env()
@@ -67,3 +86,17 @@ def parse_stdout(stdout: str):
         if line:
             return json.loads(line)
 
+
+def main():
+    std_out = execute_in_docker("opthub/sphere:latest",
+                                {"SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]"},
+                                [],
+                                100,
+                                True,
+                                "[1, 1, 1]\n")
+    
+    print(std_out)
+
+
+if __name__ == "__main__":
+    main()

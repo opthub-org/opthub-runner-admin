@@ -23,13 +23,13 @@ def fetch_match_problem_by_id(match_id):
 
     # match_idを使ってGraphQL経由でmatchを取得（未実装なのでとりあえずmock）
     match = {"MatchProblemID" : "Problem#1",
-             "MatchProblemPublicEnvironments" : {},
+             "MatchProblemPublicEnvironments" : {"SPHERE_OPTIMA": "[[1, 1, 1], [2, 2, 2]]"},
              "MatchProblemPrivateEnvironments" : {}}
     
     problem_id = match["MatchProblemID"]
 
     # problem_idを使ってGraphQL経由でproblemを取得（未実装なのでとりあえずmock）
-    problem = {"ProblemDockerImage" : "(url)"}
+    problem = {"ProblemDockerImage" : "opthub/sphere:latest"}
 
     problem_data = {"ProblemDockerImage" : problem["ProblemDockerImage"],
                     "ProblemEnvironments" : dict(**match["MatchProblemPublicEnvironments"], **match["MatchProblemPrivateEnvironments"])}
