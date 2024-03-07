@@ -2,8 +2,9 @@
 Evaluation関連の操作
 
 """
+
 from utils.dynamoDB import DynamoDB
-from utils.converter import number_to_decimal, decimal_to_float
+from utils.converter import number_to_decimal, decimal_to_float, decimal_to_int
 
 
 
@@ -119,10 +120,12 @@ def fetch_evaluation_by_primary_key(match_id, participant_id, trial, dynamodb : 
     evaluation = dynamodb.get_item(primary_key)
 
     # decimalのままだとScoreの計算に使いにくい属性をfloatに変換
-    if evaluation is not None and evaluation["Status"] == "Success":
-        evaluation["Objective"] = decimal_to_float(evaluation["Objective"])
-        evaluation["Constraint"] = decimal_to_float(evaluation["Constraint"])
-        evaluation["Info"] = decimal_to_float(evaluation["Info"])
+    if evaluation is not None:
+        evaluation["TrialNo"] = decimal_to_int(evaluation["TrialNo"])
+        if evaluation["Status"] == "Success":
+            evaluation["Objective"] = decimal_to_float(evaluation["Objective"])
+            evaluation["Constraint"] = decimal_to_float(evaluation["Constraint"])
+            evaluation["Info"] = decimal_to_float(evaluation["Info"])
 
     return evaluation
 

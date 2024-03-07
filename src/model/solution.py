@@ -3,11 +3,11 @@ Solutionの取得
 
 """
 from utils.dynamoDB import DynamoDB
-from utils.converter import decimal_to_float
+from utils.converter import decimal_to_float, decimal_to_int
 
 
 
-def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb : DynamoDB):
+def fetch_solution_by_primary_key(match_id, participant_id, trial, dynamodb : DynamoDB):
     """
     Primary Keyを使ってDynamo DBからSolutionを取ってくる関数．
 
@@ -17,8 +17,8 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb :
         Matchのid．
     participant_id : str
         UserIDまたはTeamID．
-    trial_no : int
-        試行番号．
+    trial : str
+        Trial．
     dynamodb : DynamoDB
         dynamo DBと通信するためのラッパークラスのオブジェクト．
     
@@ -28,10 +28,11 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb :
         取ってきたSolution．
     """
     primary_key = {"ID" : f"Solutions#{match_id}#{participant_id}",
-                   "Trial" : str(trial_no)}
+                   "Trial" : trial}
     solution = dynamodb.get_item(primary_key)
 
     # "Variable"がdecimalのままだと，Solutionの評価で扱いにくくなるため，変換
+    solution["TrialNo"] = decimal_to_int(solution["TrialNo"])
     solution["Variable"] = decimal_to_float(solution["Variable"])
 
     return solution
@@ -40,7 +41,7 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial_no, dynamodb :
 def main():
     dynamodb = DynamoDB("http://localhost:8000", "localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
-    solution = fetch_solution_by_primary_key("Match#1", "Team#1", 1, dynamodb)
+    solution = fetch_solution_by_primary_key("Match#1", "Team#1", "1", dynamodb)
     print("----- solution -----")
     print(solution)
 

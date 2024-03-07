@@ -23,7 +23,7 @@ def fetch_match_problem_by_id(match_id):
 
     # match_idを使ってGraphQL経由でmatchを取得（未実装なのでとりあえずmock）
     match = {"MatchProblemID" : "Problem#1",
-             "MatchProblemPublicEnvironments" : {"SPHERE_OPTIMA": "[[1, 1, 1], [2, 2, 2]]"},
+             "MatchProblemPublicEnvironments" : {"SPHERE_OPTIMA": "[[1, 1, 1], [1.5, 1.5, 1.5]]"},
              "MatchProblemPrivateEnvironments" : {}}
     
     problem_id = match["MatchProblemID"]
@@ -56,12 +56,12 @@ def fetch_match_indicator_by_id(match_id):
     # match_idを使ってGraphQL経由でmatchを取得（未実装なのでとりあえずmock）
     match = {"MatchIndicatorID" : "Indicator#1",
              "MatchIndicatorPublicEnvironments" : {},
-             "MatchIndicatorPrivateEnvironments" : {}}
+             "MatchIndicatorPrivateEnvironments" : {"HV_REF_POINT": "[1, 1]"}}
     
     indicator_id = match["MatchIndicatorID"]
 
     # indicator_idを使ってGraphQL経由でindicatorを取得（未実装なのでとりあえずmock）
-    indicator = {"IndicatorDockerImage" : "(url)"}
+    indicator = {"IndicatorDockerImage" : "opthub/hypervolume:latest"}
 
     indicator_data= {"IndicatorDockerImage" : indicator["IndicatorDockerImage"],
                      "IndicatorEnvironments" : dict(**match["MatchIndicatorPublicEnvironments"], **match["MatchIndicatorPrivateEnvironments"])}

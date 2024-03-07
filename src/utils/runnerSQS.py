@@ -34,14 +34,14 @@ class RunnerSQS:
         Return
         -------
         data : dict
-            MatchID，ParticipantID，TrialNoのdict．
+            MatchID，ParticipantID，Trialのdict．
 
         """
 
         while True:
             response = [{"MatchID": "Match#1",
                         "ParticipantID": "Team#1",
-                        "TrialNo": 1}] # SQSから取得する部分（未実装）．
+                        "Trial": "Success#2"}] # SQSから取得する部分（未実装）．
             if response:
                 break
 
@@ -49,6 +49,6 @@ class RunnerSQS:
         
         data = {"MatchID": response[0]["MatchID"],
                 "ParticipantID": response[0]["ParticipantID"],
-                "TrialNo": response[0]["TrialNo"]}
+                "Trial": response[0]["Trial"]}
         
         return data

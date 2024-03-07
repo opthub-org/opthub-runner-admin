@@ -9,8 +9,6 @@ from os import path
 import click
 import yaml
 from click.types import StringParamType
-from evaluator.main import evaluate
-from scorer.main import calculate_score
 
 LOGGER = logging.getLogger(__name__)
 
@@ -214,8 +212,10 @@ def run(ctx, **kwargs):
     LOGGER.debug("run(%s)", kwargs)
 
     if kwargs["mode"] == "evaluator":
+        from evaluator.main import evaluate
         evaluate(ctx, **kwargs)
     elif kwargs["mode"] == "scorer":
+        from scorer.main import calculate_score
         calculate_score(ctx, **kwargs)
     else:
         raise ValueError(f'Illegal mode: {kwargs["mode"]}')

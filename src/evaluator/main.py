@@ -43,7 +43,7 @@ def evaluate(ctx, **kwargs):
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
         try:
-            # Partition KeyのためのMatchID，ParticipantID，TrialNoを取得
+            # Partition KeyのためのMatchID，ParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
             partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
             LOGGER.info("...Found")
@@ -57,7 +57,7 @@ def evaluate(ctx, **kwargs):
             LOGGER.info("Fetch Solution from DB...")
             solution = fetch_solution_by_primary_key(partition_key_data["MatchID"],
                                                     partition_key_data["ParticipantID"],
-                                                    partition_key_data["TrialNo"],
+                                                    partition_key_data["Trial"],
                                                     dynamodb)
             LOGGER.info("...Fetched")
 
@@ -103,9 +103,9 @@ def evaluate(ctx, **kwargs):
 
             LOGGER.info("Save Evaluation...")
             # 成功試行をDynamo DBに保存
-            save_success_evaluation(partition_key_data["MatchID"],
-                                    partition_key_data["ParticipantID"],
-                                    partition_key_data["TrialNo"],
+            save_success_evaluation(solution["MatchID"],
+                                    solution["ParticipantID"],
+                                    solution["TrialNo"],
                                     solution["CreatedAt"],
                                     started_at,
                                     finished_at,
@@ -121,9 +121,9 @@ def evaluate(ctx, **kwargs):
             LOGGER.error("Keyboard Interrupt")
             finished_at = datetime.now()
             finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
-            save_failed_evaluation(partition_key_data["MatchID"],
-                                   partition_key_data["ParticipantID"],
-                                   partition_key_data["TrialNo"],
+            save_failed_evaluation(solution["MatchID"],
+                                   solution["ParticipantID"],
+                                   solution["TrialNo"],
                                    solution["CreatedAt"],
                                    started_at,
                                    finished_at,
@@ -135,9 +135,9 @@ def evaluate(ctx, **kwargs):
         except Exception:
             finished_at = datetime.now()
             finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
-            save_failed_evaluation(partition_key_data["MatchID"],
-                                   partition_key_data["ParticipantID"],
-                                   partition_key_data["TrialNo"],
+            save_failed_evaluation(solution["MatchID"],
+                                   solution["ParticipantID"],
+                                   solution["TrialNo"],
                                    solution["CreatedAt"],
                                    started_at,
                                    finished_at,

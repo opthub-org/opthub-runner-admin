@@ -29,7 +29,20 @@ def float_to_json_float(value):
         return None
     return value
 
+def decimal_to_int(value):
+    """
+    decimal型の数をintに変換する．
 
+    """
+    if isinstance(value, list):
+        return [decimal_to_int(v) for v in value]
+    if isinstance(value, dict):
+        return {k: decimal_to_int(v) for k, v in value.items()}
+    if isinstance(value, decimal.Decimal):
+        return int(value)
+    else:
+        return value
+    
 def decimal_to_float(value):
     """
     decimal型の数をfloatに変換する．
