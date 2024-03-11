@@ -88,13 +88,21 @@ def parse_stdout(stdout: str):
 
 
 def main():
-    std_out = execute_in_docker("opthub/sphere:latest",
-                                {"SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]"},
+    # std_out = execute_in_docker("opthub/sphere:latest",
+    #                             {"SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]"},
+    #                             [],
+    #                             100,
+    #                             True,
+    #                             "[1, 1, 1]\n")
+    
+    # print(std_out)
+
+    std_out = execute_in_docker("opthub/hypervolume:latest",
+                                {"HV_REF_POINT": "[1, 1]"},
                                 [],
                                 100,
                                 True,
-                                "[1, 1, 1]\n")
-    
+                                '{"objective": [0.11999999999999994, 0.2700000000000001], "constraint": [0, 0], "info": []}\n[]\n')
     print(std_out)
 
 

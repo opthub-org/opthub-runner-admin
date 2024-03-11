@@ -76,11 +76,11 @@ def load_until_trial_no(match_id, participant_id, trial_no, cache : Cache, dynam
 
     # 取ってきたEvaluationとScoreをCacheに格納
     for evaluation in evaluations:
-        history_after_loaded_trial_no[str(int(evaluation["TrialNo"]))] = {"Objective": decimal_to_float(evaluation["Objective"]),
-                                                                          "Constraint": decimal_to_float(evaluation["Constraint"]),
-                                                                          "Info": decimal_to_float(evaluation["Info"])}
+        history_after_loaded_trial_no[str(int(evaluation["TrialNo"]))] = {"objective": decimal_to_float(evaluation["Objective"]),
+                                                                          "constraint": decimal_to_float(evaluation["Constraint"]),
+                                                                          "info": decimal_to_float(evaluation["Info"])}
     for score in scores:
-            history_after_loaded_trial_no[str(int(score["TrialNo"]))]["Score"] = decimal_to_float(score["Score"])
+            history_after_loaded_trial_no[str(int(score["TrialNo"]))]["score"] = decimal_to_float(score["Score"])
 
             # キャッシュに追加
             cache.append(str(int(score["TrialNo"])), history_after_loaded_trial_no[str(int(score["TrialNo"]))])
@@ -111,7 +111,7 @@ def write(match_id, participant_id, trial_no, objective, constraint, info, score
 
     """
     cache.load(match_id + "#" + participant_id)
-    cache.append(str(trial_no), {"Objective": objective, "Constraint": constraint, "Info": info, "Score": score})
+    cache.append(str(trial_no), {"objective": objective, "constraint": constraint, "info": info, "score": score})
 
 
 

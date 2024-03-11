@@ -90,10 +90,13 @@ def evaluate(ctx, **kwargs):
                                                   kwargs["rm"],
                                                   str(solution["Variable"]) + "\n")
             
+            if "error" in evaluation_result:
+                raise Exception("Error occurred while evaluating solution:\n" + evaluation_result["error"])
+            
             if "constraint" not in evaluation_result:
-                evaluation_result["constraint"] = None
+                evaluation_result["constraint"] = 0 if type(evaluation_result["objective"]) is not list else [0]*len(evaluation_result["objective"])
             if "info" not in evaluation_result:
-                evaluation_result["info"] = None
+                evaluation_result["info"] = []
 
             LOGGER.info("...Evaluated")
             # 評価終了時刻の記録

@@ -68,9 +68,9 @@ def calculate_score(ctx, **kwargs):
 
             # currentとhistoryを作成（Dockerの入力）
             LOGGER.info("Make history...")
-            current = {"Objective": evaluation["Objective"],
-                       "Constraint": evaluation["Constraint"],
-                       "Info": evaluation["Info"]}
+            current = {"objective": evaluation["Objective"],
+                       "constraint": evaluation["Constraint"],
+                       "info": evaluation["Info"]}
             history = make_history(evaluation["MatchID"],
                                    evaluation["ParticipantID"],
                                    evaluation["TrialNo"] - 1,
@@ -108,20 +108,24 @@ def calculate_score(ctx, **kwargs):
                                              json.dumps(current) + "\n",
                                              json.dumps(history) + "\n")
             
+            if "error" in score_result:
+                raise Exception("Error occurred while calculating score:\n" + score_result["error"])
+            
             LOGGER.info("...Calculated")
             # スコア計算終了時刻の記録
             finished_at = datetime.now()
             finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
             LOGGER.info(f"Finished at : {finished_at}")
 
+
             LOGGER.info("Save Score...")
             # cacheにスコアを保存
             write(evaluation["MatchID"],
                   evaluation["ParticipantID"],
                   evaluation["TrialNo"],
-                  current["Objective"],
-                  current["Constraint"],
-                  current["Info"],
+                  current["objective"],
+                  current["constraint"],
+                  current["info"],
                   score_result["score"],
                   cache)
             
@@ -166,7 +170,6 @@ def calculate_score(ctx, **kwargs):
                               dynamodb)
             LOGGER.error(format_exc())
             continue
-        print(json.dumps(history))
         n_score += 1
 
 
