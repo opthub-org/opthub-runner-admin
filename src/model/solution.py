@@ -2,7 +2,7 @@
 Solutionの取得
 
 """
-from utils.dynamoDB import DynamoDB
+from utils.dynamodb import DynamoDB
 from utils.converter import decimal_to_float, decimal_to_int
 
 
@@ -32,7 +32,6 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial, dynamodb : Dy
     solution = dynamodb.get_item(primary_key)
 
     # "Variable"がdecimalのままだと，Solutionの評価で扱いにくくなるため，変換
-    solution["TrialNo"] = decimal_to_int(solution["TrialNo"])
     solution["Variable"] = decimal_to_float(solution["Variable"])
 
     return solution

@@ -4,14 +4,15 @@ import logging
 from traceback import format_exc
 import json
 
-from utils.runnerSQS import RunnerSQS
-from utils.dynamoDB import DynamoDB
-from utils.execute_in_docker import execute_in_docker
+from utils.runnersqs import RunnerSQS
+from utils.dynamodb import DynamoDB
+from utils.docker_executor import execute_in_docker
 from model.match import fetch_match_indicator_by_id
 from model.evaluation import fetch_evaluation_by_primary_key
 from model.score import save_success_score, save_failed_score
-from utils.scorer_history import make_history, write
+from utils.scorer_history import make_history, write_to_cache
 from utils.cache import Cache
+from utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,9 +42,9 @@ def calculate_score(ctx, **kwargs):
     # cacheファイルの管理用
     cache = Cache()
     
-    n_score = 1
+    n_score = 0
 
-    while n_score < 2:
+    while True:
         n_score += 1
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
@@ -55,12 +56,12 @@ def calculate_score(ctx, **kwargs):
 
             # MatchIDからIndicatorEnvironmentsとIndicatorDockerImageを取得
             LOGGER.info("Fetch indicator data from DB...")
-            indicator_data = fetch_match_indicator_by_id(partition_key_data["MatchID"])
+            indicator_data = fetch_match_indicator_by_id(kwargs["match_id"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからEvaluationを取得
             LOGGER.info("Fetch Evaluation from DB...")
-            evaluation = fetch_evaluation_by_primary_key(partition_key_data["MatchID"],
+            evaluation = fetch_evaluation_by_primary_key(kwargs["match_id"],
                                                          partition_key_data["ParticipantID"],
                                                          partition_key_data["Trial"],
                                                          dynamodb)
@@ -73,7 +74,7 @@ def calculate_score(ctx, **kwargs):
                        "info": evaluation["Info"]}
             history = make_history(evaluation["MatchID"],
                                    evaluation["ParticipantID"],
-                                   evaluation["TrialNo"] - 1,
+                                   zfill(int(evaluation["TrialNo"]) - 1, len(evaluation["TrialNo"])),
                                    cache,
                                    dynamodb)
             LOGGER.info("...Made")
@@ -96,7 +97,7 @@ def calculate_score(ctx, **kwargs):
             LOGGER.info("Start to calculate score...")
             # スコア計算開始時刻の記録
             started_at = datetime.now()
-            started_at = started_at.strftime('%Y-%m-%d-%H:%M:%S')
+            started_at = started_at.isoformat()
             LOGGER.info(f"Started at : {started_at}")
 
             # Docker Imageを使ってScoreを取得
@@ -114,20 +115,20 @@ def calculate_score(ctx, **kwargs):
             LOGGER.info("...Calculated")
             # スコア計算終了時刻の記録
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             LOGGER.info(f"Finished at : {finished_at}")
 
 
             LOGGER.info("Save Score...")
             # cacheにスコアを保存
-            write(evaluation["MatchID"],
-                  evaluation["ParticipantID"],
-                  evaluation["TrialNo"],
-                  current["objective"],
-                  current["constraint"],
-                  current["info"],
-                  score_result["score"],
-                  cache)
+            write_to_cache(evaluation["MatchID"],
+                           evaluation["ParticipantID"],
+                           evaluation["TrialNo"],
+                           current["objective"],
+                           current["constraint"],
+                           current["info"],
+                           score_result["score"],
+                           cache)
             
             # 成功試行をDynamo DBに保存
             save_success_score(evaluation["MatchID"],
@@ -145,7 +146,7 @@ def calculate_score(ctx, **kwargs):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.error("Keyboard Interrupt")
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             save_failed_score(evaluation["MatchID"],
                               evaluation["ParticipantID"],
                               evaluation["TrialNo"],
@@ -159,7 +160,7 @@ def calculate_score(ctx, **kwargs):
             ctx.exit(0)
         except Exception:
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             save_failed_score(evaluation["MatchID"],
                               evaluation["ParticipantID"],
                               evaluation["TrialNo"],
@@ -170,11 +171,3 @@ def calculate_score(ctx, **kwargs):
                               dynamodb)
             LOGGER.error(format_exc())
             continue
-        n_score += 1
-
-
-    
-
-
-
-

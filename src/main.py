@@ -192,6 +192,12 @@ signal.signal(signal.SIGTERM, signal_handler)
     callback=load_config,
     help="Configuration file.",
 )
+@click.option(
+    "--match_id",
+    envvar="OPTHUB_MATCH_ID",
+    type=str,
+    help="MatchId handled un this server.",
+)
 @click.version_option()
 @click.argument("mode", type=click.Choice(["evaluator", "scorer"]))
 @click.argument("command", envvar="OPTHUB_COMMAND", type=str, nargs=-1)

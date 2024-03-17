@@ -2,10 +2,11 @@ from datetime import datetime
 import signal
 import logging
 from traceback import format_exc
+import json
 
-from utils.runnerSQS import RunnerSQS
-from utils.dynamoDB import DynamoDB
-from utils.execute_in_docker import execute_in_docker
+from utils.runnersqs import RunnerSQS
+from utils.dynamodb import DynamoDB
+from utils.docker_executor import execute_in_docker
 from model.match import fetch_match_problem_by_id
 from model.solution import fetch_solution_by_primary_key
 from model.evaluation import save_success_evaluation, save_failed_evaluation
@@ -36,26 +37,26 @@ def evaluate(ctx, **kwargs):
     #                     kwargs["aws_secret_access_key_id"],
     #                     kwargs["table_name"])
     
-    n_evaluation = 1
+    n_evaluation = 0
 
-    while n_evaluation < 2:
+    while True:
         n_evaluation += 1
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
         try:
-            # Partition KeyのためのMatchID，ParticipantID，Trialを取得
+            # Partition KeyのためのParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
             partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
             LOGGER.info("...Found")
 
             # MatchIDからProblemEnvironmentsとProblemDockerImageを取得
             LOGGER.info("Fetch problem data from DB...")
-            problem_data = fetch_match_problem_by_id(partition_key_data["MatchID"])
+            problem_data = fetch_match_problem_by_id(kwargs["match_id"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからSolutionを取得
             LOGGER.info("Fetch Solution from DB...")
-            solution = fetch_solution_by_primary_key(partition_key_data["MatchID"],
+            solution = fetch_solution_by_primary_key(kwargs["match_id"],
                                                     partition_key_data["ParticipantID"],
                                                     partition_key_data["Trial"],
                                                     dynamodb)
@@ -78,9 +79,8 @@ def evaluate(ctx, **kwargs):
             LOGGER.info("Start to evaluate...")
             # 評価開始時刻の記録
             started_at = datetime.now()
-            started_at = started_at.strftime('%Y-%m-%d-%H:%M:%S')
+            started_at = started_at.isoformat()
             LOGGER.info(f"Started at : {started_at}")
-
 
             # Docker Imageを使ってObjective，Constraint，Infoを取得
             evaluation_result = execute_in_docker(problem_data["ProblemDockerImage"],
@@ -88,20 +88,21 @@ def evaluate(ctx, **kwargs):
                                                   kwargs["command"],
                                                   kwargs["timeout"],
                                                   kwargs["rm"],
-                                                  str(solution["Variable"]) + "\n")
-            
+                                                  json.dumps(solution["Variable"]) + "\n")
+
             if "error" in evaluation_result:
                 raise Exception("Error occurred while evaluating solution:\n" + evaluation_result["error"])
-            
+            if "feasible" not in evaluation_result:
+                evaluation_result["feasible"] = None
             if "constraint" not in evaluation_result:
-                evaluation_result["constraint"] = 0 if type(evaluation_result["objective"]) is not list else [0]*len(evaluation_result["objective"])
+                evaluation_result["constraint"] = None
             if "info" not in evaluation_result:
-                evaluation_result["info"] = []
+                evaluation_result["info"] = {}
 
             LOGGER.info("...Evaluated")
             # 評価終了時刻の記録
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             LOGGER.info(f"Finished at : {finished_at}")
 
             LOGGER.info("Save Evaluation...")
@@ -115,6 +116,7 @@ def evaluate(ctx, **kwargs):
                                     evaluation_result["objective"],
                                     evaluation_result["constraint"],
                                     evaluation_result["info"],
+                                    evaluation_result["feasible"],
                                     dynamodb)
             LOGGER.info("...Saved")
             
@@ -123,7 +125,7 @@ def evaluate(ctx, **kwargs):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.error("Keyboard Interrupt")
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             save_failed_evaluation(solution["MatchID"],
                                    solution["ParticipantID"],
                                    solution["TrialNo"],
@@ -137,7 +139,7 @@ def evaluate(ctx, **kwargs):
             ctx.exit(0)
         except Exception:
             finished_at = datetime.now()
-            finished_at = finished_at.strftime('%Y-%m-%d-%H:%M:%S')
+            finished_at = finished_at.isoformat()
             save_failed_evaluation(solution["MatchID"],
                                    solution["ParticipantID"],
                                    solution["TrialNo"],
@@ -148,11 +150,3 @@ def evaluate(ctx, **kwargs):
                                    dynamodb)
             LOGGER.error(format_exc())
             continue
-
-        n_evaluation += 1
-
-
-    
-
-
-

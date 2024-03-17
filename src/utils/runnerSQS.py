@@ -5,6 +5,7 @@ Amazon SQSをラップするクラス．
 from time import sleep
 
 
+
 class RunnerSQS:
     """
     Amazon SQSをラップするクラス．
@@ -20,11 +21,18 @@ class RunnerSQS:
 
         """
         self.queue_name = queue_name
+        # self.response = [{"ParticipantID": "Team#1", "Trial": "001"},
+        #     {"ParticipantID": "Team#1", "Trial": "002"},
+        #     {"ParticipantID": "Team#1", "Trial": "003"}]
+        self.response = [{"ParticipantID": "Team#1", "Trial": "Success#001"},
+            {"ParticipantID": "Team#1", "Trial": "Success#002"},
+            {"ParticipantID": "Team#1", "Trial": "Success#003"}]
+
     
 
     def get_partition_key_from_queue(self, interval):
         """
-        Partition Keyに使うMatchID，ParticipantID，TrialNoをqueueから取得するまでpollingする．
+        Partition Keyに使うParticipantID，TrialNoをqueueから取得するまでpollingする．
 
         Parameter
         ---------
@@ -34,21 +42,19 @@ class RunnerSQS:
         Return
         -------
         data : dict
-            MatchID，ParticipantID，Trialのdict．
+            ParticipantID，Trialのdict．
 
         """
 
         while True:
-            response = [{"MatchID": "Match#1",
-                        "ParticipantID": "Team#1",
-                        "Trial": "Success#2"}] # SQSから取得する部分（未実装）．
-            if response:
+            # SQSから取得する部分（未実装）．
+            if self.response:
                 break
 
             sleep(interval)
         
-        data = {"MatchID": response[0]["MatchID"],
-                "ParticipantID": response[0]["ParticipantID"],
-                "Trial": response[0]["Trial"]}
+        data = {"ParticipantID": self.response[0]["ParticipantID"],
+                "Trial": self.response[0]["Trial"]}
+        self.response = self.response[1:]
         
         return data
