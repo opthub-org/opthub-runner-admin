@@ -4,7 +4,7 @@ Dynamo DBのラッパー．
 """
 import boto3
 from boto3.dynamodb.conditions import Key
-
+from typing import Optional, Any, List, Dict
 
 class DynamoDB:
     """
@@ -12,24 +12,25 @@ class DynamoDB:
 
     """
 
-    def __init__(self, endpoint_url, region_name, aws_access_key_id,
-                 aws_secret_access_key, table_name):
+    def __init__(self, endpoint_url: str, region_name: str, aws_access_key_id: str,
+                 aws_secret_access_key: str, table_name: str) -> None:
         """
         Parameters
         ----------
-        endpoint_url : str
+        endpoint_url: str
             DynamoDBへの接続先URL．
-        region_name : str
+        region_name: str
             サービスがデプロイされるリージョン．
-        aws_access_key_id : str
+        aws_access_key_id: str
             AWSアカウントのアクセスキーID．
-        aws_secret_access_key : str
+        aws_secret_access_key: str
             AWSアクセスキーIDに対応する秘密アクセスキー．
-        table_name : str
+        table_name: str
             テーブル名．
-        
+
         """
-        self.dynamoDB = boto3.resource("dynamodb", endpoint_url=endpoint_url,
+        self.dynamoDB = boto3.resource(service_name="dynamodb",
+                                       endpoint_url=endpoint_url,
                                        region_name=region_name,
                                        aws_access_key_id=aws_access_key_id,
                                        aws_secret_access_key=aws_secret_access_key)
@@ -37,70 +38,73 @@ class DynamoDB:
         self.table = self.dynamoDB.Table(self.table_name)
     
 
-    def get_item(self, primary_key):
+    def get_item(self, primary_key_value: Dict[str, str]) -> Optional[Dict[str, Any]]:
         """
-        primary_keyを使ってDynamo DBからitemを取得．
+        Primary Keyを使ってDynamo DBからitemを取得．対応するitemがなければNoneを返す．
 
         Parameter
         ---------
-        primary_key : dict
-            Primary Key．
-        
+        primary_key_value : dict[str, str]
+            Primary KeyとそのValue．
+    
         Return
         ------
-        item : dict
+        item : Dict[str, Any] | None
             取得したitem．
 
         """
-        item = self.table.get_item(Key=primary_key).get("Item")
+        item = self.table.get_item(Key=primary_key_value).get("Item")
         return item
     
         
-    def put_item(self, item):
+    def put_item(self, item: Dict[str, Any]) -> None:
         """
         Dynamo DBにitemを保存．
 
         Parameter
         ---------
-        item : dict
+        item : Dict[str, Any]
             Dynamo DBに保存するitem．
         
         """
         self.table.put_item(Item=item)
 
 
-    def get_item_between_least_and_greatest(self, partition_key, partition_key_value, sort_key, least, greatest, *attributes):
+    def get_item_between_least_and_greatest(self, partition_key_value: Dict[str, str], sort_key: str,
+                                            least: str, greatest: str, *attributes: str) -> List[Dict[str, Any]]:
         """
-        partition_keyがpartition_key_value，sort_keyがleastからgreatestのitemをDynamo DBから複数まとめて取得．
+        Partition Keyがpartition_key_valueであるitemのうち，least <= (Sort KeyのValue) <= greatestであるitemをDynamo DBから複数まとめて取得．
 
         Parameters
         ----------
-        partition_key: str
+        partition_key_value: Dict[str, str]
             Partition Key．
-        partition_key_value: str
-            Partition Keyの値．
         sort_key: str
             Sort Key．
         least: str
-            Sort Keyの下端．
+            Sort KeyのValueの下限．
         greatest: str
-            Sort Keyの上端．
-        attributes : list
-            取得してくる属性．値を渡さなければ，全部取ってくる．
+            Sort KeyのValueの上限．
+        attributes : tuple[str, ...]
+            取得してくる属性(個数は任意)．値を渡さなければ，全ての属性を取ってくる．
 
         Return
         ------
-        items : list
-            取得したitemのlist（すなわち，dictのlist）．
+        items : List[Dict[str, Any]] | None
+            取得したitemのlist．
         
         """
+        partition_key, value_of_partition_key = partition_key_value.popitem()
+        
         if not attributes:
+            # 属性の指定がなく全部取ってくるパターン．
             response = self.table.query(
-                KeyConditionExpression=Key(partition_key).eq(partition_key_value) & Key(sort_key).between(least, greatest),
+                KeyConditionExpression=Key(partition_key).eq(value_of_partition_key) & Key(sort_key).between(least, greatest),
             )
         else:
+            # 指定された属性のみ取ってくるパターン．
             response = self.table.query(
-                KeyConditionExpression=Key(partition_key).eq(partition_key_value) & Key(sort_key).between(least, greatest),
+                KeyConditionExpression=Key(partition_key).eq(value_of_partition_key) & Key(sort_key).between(least, greatest),
                 ProjectionExpression=",".join([f"#attr{i}" for i in range(len(attributes))]),
                 ExpressionAttributeNames={f"#attr{i}": attr for i, attr in enumerate(attributes)}
             )
@@ -137,7 +141,7 @@ def main():
     print(got_item)
 
     print("----- get items -----")
-    items = dynamodb.get_item_between_least_and_greatest("ID", "Solutions#Match#10#Team#10", "Trial", "02", "08", "TrialNo", "Variable", "UserID", "MatchID")
+    items = dynamodb.get_item_between_least_and_greatest({"ID": "Solutions#Match#10#Team#10"}, "Trial", "02", "08", "TrialNo", "Variable", "UserID", "MatchID")
     print(items)
 
 if __name__ == "__main__":

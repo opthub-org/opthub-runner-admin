@@ -1,3 +1,3 @@
-from utils.scorer_history import main
+from utils.dynamodb import main
 
 main()

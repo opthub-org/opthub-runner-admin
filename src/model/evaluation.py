@@ -5,35 +5,40 @@ Evaluation関連の操作
 
 from utils.dynamodb import DynamoDB
 from utils.converter import number_to_decimal, decimal_to_float, decimal_to_int
+from typing import Optional, Union, List, Dict
 
 
-
-def save_success_evaluation(match_id, participant_id, trial_no, created_at, started_at, finished_at, objective, constraint, info, feasible, dynamodb : DynamoDB):
+def save_success_evaluation(match_id: str, participant_id: str, trial_no: str,
+                            created_at: str, started_at: str, finished_at: str,
+                            objective: Union[Union[int, float], List[Union[int, float]]], constraint: Optional[List],
+                            info: Optional[Dict], feasible: Optional[bool], dynamodb : DynamoDB) -> None:
     """
-    評価に成功した場合に，Dynamo DBにEvaluationを保存するための関数．
+    評価に成功した場合に，Dynamo DBにEvaluationの情報を保存するための関数．
 
     Parameters
     ----------
-    match_id : str
-        Matchのid．
-    participant_id : str
-        UserIDまたはTeamID．
-    trial_no : str
+    match_id: str
+        MatchID．
+    participant_id: str
+        ParticipantID．
+    trial_no: str
         試行回数．
-    created_at : str
-        Solutionが作られた時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    started_at : str
-        解の評価を開始した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    finished_at : str
-        解の評価を終了した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    objective : float or list
-        ユーザが送信した解を評価した時の目的関数の値（単目的、多目的で変化）．
-    constraint : list?
-        ユーザが送信した解を評価した時の制約条件の値．
-    info : list?
-        ユーザが送信した解を評価した時の付随情報．
-    feasible : bool
-        ユーザが送信した解が実行可能かどうか．
+    created_at: str
+        評価対象のSolutionが作られた時刻．ISOString形式．
+    started_at: str
+        Solutionの評価を開始した時刻．ISOString形式．
+    finished_at: str
+        Solutionの評価を終了した時刻．ISOString形式．
+    objective: int | float | List[int | float]
+        ユーザが送信したSolutionを評価した時の目的関数の値．単目的ならint | float、多目的ならList[int | float]．
+    constraint: List | None
+        ユーザが送信したSolutionを評価した時の制約条件の値．
+    info: Dict | None
+        ユーザが送信したSolutionを評価した時の付随情報．
+    feasible: bool | None
+        ユーザが送信したSolutionの実行可能性．
+    dynamodb: DynamoDB
+        Evaluationの情報を保存するために使用する，DynamoDBとの通信用の関数．
 
     """
     evaluation = {"ID": f"Evaluations#{match_id}#{participant_id}",
@@ -49,8 +54,7 @@ def save_success_evaluation(match_id, participant_id, trial_no, created_at, star
                   "Objective": number_to_decimal(objective),
                   "Constraint": number_to_decimal(constraint),
                   "Info": number_to_decimal(info),
-                  "Feasible": feasible
-    }
+                  "Feasible": feasible}
 
     dynamodb.put_item(evaluation)
 
