@@ -1,10 +1,23 @@
-"""
-GraphQL経由でMatchの情報を取得
+"""This module provides functions to fetch match problems and indicators by GraphQL."""
 
-"""
+from typing import TypedDict
 
 
-def fetch_match_problem_by_id(match_id):
+class MatchProblem(TypedDict):
+    """This class represents the match problem type."""
+
+    docker_image: str
+    environments: dict[str, str]
+
+
+class MatchIndicator(TypedDict):
+    """This class represents the indicator problem type."""
+
+    docker_image: str
+    environments: dict[str, str]
+
+
+def fetch_match_problem_by_id(match_id: str) -> MatchProblem:
     """
     GraphQL経由でMatchを取得し，Evaluationに必要なProblemの情報を取得する関数．
 
@@ -19,30 +32,13 @@ def fetch_match_problem_by_id(match_id):
         Problemの情報（ProblemDockerImageとProblemEnvironments）を格納したdict．
 
     """
-
-    # match_idを使ってGraphQL経由でmatchを取得（未実装なのでとりあえずmock）
-    match = {
-        "MatchProblemID": "Problem#1",
-        "MatchProblemPublicEnvironments": {"SPHERE_OPTIMA": "[[1, 1, 1], [1.5, 1.5, 1.5]]"},
-        "MatchProblemPrivateEnvironments": {},
+    return {
+        "docker_image": "opthub/sphere:latest",
+        "environments": {"SPHERE_OPTIMA": "[[1, 1, 1], [1.5, 1.5, 1.5]]"},
     }
 
-    problem_id = match["MatchProblemID"]
 
-    # problem_idを使ってGraphQL経由でproblemを取得（未実装なのでとりあえずmock）
-    problem = {"ProblemDockerImage": "opthub/sphere:latest"}
-
-    problem_data = {
-        "ProblemDockerImage": problem["ProblemDockerImage"],
-        "ProblemEnvironments": dict(
-            **match["MatchProblemPublicEnvironments"], **match["MatchProblemPrivateEnvironments"]
-        ),
-    }
-
-    return problem_data
-
-
-def fetch_match_indicator_by_id(match_id):
+def fetch_match_indicator_by_id(match_id: str) -> MatchIndicator:
     """
     GraphQL経由でMatchを取得し，Scoreに必要なIndicatorの情報を取得する関数．
 
@@ -57,28 +53,7 @@ def fetch_match_indicator_by_id(match_id):
         Indicatorの情報（IndicatorDockerImageとIndicatorEnvironments）を格納したdict．
 
     """
-
-    # match_idを使ってGraphQL経由でmatchを取得（未実装なのでとりあえずmock）
-    # match = {"MatchIndicatorID" : "Indicator#1",
-    #         "MatchIndicatorPublicEnvironments" : {},
-    #         "MatchIndicatorPrivateEnvironments" : {}}
-    match = {
-        "MatchIndicatorID": "Indicator#1",
-        "MatchIndicatorPublicEnvironments": {},
-        "MatchIndicatorPrivateEnvironments": {"HV_REF_POINT": "[1, 1]"},
+    return {
+        "docker_image": "opthub/hypervolume:latest",
+        "environments": {"HV_REF_POINT": "[1, 1]"},
     }
-
-    indicator_id = match["MatchIndicatorID"]
-
-    # indicator_idを使ってGraphQL経由でindicatorを取得（未実装なのでとりあえずmock）
-    indicator = {"IndicatorDockerImage": "opthub/hypervolume:latest"}
-    # indicator = {"IndicatorDockerImage" : "opthub/best:latest"}
-
-    indicator_data = {
-        "IndicatorDockerImage": indicator["IndicatorDockerImage"],
-        "IndicatorEnvironments": dict(
-            **match["MatchIndicatorPublicEnvironments"], **match["MatchIndicatorPrivateEnvironments"]
-        ),
-    }
-
-    return indicator_data

@@ -14,7 +14,7 @@ from opthub_runner.utils.runner_sqs import RunnerSQS
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(ctx, **kwargs):
+def evaluate(ctx, **kwargs) -> None:
     """
     評価プロセスのコントローラーを行う関数．
 

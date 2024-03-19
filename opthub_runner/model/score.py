@@ -1,15 +1,21 @@
-"""
-Score関連の操作
+"""This module provides functions to save and fetch scores to and from DynamoDB."""
 
-"""
+from typing import Any
 
 from opthub_runner.utils.converter import number_to_decimal
 from opthub_runner.utils.dynamodb import DynamoDB
 
 
 def save_success_score(
-    match_id, participant_id, trial_no, created_at, started_at, finished_at, score, dynamodb: DynamoDB
-):
+    match_id: str,
+    participant_id: str,
+    trial_no: str,
+    created_at: str,
+    started_at: str,
+    finished_at: str,
+    score: float,
+    dynamodb: DynamoDB,
+) -> None:
     """
     スコアの計算に成功した場合に，Dynamo DBにScoreを保存するための関数．
 
@@ -32,7 +38,7 @@ def save_success_score(
 
     """
 
-    score = {
+    score_data: dict[str, Any] = {
         "ID": f"Scores#{match_id}#{participant_id}",
         "Trial": f"Success#{trial_no}",
         "TrialNo": trial_no,
@@ -46,12 +52,12 @@ def save_success_score(
         "Score": number_to_decimal(score),
     }
 
-    dynamodb.put_item(score)
+    dynamodb.put_item(score_data)
 
 
 def save_failed_score(
     match_id, participant_id, trial_no, created_at, started_at, finished_at, error_message, dynamodb: DynamoDB
-):
+) -> None:
     """
     Scoreの計算に失敗した場合に，Dynamo DBにScoreを保存するための関数．
 

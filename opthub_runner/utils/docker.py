@@ -8,7 +8,14 @@ from opthub_runner.utils.converter import float_to_json_float
 LOGGER = logging.getLogger(__name__)
 
 
-def execute_in_docker(image, environment, command, timeout, rm, *std_in):
+def execute_in_docker(
+    image: str,
+    environments: dict[str, str],
+    command: str,
+    timeout: float,
+    rm: bool,
+    *std_in,
+) -> None:
     """
     Solutionの評価とEvaluationのScore計算をDocker Imageを使って行う関数．
 
@@ -16,7 +23,7 @@ def execute_in_docker(image, environment, command, timeout, rm, *std_in):
     ----------
     image : str
         Docker Imageの名前．
-    environment : dict
+    environments : dict
         環境変数のdict．ProblemEnvironmentやIndicatorEnvironmentを表す．
     command : str
         Dockerで実行するコマンド．
