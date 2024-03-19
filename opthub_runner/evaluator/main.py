@@ -7,7 +7,7 @@ from traceback import format_exc
 from opthub_runner.model.evaluation import save_failed_evaluation, save_success_evaluation
 from opthub_runner.model.match import fetch_match_problem_by_id
 from opthub_runner.model.solution import fetch_solution_by_primary_key
-from opthub_runner.utils.docker import execute_in_docker
+from opthub_runner.utils.docker_executer import execute_in_docker
 from opthub_runner.utils.dynamodb import DynamoDB
 from opthub_runner.utils.runner_sqs import RunnerSQS
 

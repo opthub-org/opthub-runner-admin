@@ -8,7 +8,7 @@ from opthub_runner.model.evaluation import fetch_evaluation_by_primary_key
 from opthub_runner.model.match import fetch_match_indicator_by_id
 from opthub_runner.model.score import save_failed_score, save_success_score
 from opthub_runner.utils.cache import Cache
-from opthub_runner.utils.docker import execute_in_docker
+from opthub_runner.utils.docker_executer import execute_in_docker
 from opthub_runner.utils.dynamodb import DynamoDB
 from opthub_runner.utils.runner_sqs import RunnerSQS
 from opthub_runner.utils.scorer_history import make_history, write_to_cache
@@ -17,7 +17,7 @@ from opthub_runner.utils.zfill import zfill
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_score(ctx, **kwargs):
+def calculate_score(ctx, **kwargs) -> None:
     """
     スコア計算プロセスのコントローラーを行う関数．
 

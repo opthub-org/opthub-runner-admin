@@ -21,7 +21,7 @@
   "mypy.dmypyExecutable": ".venv/bin/dmypy",
 
   // Spell check setting
-  "cSpell.userWords": ["opthub"],
+  "cSpell.userWords": ["opthub", "hypervolume"],
   "cSpell.words": [
     "aiohttp",
     "boto"
