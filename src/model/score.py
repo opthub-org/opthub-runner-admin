@@ -3,7 +3,7 @@ Score関連の操作
 
 """
 from utils.dynamodb import DynamoDB
-from utils.converter import decimal_to_float, number_to_decimal
+from utils.converter import number_to_decimal
 
 
 

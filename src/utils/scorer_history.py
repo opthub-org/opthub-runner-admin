@@ -66,14 +66,12 @@ def load_until_trial_no(match_id, participant_id, trial_no, cache : Cache, dynam
         return
     
     # DBからCacheにないデータを取ってくる
-    evaluations = dynamodb.get_item_between_least_and_greatest("ID",
-                                                               f"Evaluations#{match_id}#{participant_id}",
+    evaluations = dynamodb.get_item_between_least_and_greatest({"ID": f"Evaluations#{match_id}#{participant_id}"},
                                                                "Trial",
                                                                "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
                                                                "Success#" + zfill(int(trial_no), len(trial_no)),
                                                                "Objective", "Constraint", "Info", "Feasible", "TrialNo")
-    scores = dynamodb.get_item_between_least_and_greatest("ID", 
-                                                          f"Scores#{match_id}#{participant_id}",
+    scores = dynamodb.get_item_between_least_and_greatest({"ID": f"Scores#{match_id}#{participant_id}"},
                                                           "Trial",
                                                           "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
                                                           "Success#" + zfill(int(trial_no), len(trial_no)),
