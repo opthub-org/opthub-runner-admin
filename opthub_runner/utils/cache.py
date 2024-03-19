@@ -2,9 +2,10 @@
 Score計算用のキャッシュファイルを扱うクラス．
 
 """
+
 import os
-import shutil
 import pickle
+import shutil
 import tempfile
 
 """
@@ -13,6 +14,7 @@ CacheとDynamo DBがあればできる
 
 
 """
+
 
 class Cache:
     """
@@ -25,8 +27,8 @@ class Cache:
         キャッシュの初期化．
 
         """
-        self.__loaded_filename = None # 現在読み込んでいるキャッシュのファイル名
-        self.__values = None # 現在持っているキャッシュの値
+        self.__loaded_filename = None  # 現在読み込んでいるキャッシュのファイル名
+        self.__values = None  # 現在持っているキャッシュの値
 
         # キャッシュ保管用のディレクトリを作っておく
         temp_dir = tempfile.gettempdir()
@@ -34,7 +36,6 @@ class Cache:
         if os.path.exists(self.__cache_dir_path):
             shutil.rmtree(self.__cache_dir_path)
         os.mkdir(self.__cache_dir_path)
-        
 
     def append(self, value):
         """
@@ -48,14 +49,13 @@ class Cache:
         """
         if self.__values is None:
             raise ValueError("No file loaded.")
-        
-        self.__values.append(value)
 
+        self.__values.append(value)
 
     def get_values(self):
         """
         self.__valuesを取ってくる．read only．
-        
+
         Return
         ------
         values : list
@@ -64,10 +64,9 @@ class Cache:
         """
         if self.__values is None:
             return None
-        
+
         return self.__values
-    
-    
+
     def load(self, filename):
         """
         filenameのキャッシュからデータを取ってくる．
@@ -76,11 +75,11 @@ class Cache:
         ---------
         filename : str
             キャッシュファイル名．
-        
+
         """
         if self.__loaded_filename is not None and filename == self.__loaded_filename:
             return
-        
+
         if self.__loaded_filename is not None:
             with open(os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl"), "wb") as file:
                 pickle.dump(self.__values, file)
@@ -89,22 +88,24 @@ class Cache:
         self.__values = []
         if os.path.exists(os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl")):
             with open(os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl"), "rb") as file:
-                    self.__values = pickle.load(file)
-        
+                self.__values = pickle.load(file)
 
     def clear(self):
         """
         このキャッシュのデータを削除する．
 
         """
-        if self.__loaded_filename is not None and not os.path.exists(os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl")):
+        if self.__loaded_filename is not None and not os.path.exists(
+            os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl")
+        ):
             os.remove(os.path.join(self.__cache_dir_path, self.__loaded_filename + ".pkl"))
         self.__loaded_filename = None
         self.__values = None
-    
+
 
 def main():
     from traceback import format_exc
+
     cache = Cache()
     try:
         cache.append({"TrialNo": "1", "Objective": 0.8, "Constraint": None, "Info": {}, "Score": 0.8, "Feasible": True})
@@ -132,9 +133,7 @@ def main():
         cache.append({"TrialNo": "1", "Objective": 0.8, "Constraint": None, "Info": {}, "Score": 0.8, "Feasible": None})
     except Exception:
         print(format_exc())
-    
 
 
 if __name__ == "__main__":
     main()
-        

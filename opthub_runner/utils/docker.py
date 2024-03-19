@@ -1,8 +1,9 @@
-import docker
 import json
-from utils.converter import float_to_json_float
 import logging
 
+import docker
+
+from opthub_runner.utils.converter import float_to_json_float
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,12 +34,12 @@ def execute_in_docker(image, environment, command, timeout, rm, *std_in):
     LOGGER.info("...Connected")
 
     LOGGER.info("Pull image...")
-    client.images.pull(image) # pull image
+    client.images.pull(image)  # pull image
     LOGGER.debug(image)
     LOGGER.info("...Pulled")
     # run container
     LOGGER.info("Start container...")
-    
+
     container = client.containers.run(
         image=image,
         command=command,
@@ -49,14 +50,10 @@ def execute_in_docker(image, environment, command, timeout, rm, *std_in):
     LOGGER.info("...Started: %s", container.name)
 
     LOGGER.info("Send variable...")
-    socket = container.attach_socket(
-        params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1}
-    )
+    socket = container.attach_socket(params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1})
 
     for line in std_in:
-        socket._sock.sendall(
-            line.encode("utf-8")
-        )  # pylint: disable=protected-access
+        socket._sock.sendall(line.encode("utf-8"))  # pylint: disable=protected-access
     LOGGER.info("...Send")
 
     LOGGER.info("Wait for execution...")
@@ -75,7 +72,7 @@ def execute_in_docker(image, environment, command, timeout, rm, *std_in):
 
     LOGGER.info("Parse stdout...")
     out = parse_stdout(stdout)
-    
+
     LOGGER.debug(out)
     LOGGER.info("...Parsed")
 
@@ -91,21 +88,20 @@ def parse_stdout(stdout: str):
 
 
 def main():
-    std_out = execute_in_docker("opthub/sphere:latest",
-                                {"SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]"},
-                                [],
-                                100,
-                                True,
-                                "[1, 1, 1]\n")
-    
+    std_out = execute_in_docker(
+        "opthub/sphere:latest", {"SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]"}, [], 100, True, "[1, 1, 1]\n"
+    )
+
     print(std_out)
 
-    std_out = execute_in_docker("opthub/hypervolume:latest",
-                                {"HV_REF_POINT": "[1, 1]"},
-                                [],
-                                100,
-                                True,
-                                '{"objective": [0.11999999999999994, 0.2700000000000001], "constraint": null}\n[]\n')
+    std_out = execute_in_docker(
+        "opthub/hypervolume:latest",
+        {"HV_REF_POINT": "[1, 1]"},
+        [],
+        100,
+        True,
+        '{"objective": [0.11999999999999994, 0.2700000000000001], "constraint": null}\n[]\n',
+    )
     print(std_out)
 
 

@@ -2,8 +2,8 @@
 Amazon SQSをラップするクラス．
 
 """
-from time import sleep
 
+from time import sleep
 
 
 class RunnerSQS:
@@ -24,11 +24,11 @@ class RunnerSQS:
         # self.response = [{"ParticipantID": "Team#1", "Trial": "001"},
         #     {"ParticipantID": "Team#1", "Trial": "002"},
         #     {"ParticipantID": "Team#1", "Trial": "003"}]
-        self.response = [{"ParticipantID": "Team#1", "Trial": "Success#001"},
+        self.response = [
+            {"ParticipantID": "Team#1", "Trial": "Success#001"},
             {"ParticipantID": "Team#1", "Trial": "Success#002"},
-            {"ParticipantID": "Team#1", "Trial": "Success#003"}]
-
-    
+            {"ParticipantID": "Team#1", "Trial": "Success#003"},
+        ]
 
     def get_partition_key_from_queue(self, interval):
         """
@@ -52,9 +52,8 @@ class RunnerSQS:
                 break
 
             sleep(interval)
-        
-        data = {"ParticipantID": self.response[0]["ParticipantID"],
-                "Trial": self.response[0]["Trial"]}
+
+        data = {"ParticipantID": self.response[0]["ParticipantID"], "Trial": self.response[0]["Trial"]}
         self.response = self.response[1:]
-        
+
         return data

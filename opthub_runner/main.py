@@ -1,7 +1,5 @@
-"""
-Definition of CLI commands.
+"""Definition of CLI commands."""
 
-"""
 import logging
 import signal
 from os import path
@@ -24,9 +22,7 @@ class AliasedGroup(click.Group):
     ...     pass
     """
 
-    def get_command(
-        self, ctx, cmd_name
-    ):  # pylint: disable=inconsistent-return-statements
+    def get_command(self, ctx, cmd_name):  # pylint: disable=inconsistent-return-statements
         cmd = click.Group.get_command(self, ctx, cmd_name)
         if cmd is not None:
             return cmd
@@ -46,9 +42,7 @@ class StrLength(StringParamType):
 
     """
 
-    def __init__(
-        self, min=None, max=None, clamp=False
-    ):  # pylint: disable=redefined-builtin
+    def __init__(self, min=None, max=None, clamp=False):  # pylint: disable=redefined-builtin
         self.min = min
         self.max = max
         self.clamp = clamp
@@ -61,30 +55,22 @@ class StrLength(StringParamType):
                 return ret + " " * (self.min - len_ret)
             if self.max is not None and len_ret > self.max:
                 return ret[: self.max]
-        if (
-            self.min is not None
-            and len_ret < self.min
-            or self.max is not None
-            and len_ret > self.max
-        ):
+        if self.min is not None and len_ret < self.min or self.max is not None and len_ret > self.max:
             if self.min is None:
                 self.fail(
-                    "Length %d is longer than the maximum valid length %d."
-                    % (len_ret, self.max),
+                    "Length %d is longer than the maximum valid length %d." % (len_ret, self.max),
                     param,
                     ctx,
                 )
             elif self.max is None:
                 self.fail(
-                    "Length %d is shorter than the minimum valid length %d."
-                    % (len_ret, self.min),
+                    "Length %d is shorter than the minimum valid length %d." % (len_ret, self.min),
                     param,
                     ctx,
                 )
             else:
                 self.fail(
-                    "Length %d is not in the valid range of %d to %d."
-                    % (len_ret, self.min, self.max),
+                    "Length %d is not in the valid range of %d to %d." % (len_ret, self.min, self.max),
                     param,
                     ctx,
                 )
@@ -92,6 +78,7 @@ class StrLength(StringParamType):
 
     def __repr__(self):
         return "StrLength(%d, %d)" % (self.min, self.max)
+
 
 def load_config(ctx, self, value):  # pylint:disable=unused-argument
     """
@@ -136,9 +123,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     default="https://opthub-api.herokuapp.com/v1/graphql",
     help="URL to OptHub.",
 )
-@click.option(
-    "-a", "--apikey", envvar="OPTHUB_APIKEY", type=StrLength(max=64), help="ApiKey."
-)
+@click.option("-a", "--apikey", envvar="OPTHUB_APIKEY", type=StrLength(max=64), help="ApiKey.")
 @click.option(
     "-i",
     "--interval",
@@ -169,9 +154,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     default=600,
     help="Timeout to process a query.",
 )
-@click.option(
-    "--rm", envvar="OPTHUB_REMOVE", is_flag=True, help="Remove containers after exit."
-)
+@click.option("--rm", envvar="OPTHUB_REMOVE", is_flag=True, help="Remove containers after exit.")
 @click.option(
     "-b",
     "--backend",
@@ -209,7 +192,7 @@ def run(ctx, **kwargs):
     """
     # set loglevel
     verbosity = 10 * (kwargs["quiet"] - kwargs["verbose"])
-    log_level = 0 #logging.WARNING + verbosity
+    log_level = 0  # logging.WARNING + verbosity
     logging.basicConfig(
         level=log_level,
         format="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s",
@@ -219,9 +202,11 @@ def run(ctx, **kwargs):
 
     if kwargs["mode"] == "evaluator":
         from evaluator.main import evaluate
+
         evaluate(ctx, **kwargs)
     elif kwargs["mode"] == "scorer":
         from scorer.main import calculate_score
+
         calculate_score(ctx, **kwargs)
     else:
         raise ValueError(f'Illegal mode: {kwargs["mode"]}')

@@ -1,5 +1,32 @@
 {
-    "cSpell.words": [
-        "boto"
-    ]
+  // Auto save
+  "files.autoSave": "onFocusChange",
+
+  // Python editor setting
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+  },
+
+  // Runff setting
+  "ruff.organizeImports": true,
+  "ruff.format.args": [
+    "--config=pyproject.toml"
+  ],
+
+  // Mypy setting
+  "mypy.runUsingActiveInterpreter": true,
+  "mypy.dmypyExecutable": ".venv/bin/dmypy",
+
+  // Spell check setting
+  "cSpell.userWords": ["opthub"],
+  "cSpell.words": [
+    "aiohttp",
+    "boto"
+  ],
+
+  // Format setting
+  "files.insertFinalNewline": true,
 }
