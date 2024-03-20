@@ -1,6 +1,7 @@
 import boto3
 from time import sleep
 from typing import Dict
+from utils.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, QUEUE_URL, DYNAMODB_URL, TABLE_NAME
 
 
 
@@ -22,17 +23,13 @@ class SQS:
         self.queue_name = queue_name
         self.interval = interval
 
-        access_key_id = ""
-        secret_access_key = ""
-        region_name = ""
+
         self.sqs = boto3.client("sqs",
-                                region_name=region_name,
-                                aws_access_key_id=access_key_id,
-                                aws_secret_access_key=secret_access_key)
+                                region_name=REGION_NAME,
+                                aws_access_key_id=ACCESS_KEY_ID,
+                                aws_secret_access_key=SECRET_ACCESS_KEY)
         
-        response = self.sqs.create_queue(
-            QueueName=queue_name)
-        self.queue_url = response["QueueUrl"]
+        self.queue_url = QUEUE_URL
         self.receipt_handle = None
 
     
@@ -55,6 +52,7 @@ class SQS:
             
             if messages:
                 break
+            print(messages)
             sleep(self.interval)
         
         message = messages[0]
@@ -86,3 +84,43 @@ class SQS:
         #
 
 
+def main():
+    from utils.dynamodb import DynamoDB
+
+    dynamodb = DynamoDB(DYNAMODB_URL,
+                        REGION_NAME,
+                        ACCESS_KEY_ID,
+                        SECRET_ACCESS_KEY,
+                        TABLE_NAME)
+    sqs = SQS(REGION_NAME, 2.0)
+
+    response = sqs.sqs.purge_queue(QueueUrl=sqs.queue_url)
+    print(response)
+    
+    for i in range(1, 3):
+        put_item = {"ID": "Solutions#Match#1#Team#1",
+                    "Trial": str(i).zfill(2),
+                    "ParticipantID": "Team#1",
+                    "Variable": [1, 2],
+                    "UserID": "User#1",
+                    "MatchID": "Match#1", 
+                    "CreatedAt": f"2024-03-05-00:{str(i).zfill(2)}:00",
+                    "ResourceType": "Solutions",
+                    "TrialNo": str(i).zfill(2)}
+        dynamodb.put_item(put_item)
+
+    message = sqs.polling_sqs_message()
+
+    print(message)
+    
+    sqs.delete_sqs_message()
+
+    message = sqs.polling_sqs_message()
+
+    print(message)
+    
+    sqs.delete_sqs_message()
+
+
+if __name__ == "__main__":
+    main()

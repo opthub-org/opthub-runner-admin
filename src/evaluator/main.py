@@ -10,6 +10,7 @@ from utils.docker_executor import execute_in_docker
 from model.match import fetch_match_problem_by_id
 from model.solution import fetch_solution_by_primary_key
 from model.evaluation import save_success_evaluation, save_failed_evaluation
+from utils.keys import QUEUE_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION_NAME, TABLE_NAME, DYNAMODB_URL
 
 
 LOGGER = logging.getLogger(__name__)
@@ -22,15 +23,15 @@ def evaluate(ctx, **kwargs):
     """
 
     # Amazon SQSとのやり取り用
-    sqs = RunnerSQS("tmp_name")
-    #sqs = RunnerSQS(kwargs["queue_name"])
+    sqs = RunnerSQS(QUEUE_NAME, 2)
+    #sqs = RunnerSQS(kwargs["queue_name"], kwargs["interval"])
 
     # Dynamo DBとのやり取り用
-    dynamodb = DynamoDB("http://localhost:8000",
-                        "localhost",
-                        "aaa",
-                        "aaa",
-                        "opthub-dynamodb-participant-trials-dev")
+    dynamodb = DynamoDB(DYNAMODB_URL,
+                        REGION_NAME,
+                        ACCESS_KEY_ID,
+                        SECRET_ACCESS_KEY,
+                        TABLE_NAME)
     # dynamodb = DynamoDB(kwargs["endpoint_url"],
     #                     kwargs["region_name"],
     #                     kwargs["aws_access_key_id"],
@@ -46,7 +47,7 @@ def evaluate(ctx, **kwargs):
         try:
             # Partition KeyのためのParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
-            partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
+            partition_key_data = sqs.get_partition_key_from_queue()
             LOGGER.info("...Found")
 
             # MatchIDからProblemEnvironmentsとProblemDockerImageを取得
@@ -119,6 +120,8 @@ def evaluate(ctx, **kwargs):
                                     evaluation_result["feasible"],
                                     dynamodb)
             LOGGER.info("...Saved")
+
+            sqs.delete_partition_key_from_queue()
             
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)

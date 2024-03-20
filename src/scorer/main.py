@@ -24,8 +24,7 @@ def calculate_score(ctx, **kwargs):
     """
 
     # Amazon SQSとのやり取り用
-    sqs = RunnerSQS("tmp_name")
-    #sqs = RunnerSQS(kwargs["queue_name"])
+    sqs = RunnerSQS(kwargs["queue_name"], kwargs["interval"])
 
     # Dynamo DBとのやり取り用
     dynamodb = DynamoDB("http://localhost:8000",
@@ -51,7 +50,7 @@ def calculate_score(ctx, **kwargs):
         try:
             # Partition KeyのためのMatchID，ParticipantID，TrialNoを取得
             LOGGER.info("Find Evaluation to calculate score...")
-            partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
+            partition_key_data = sqs.get_partition_key_from_queue()
             LOGGER.info("...Found")
 
             # MatchIDからIndicatorEnvironmentsとIndicatorDockerImageを取得
