@@ -126,7 +126,7 @@ def write_to_cache(match_id, participant_id, trial_no, objective, constraint, in
 def main():
     from utils.converter import number_to_decimal
     cache = Cache()
-    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+    dynamodb = DynamoDB("localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
     
     for i in range(1, 11):

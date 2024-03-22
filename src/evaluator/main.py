@@ -4,13 +4,13 @@ import logging
 from traceback import format_exc
 import json
 
-from utils.runnersqs import RunnerSQS
+from utils.runner_sqs import EvaluatorSQS
 from utils.dynamodb import DynamoDB
 from utils.docker_executor import execute_in_docker
 from model.match import fetch_match_problem_by_id
 from model.solution import fetch_solution_by_primary_key
 from model.evaluation import save_success_evaluation, save_failed_evaluation
-from utils.keys import QUEUE_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION_NAME, TABLE_NAME, DYNAMODB_URL
+from utils.keys import QUEUE_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION_NAME, TABLE_NAME
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,12 +23,11 @@ def evaluate(ctx, **kwargs):
     """
 
     # Amazon SQSとのやり取り用
-    sqs = RunnerSQS(QUEUE_NAME, 2)
+    sqs = EvaluatorSQS(QUEUE_NAME, 2.0)
     #sqs = RunnerSQS(kwargs["queue_name"], kwargs["interval"])
 
     # Dynamo DBとのやり取り用
-    dynamodb = DynamoDB(DYNAMODB_URL,
-                        REGION_NAME,
+    dynamodb = DynamoDB(REGION_NAME,
                         ACCESS_KEY_ID,
                         SECRET_ACCESS_KEY,
                         TABLE_NAME)
@@ -152,4 +151,6 @@ def evaluate(ctx, **kwargs):
                                    format_exc(),
                                    dynamodb)
             LOGGER.error(format_exc())
+
+            sqs.delete_partition_key_from_queue()
             continue

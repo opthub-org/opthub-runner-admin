@@ -4,7 +4,7 @@ import logging
 from traceback import format_exc
 import json
 
-from utils.runnersqs import RunnerSQS
+from utils.runner_sqs import ScorerSQS
 from utils.dynamodb import DynamoDB
 from utils.docker_executor import execute_in_docker
 from model.match import fetch_match_indicator_by_id
@@ -13,6 +13,8 @@ from model.score import save_success_score, save_failed_score
 from utils.scorer_history import make_history, write_to_cache
 from utils.cache import Cache
 from utils.zfill import zfill
+from utils.keys import QUEUE_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION_NAME, TABLE_NAME
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,14 +26,13 @@ def calculate_score(ctx, **kwargs):
     """
 
     # Amazon SQSとのやり取り用
-    sqs = RunnerSQS(kwargs["queue_name"], kwargs["interval"])
+    sqs = ScorerSQS(QUEUE_NAME, 2.0)
 
     # Dynamo DBとのやり取り用
-    dynamodb = DynamoDB("http://localhost:8000",
-                        "localhost",
-                        "aaa",
-                        "aaa",
-                        "opthub-dynamodb-participant-trials-dev")
+    dynamodb = DynamoDB(REGION_NAME,
+                        ACCESS_KEY_ID,
+                        SECRET_ACCESS_KEY,
+                        TABLE_NAME)
     # dynamodb = DynamoDB(kwargs["endpoint_url"],
     #                     kwargs["region_name"],
     #                     kwargs["aws_access_key_id"],
@@ -139,6 +140,8 @@ def calculate_score(ctx, **kwargs):
                                score_result["score"],
                                dynamodb)
             LOGGER.info("...Saved")
+
+            sqs.delete_partition_key_from_queue()
             
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -169,4 +172,7 @@ def calculate_score(ctx, **kwargs):
                               format_exc(),
                               dynamodb)
             LOGGER.error(format_exc())
+
+            sqs.delete_partition_key_from_queue()
+
             continue

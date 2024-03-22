@@ -4,7 +4,7 @@ Evaluation関連の操作
 """
 
 from utils.dynamodb import DynamoDB
-from utils.converter import number_to_decimal, decimal_to_float, decimal_to_int
+from utils.converter import number_to_decimal, decimal_to_float
 from typing import Optional, Union, List, Dict
 
 
@@ -131,7 +131,7 @@ def fetch_evaluation_by_primary_key(match_id, participant_id, trial, dynamodb : 
 
 
 def main():
-    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+    dynamodb = DynamoDB("localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
     
     save_success_evaluation("Match#1", "Team#1", "1", "2020-2-20-09:00:00",

@@ -1,7 +1,7 @@
 import boto3
 from time import sleep
 from typing import Dict
-from utils.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, QUEUE_URL, DYNAMODB_URL, TABLE_NAME
+from utils.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, QUEUE_URL, TABLE_NAME
 
 
 
@@ -52,7 +52,6 @@ class SQS:
             
             if messages:
                 break
-            print(messages)
             sleep(self.interval)
         
         message = messages[0]
@@ -87,8 +86,7 @@ class SQS:
 def main():
     from utils.dynamodb import DynamoDB
 
-    dynamodb = DynamoDB(DYNAMODB_URL,
-                        REGION_NAME,
+    dynamodb = DynamoDB(REGION_NAME,
                         ACCESS_KEY_ID,
                         SECRET_ACCESS_KEY,
                         TABLE_NAME)

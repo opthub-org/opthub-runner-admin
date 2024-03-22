@@ -39,7 +39,7 @@ def fetch_solution_by_primary_key(match_id, participant_id, trial, dynamodb : Dy
 
 
 def main():
-    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+    dynamodb = DynamoDB("localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
     solution = fetch_solution_by_primary_key("Match#1", "Team#1", "1", dynamodb)
     print("----- solution -----")

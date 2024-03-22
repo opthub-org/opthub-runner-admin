@@ -85,7 +85,7 @@ def save_failed_score(match_id, participant_id, trial_no, created_at, started_at
 
 
 def main():
-    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+    dynamodb = DynamoDB("localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
     
     save_success_score("Match#1", "Team#1", "1", "2020-2-20-09:00:00",

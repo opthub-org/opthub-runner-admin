@@ -12,13 +12,11 @@ class DynamoDB:
 
     """
 
-    def __init__(self, endpoint_url: str, region_name: str, aws_access_key_id: str,
+    def __init__(self, region_name: str, aws_access_key_id: str,
                  aws_secret_access_key: str, table_name: str) -> None:
         """
         Parameters
         ----------
-        endpoint_url: str
-            DynamoDBへの接続先URL．
         region_name: str
             サービスがデプロイされるリージョン．
         aws_access_key_id: str
@@ -30,7 +28,6 @@ class DynamoDB:
 
         """
         self.dynamoDB = boto3.resource(service_name="dynamodb",
-                                       endpoint_url=endpoint_url,
                                        region_name=region_name,
                                        aws_access_key_id=aws_access_key_id,
                                        aws_secret_access_key=aws_secret_access_key)
@@ -115,7 +112,7 @@ class DynamoDB:
 
 def main():
 
-    dynamodb = DynamoDB("http://localhost:8000", "localhost",
+    dynamodb = DynamoDB("localhost",
                         "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev")
     
     for i in range(1, 11):
