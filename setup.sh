@@ -16,5 +16,8 @@ fi
 # Python のローカルバージョンを設定
 pyenv local 3.12.1
 
+# poetry の設定
+poetry config virtualenvs.in-project true
+
 # 依存関係のインストール（poetry によるプロジェクト依存関係）
 poetry install
