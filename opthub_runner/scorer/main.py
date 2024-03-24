@@ -6,17 +6,17 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.scorer.cache import Cache
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 from opthub_runner.lib.runner_sqs import ScorerSQS
-from opthub_runner.scorer.history import make_history, write_to_cache
 from opthub_runner.lib.zfill import zfill
 from opthub_runner.main import Args
 from opthub_runner.models.evaluation import fetch_success_evaluation_by_primary_key
-from opthub_runner.models.match import fetch_match_indicator_by_id
+from opthub_runner.models.match import fetch_match_by_alias
 from opthub_runner.models.score import save_failed_score, save_success_score
+from opthub_runner.scorer.cache import Cache
+from opthub_runner.scorer.history import make_history, write_to_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,16 +55,16 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             partition_key_data = sqs.get_partition_key_from_queue()
             LOGGER.info("...Found")
 
-            # MatchIDからIndicatorEnvironmentsとIndicatorDockerImageを取得
+            # 競技をエイリアスから取得
             LOGGER.info("Fetch indicator data from DB...")
-            indicator_data = fetch_match_indicator_by_id(args["match_id"])
+            match = fetch_match_by_alias(args["match_alias"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからEvaluationを取得
             LOGGER.info("Fetch Evaluation from DB...")
             evaluation = fetch_success_evaluation_by_primary_key(
                 dynamodb,
-                args["match_id"],
+                match["id"],
                 partition_key_data["ParticipantID"],
                 partition_key_data["Trial"],
             )
@@ -78,7 +78,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 "info": evaluation["info"],
             }
             history = make_history(
-                evaluation["match_id"],
+                match["id"],
                 evaluation["participant_id"],
                 zfill(int(evaluation["trial_no"]) - 1, len(evaluation["trial_no"])),
                 cache,
@@ -108,8 +108,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             # Docker Imageを使ってScoreを取得
             score_result = execute_in_docker(
                 {
-                    "image": indicator_data["docker_image"],
-                    "environments": indicator_data["environments"],
+                    "image": match["indicator_docker_image"],
+                    "environments": match["indicator_environments"],
                     "command": args["command"],
                     "timeout": args["timeout"],
                     "rm": args["rm"],
@@ -131,7 +131,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             # cacheにスコアを保存
             write_to_cache(
                 cache,
-                evaluation["match_id"],
+                match["id"],
                 evaluation["participant_id"],
                 {
                     "TrialNo": evaluation["trial_no"],
@@ -147,7 +147,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             save_success_score(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),
@@ -168,7 +168,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             save_failed_score(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),
@@ -185,7 +185,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             save_failed_score(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),

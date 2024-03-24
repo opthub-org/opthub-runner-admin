@@ -23,7 +23,7 @@ class Args(TypedDict):
 
     interval: int
     timeout: int
-    match_id: str
+    match_alias: str
     rm: bool
     mode: str
     command: list[str]
@@ -47,7 +47,7 @@ class Args(TypedDict):
     help="Timeout to process a query.",
 )
 @click.option(
-    "--match_id",
+    "--match",
     envvar="OPTHUB_MATCH_ID",
     type=str,
     help="MatchId handled un this server.",
@@ -60,7 +60,7 @@ def run(
     ctx: click.Context,
     interval: int,
     timeout: int,
-    match_id: str,
+    match: str,
     rm: bool,
     mode: str,
     command: list[str],
@@ -69,7 +69,7 @@ def run(
     args: Args = {
         "interval": interval,
         "timeout": timeout,
-        "match_id": match_id,
+        "match_alias": match,
         "rm": rm,
         "mode": mode,
         "command": command,

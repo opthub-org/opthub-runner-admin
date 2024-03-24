@@ -12,7 +12,7 @@ from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRE
 from opthub_runner.lib.runner_sqs import EvaluatorSQS
 from opthub_runner.main import Args
 from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner.models.match import fetch_match_problem_by_id
+from opthub_runner.models.match import fetch_match_by_alias
 from opthub_runner.models.solution import fetch_solution_by_primary_key
 
 LOGGER = logging.getLogger(__name__)
@@ -49,15 +49,18 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             partition_key_data = sqs.get_partition_key_from_queue()
             LOGGER.info("...Found")
 
-            # MatchIDからProblemEnvironmentsとProblemDockerImageを取得
+            # 競技をエイリアスから取得
             LOGGER.info("Fetch problem data from DB...")
-            problem_data = fetch_match_problem_by_id(args["match_id"])
+            match = fetch_match_by_alias(args["match_alias"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからSolutionを取得
             LOGGER.info("Fetch Solution from DB...")
             solution = fetch_solution_by_primary_key(
-                args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
+                dynamodb,
+                match["id"],
+                partition_key_data["ParticipantID"],
+                partition_key_data["Trial"],
             )
             LOGGER.info("...Fetched")
 
@@ -83,8 +86,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             # Docker Imageを使ってObjective，Constraint，Infoを取得
             evaluation_result = execute_in_docker(
                 {
-                    "image": problem_data["docker_image"],
-                    "environments": problem_data["environments"],
+                    "image": match["problem_docker_image"],
+                    "environments": match["problem_environments"],
                     "command": args["command"],
                     "timeout": args["timeout"],
                     "rm": args["rm"],
@@ -112,7 +115,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             save_success_evaluation(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),
@@ -136,7 +139,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             save_failed_evaluation(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),
@@ -155,7 +158,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             save_failed_evaluation(
                 dynamodb,
                 {
-                    "match_id": args["match_id"],
+                    "match_id": match["id"],
                     "participant_id": partition_key_data["ParticipantID"],
                     "trial_no": partition_key_data["Trial"],
                     "created_at": datetime.now().isoformat(),

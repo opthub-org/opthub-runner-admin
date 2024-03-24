@@ -1,4 +1,4 @@
-from opthub_runner.lib.cache import Cache
+from opthub_runner.scorer.cache import Cache
 from opthub_runner.lib.converter import number_to_decimal
 from opthub_runner.lib.dynamodb import DynamoDB
 
