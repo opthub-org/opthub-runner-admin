@@ -75,11 +75,11 @@ def run(
         "command": command,
     }
     if args["mode"] == "evaluator":
-        from evaluator.main import evaluate
+        from opthub_runner.evaluator.main import evaluate
 
         evaluate(ctx, args)
     elif args["mode"] == "scorer":
-        from scorer.main import calculate_score
+        from opthub_runner.scorer.main import calculate_score
 
         calculate_score(ctx, args)
     else:

@@ -8,7 +8,7 @@ import click
 
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 from opthub_runner.lib.sqs import EvaluatorSQS
 from opthub_runner.main import Args
 from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
@@ -25,7 +25,16 @@ def evaluate(ctx: click.Context, args: Args) -> None:
     """
 
     # Amazon SQSとのやり取り用
-    sqs = EvaluatorSQS(QUEUE_NAME, 2.0)
+    sqs = EvaluatorSQS(
+        args["interval"],
+        {
+            "queue_name": QUEUE_NAME,
+            "queue_url": QUEUE_URL,
+            "region_name": REGION_NAME,
+            "aws_access_key_id": ACCESS_KEY_ID,
+            "aws_secret_access_key": SECRET_ACCESS_KEY,
+        },
+    )
 
     # Dynamo DBとのやり取り用
     dynamodb = DynamoDB(
@@ -46,7 +55,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         try:
             # Partition KeyのためのParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
-            partition_key_data = sqs.get_partition_key_from_queue()
+            message = sqs.get_message_from_queue()
             LOGGER.info("...Found")
 
             # 競技をエイリアスから取得
@@ -59,8 +68,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             solution = fetch_solution_by_primary_key(
                 dynamodb,
                 match["id"],
-                partition_key_data["ParticipantID"],
-                partition_key_data["Trial"],
+                message["participant_id"],
+                message["trial"],
             )
             LOGGER.info("...Fetched")
 
@@ -116,8 +125,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 dynamodb,
                 {
                     "match_id": match["id"],
-                    "participant_id": partition_key_data["ParticipantID"],
-                    "trial_no": partition_key_data["Trial"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
@@ -129,7 +138,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             )
             LOGGER.info("...Saved")
 
-            sqs.delete_partition_key_from_queue()
+            sqs.delete_message_from_queue()
 
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -140,15 +149,15 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 dynamodb,
                 {
                     "match_id": match["id"],
-                    "participant_id": partition_key_data["ParticipantID"],
-                    "trial_no": partition_key_data["Trial"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": format_exc(),
                 },
             )
-            sqs.delete_partition_key_from_queue()
+            sqs.delete_message_from_queue()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -159,15 +168,15 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 dynamodb,
                 {
                     "match_id": match["id"],
-                    "participant_id": partition_key_data["ParticipantID"],
-                    "trial_no": partition_key_data["Trial"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": format_exc(),
                 },
             )
-            sqs.delete_partition_key_from_queue()
+            sqs.delete_message_from_queue()
             LOGGER.error(format_exc())
 
             continue
