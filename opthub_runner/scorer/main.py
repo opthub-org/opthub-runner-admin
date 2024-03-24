@@ -6,17 +6,17 @@ from traceback import format_exc
 
 import click
 
+from opthub_runner.keys import ACCESS_KEY_ID, QUEUE_NAME, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 from opthub_runner.lib.sqs import ScorerSQS
-from opthub_runner.lib.zfill import zfill
 from opthub_runner.main import Args
 from opthub_runner.models.evaluation import fetch_success_evaluation_by_primary_key
 from opthub_runner.models.match import fetch_match_by_alias
 from opthub_runner.models.score import save_failed_score, save_success_score
 from opthub_runner.scorer.cache import Cache
 from opthub_runner.scorer.history import make_history, write_to_cache
+from opthub_runner.utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
 

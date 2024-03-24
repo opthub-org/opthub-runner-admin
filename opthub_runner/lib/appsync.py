@@ -1,6 +1,7 @@
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
-from keys import API_ENDPOINT_URL, API_KEY
+
+from opthub_runner.keys import API_ENDPOINT_URL, API_KEY
 
 
 def get_gql_client() -> Client:

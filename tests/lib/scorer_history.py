@@ -1,6 +1,6 @@
 from opthub_runner.lib.cache import Cache
-from opthub_runner.lib.converter import number_to_decimal
 from opthub_runner.lib.dynamodb import DynamoDB
+from opthub_runner.utils.converter import number_to_decimal
 
 
 def test() -> None:

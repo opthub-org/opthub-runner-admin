@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional, TypedDict, TypeVar
 import boto3
 from boto3.dynamodb.conditions import Key
 
-from opthub_runner.lib.schema import Schema
+from opthub_runner.models.schema import Schema
 
 
 # Primary key for Dynamo DB.

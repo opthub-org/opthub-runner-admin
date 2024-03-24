@@ -6,7 +6,7 @@ from typing import Any, TypedDict, cast
 
 import docker
 
-from opthub_runner.lib.converter import float_to_json_float
+from opthub_runner.utils.converter import float_to_json_float
 
 LOGGER = logging.getLogger(__name__)
 

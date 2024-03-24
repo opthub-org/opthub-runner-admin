@@ -5,10 +5,10 @@ scorerで使うhistoryを作成する関数．
 
 from typing import TypedDict, cast
 
-from opthub_runner.scorer.cache import Cache
-from opthub_runner.lib.converter import decimal_to_float
 from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.zfill import zfill
+from opthub_runner.scorer.cache import Cache
+from opthub_runner.utils.converter import decimal_to_float
+from opthub_runner.utils.zfill import zfill
 
 
 class Trial(TypedDict):

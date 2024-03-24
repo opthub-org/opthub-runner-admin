@@ -1,6 +1,6 @@
 def test() -> None:
+    from opthub_runner.keys import ACCESS_KEY_ID, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
     from opthub_runner.lib.dynamodb import DynamoDB
-    from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 
     dynamodb = DynamoDB(REGION_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, TABLE_NAME)
     sqs = SQS(REGION_NAME, 2.0)
