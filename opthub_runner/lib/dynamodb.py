@@ -1,7 +1,9 @@
-from typing import Any, Dict, List, Optional, TypedDict, TypeVar
+from typing import Any, Dict, List, Literal, Optional, TypedDict, TypeVar
 
 import boto3
 from boto3.dynamodb.conditions import Key
+
+from opthub_runner.lib.schema import Schema
 
 
 # Primary key for Dynamo DB.
@@ -12,16 +14,22 @@ class PrimaryKey(TypedDict):
     Trial: str
 
 
+class DynamoDBOptions(TypedDict):
+    """The options for DynamoDB."""
+
+    endpoint_url: str
+    region_name: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    table_name: str
+
+
 class DynamoDB:
     """The wrapper class for interaction with Amazon DynamoDB."""
 
     def __init__(
         self,
-        endpoint_url: str,
-        region_name: str,
-        aws_access_key_id: str,
-        aws_secret_access_key: str,
-        table_name: str,
+        options: DynamoDBOptions,
     ) -> None:
         """
         Parameters
@@ -40,12 +48,12 @@ class DynamoDB:
         """
         self.dynamoDB = boto3.resource(
             service_name="dynamodb",
-            endpoint_url=endpoint_url,
-            region_name=region_name,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            endpoint_url=options["endpoint_url"],
+            region_name=options["region_name"],
+            aws_access_key_id=options["aws_access_key_id"],
+            aws_secret_access_key=options["aws_secret_access_key"],
         )
-        self.table_name = table_name
+        self.table_name = options["table_name"]
         self.table = self.dynamoDB.Table(self.table_name)
 
     def get_item(self, primary_key_value: PrimaryKey) -> dict[str, Any] | None:
@@ -66,7 +74,7 @@ class DynamoDB:
         item: dict[str, Any] | None = self.table.get_item(Key=primary_key_value).get("Item")
         return item
 
-    def put_item(self, item: dict[str, Any]) -> None:
+    def put_item(self, item: Schema) -> None:
         """
         Dynamo DBにitemを保存．
 
@@ -79,8 +87,12 @@ class DynamoDB:
         self.table.put_item(Item=item)
 
     def get_item_between_least_and_greatest(
-        self, partition_key_value: Dict[str, str], sort_key: str, least: str, greatest: str, *attributes: str
-    ) -> List[Dict[str, Any]]:
+        self,
+        partition_key: str,
+        least_trial_no: str,
+        greatest_trial_no: str,
+        *attributes: str,
+    ) -> list[dict[str, Any]]:
         """
         Partition Keyがpartition_key_valueであるitemのうち，least <= (Sort KeyのValue) <= greatestであるitemをDynamo DBから複数まとめて取得．
 
@@ -103,64 +115,20 @@ class DynamoDB:
             取得したitemのlist．
 
         """
-        partition_key, value_of_partition_key = partition_key_value.popitem()
-
         if not attributes:
             # 属性の指定がなく全部取ってくるパターン．
             response = self.table.query(
-                KeyConditionExpression=Key(partition_key).eq(value_of_partition_key)
-                & Key(sort_key).between(least, greatest),
+                KeyConditionExpression=Key("ID").eq(partition_key)
+                & Key("Trial").between(least_trial_no, greatest_trial_no),
             )
         else:
             # 指定された属性のみ取ってくるパターン．
             response = self.table.query(
-                KeyConditionExpression=Key(partition_key).eq(value_of_partition_key)
-                & Key(sort_key).between(least, greatest),
+                KeyConditionExpression=Key("ID").eq(partition_key)
+                & Key("Trial").between(least_trial_no, greatest_trial_no),
                 ProjectionExpression=",".join([f"#attr{i}" for i in range(len(attributes))]),
                 ExpressionAttributeNames={f"#attr{i}": attr for i, attr in enumerate(attributes)},
             )
         items: list[dict[str, Any]] = response["Items"]
 
         return items
-
-
-def main() -> None:
-    dynamodb = DynamoDB(
-        "http://localhost:8000",
-        "localhost",
-        "aaaaa",
-        "aaaaa",
-        "opthub-dynamodb-participant-trials-dev",
-    )
-
-    for i in range(1, 11):
-        put_item = {
-            "ID": "Solutions#Match#10#Team#10",
-            "Trial": str(i).zfill(2),
-            "ParticipantID": "Team#10",
-            "Variable": [1, 2],
-            "UserID": "User#1",
-            "MatchID": "Match#10",
-            "CreatedAt": f"2024-01-05-00:{str(i).zfill(2)}:00",
-            "ResourceType": "Solutions",
-            "TrialNo": str(i).zfill(2),
-        }
-
-        print("----- put item -----")
-        dynamodb.put_item(put_item)
-        print(put_item)
-
-    primary_key: PrimaryKey = {"ID": "Solutions#Match#10#Team#10", "Trial": "03"}
-    print("----- get item -----")
-    got_item = dynamodb.get_item(primary_key)
-    print(got_item)
-
-    print("----- get items -----")
-    items = dynamodb.get_item_between_least_and_greatest(
-        {"ID": "Solutions#Match#10#Team#10"}, "Trial", "02", "08", "TrialNo", "Variable", "UserID", "MatchID"
-    )
-    print(items)
-
-
-if __name__ == "__main__":
-    main()

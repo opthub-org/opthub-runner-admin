@@ -1,20 +1,60 @@
 """This module provides functions to save and fetch scores to and from DynamoDB."""
 
-from typing import Any
+from decimal import Decimal
+from typing import TYPE_CHECKING, TypedDict
 
-from opthub_runner.utils.converter import number_to_decimal
-from opthub_runner.utils.dynamodb import DynamoDB
+from opthub_runner.lib.converter import number_to_decimal
+from opthub_runner.lib.dynamodb import DynamoDB
+
+if TYPE_CHECKING:
+    from opthub_runner.lib.schema import FailedScoreSchema, SuccessScoreSchema
+
+
+class SuccessScoreCreateParams(TypedDict):
+    """The input data to create a success score.
+
+    match_id (str): MatchID.
+    participant_id (str): ParticipantID.
+    trial_no (str): The zero-filled trial number.
+    created_at (str): The time when the score to be calculated was created. ISOString format.
+    started_at (str): The time when the calculation of the score started. ISOString format.
+    finished_at (str): The time when the calculation of the score finished. ISOString format.
+    score (float): The score of the evaluation.
+    """
+
+    match_id: str
+    participant_id: str
+    trial_no: int
+    created_at: str
+    started_at: str
+    finished_at: str
+    score: float
+
+
+class FailedScoreCreateParams(TypedDict):
+    """The input data to create a failed score.
+
+    match_id (str): MatchID.
+    participant_id (str): ParticipantID.
+    trial_no (str): The zero-filled trial number.
+    created_at (str): The time when the score to be calculated was created. ISOString format.
+    started_at (str): The time when the calculation of the score started. ISOString format.
+    finished_at (str): The time when the calculation of the score finished. ISOString format.
+    error_message (str): The error message when the calculation of score is failed.
+    """
+
+    match_id: str
+    participant_id: str
+    trial_no: int
+    created_at: str
+    started_at: str
+    finished_at: str
+    error_message: str
 
 
 def save_success_score(
-    match_id: str,
-    participant_id: str,
-    trial_no: str,
-    created_at: str,
-    started_at: str,
-    finished_at: str,
-    score: float,
     dynamodb: DynamoDB,
+    input_item: SuccessScoreCreateParams,
 ) -> None:
     """
     スコアの計算に成功した場合に，Dynamo DBにScoreを保存するための関数．
@@ -38,26 +78,28 @@ def save_success_score(
 
     """
 
-    score_data: dict[str, Any] = {
-        "ID": f"Scores#{match_id}#{participant_id}",
-        "Trial": f"Success#{trial_no}",
-        "TrialNo": trial_no,
-        "ResourceType": "Score",
-        "MatchID": match_id,
-        "CreatedAt": created_at,
-        "ParticipantID": participant_id,
-        "StartedAt": started_at,
-        "FinishedAt": finished_at,
-        "Status": "Success",
-        "Score": number_to_decimal(score),
-    }
+    score = number_to_decimal(input_item["score"])
+    if not isinstance(score, Decimal):
+        msg = "score must be a float"
+        raise TypeError(msg)
 
+    score_data: SuccessScoreSchema = {
+        "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
+        "Trial": f"Success#{input_item["trial_no"]}",
+        "TrialNo": input_item["trial_no"],
+        "ResourceType": "Score",
+        "MatchID": input_item["match_id"],
+        "CreatedAt": input_item["created_at"],
+        "ParticipantID": input_item["participant_id"],
+        "StartedAt": input_item["started_at"],
+        "FinishedAt": input_item["finished_at"],
+        "Status": "Success",
+        "Score": score,
+    }
     dynamodb.put_item(score_data)
 
 
-def save_failed_score(
-    match_id, participant_id, trial_no, created_at, started_at, finished_at, error_message, dynamodb: DynamoDB
-) -> None:
+def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -> None:
     """
     Scoreの計算に失敗した場合に，Dynamo DBにScoreを保存するための関数．
 
@@ -79,68 +121,18 @@ def save_failed_score(
         エラーメッセージ．
 
     """
-    score = {
-        "ID": f"Scores#{match_id}#{participant_id}",
-        "Trial": f"Failed#{trial_no}",
-        "TrialNo": trial_no,
+    score: FailedScoreSchema = {
+        "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
+        "Trial": f"Failed#{input_item["trial_no"]}",
+        "TrialNo": int(input_item["trial_no"]),
         "ResourceType": "Score",
-        "MatchID": match_id,
-        "CreatedAt": created_at,
-        "ParticipantID": participant_id,
-        "StartedAt": started_at,
-        "FinishedAt": finished_at,
+        "MatchID": input_item["match_id"],
+        "CreatedAt": input_item["created_at"],
+        "ParticipantID": input_item["participant_id"],
+        "StartedAt": input_item["started_at"],
+        "FinishedAt": input_item["finished_at"],
         "Status": "Failed",
-        "ErrorMessage": error_message,
+        "ErrorMessage": input_item["error_message"],
     }
 
     dynamodb.put_item(score)
-
-
-def main():
-    dynamodb = DynamoDB(
-        "http://localhost:8000", "localhost", "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev"
-    )
-
-    save_success_score(
-        "Match#1", "Team#1", "1", "2020-2-20-09:00:00", "2020-2-25-09:00:00", "2020-2-25-12:00:00", 0.8, dynamodb
-    )
-    save_success_score(
-        "Match#1", "Team#1", "2", "2020-2-21-09:00:00", "2020-2-26-09:00:00", "2020-2-26-12:00:00", 0.2, dynamodb
-    )
-    save_success_score(
-        "Match#1", "Team#2", "1", "2020-2-20-09:00:00", "2020-2-25-09:00:00", "2020-2-25-12:00:00", 0.4, dynamodb
-    )
-    save_failed_score(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_score(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-13:00:00",
-        "2020-2-25-14:00:00",
-        "2020-2-25-15:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_score(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-16:00:00",
-        "2020-2-25-17:00:00",
-        "2020-2-25-18:00:00",
-        "Error Message",
-        dynamodb,
-    )
-
-
-if __name__ == "__main__":
-    main()

@@ -18,19 +18,13 @@ class MatchIndicator(TypedDict):
 
 
 def fetch_match_problem_by_id(match_id: str) -> MatchProblem:
-    """
-    GraphQL経由でMatchを取得し，Evaluationに必要なProblemの情報を取得する関数．
+    """Fetch the problem of the match by GraphQL.
 
-    Parameters
-    ----------
-    match_id : str
-        取得するMatchのid．
+    Args:
+        match_id (str): The id of the match.
 
-    Returns
-    -------
-    problem_data : dict
-        Problemの情報（ProblemDockerImageとProblemEnvironments）を格納したdict．
-
+    Returns:
+        MatchProblem: The problem of the match.
     """
     return {
         "docker_image": "opthub/sphere:latest",
@@ -39,19 +33,13 @@ def fetch_match_problem_by_id(match_id: str) -> MatchProblem:
 
 
 def fetch_match_indicator_by_id(match_id: str) -> MatchIndicator:
-    """
-    GraphQL経由でMatchを取得し，Scoreに必要なIndicatorの情報を取得する関数．
+    """Fetch the indicator of the match by GraphQL.
 
-    Parameters
-    ----------
-    match_id : str
-        取得するMatchのid．
+    Args:
+        match_id (str): The id of the match.
 
-    Returns
-    -------
-    indicator_data : dict
-        Indicatorの情報（IndicatorDockerImageとIndicatorEnvironments）を格納したdict．
-
+    Returns:
+        MatchIndicator: The indicator of the match.
     """
     return {
         "docker_image": "opthub/hypervolume:latest",

@@ -2,27 +2,12 @@
 
 from typing import Literal, TypedDict, cast
 
-from opthub_runner.utils.converter import decimal_to_float, number_to_decimal
-from opthub_runner.utils.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner.lib.converter import decimal_to_float, number_to_decimal
+from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner.lib.schema import FailedEvaluationSchema, SuccessEvaluationSchema
 
 
-class SuccessEvaluation(TypedDict):
-    Status: Literal["Success"]
-    Objective: object
-    Constraint: object | None
-    Info: object | None
-    Feasible: bool | None
-
-
-class FailedEvaluation(TypedDict):
-    Status: Literal["Failed"]
-    ErrorMessage: str
-
-
-Evaluation = SuccessEvaluation | FailedEvaluation
-
-
-class SuccessEvaluationCreateInput(TypedDict):
+class SuccessEvaluationCreateParams(TypedDict):
     """The input data to create a success evaluation.
 
     match_id (str): MatchID.
@@ -42,7 +27,7 @@ class SuccessEvaluationCreateInput(TypedDict):
 
     match_id: str
     participant_id: str
-    trial_no: str
+    trial_no: int
     created_at: str
     started_at: str
     finished_at: str
@@ -52,7 +37,7 @@ class SuccessEvaluationCreateInput(TypedDict):
     feasible: bool | None
 
 
-class FailedEvaluationCreateInput(TypedDict):
+class FailedEvaluationCreateParams(TypedDict):
     """The input data to create a failed evaluation.
 
     match_id (str): MatchID.
@@ -73,9 +58,19 @@ class FailedEvaluationCreateInput(TypedDict):
     error_message: str
 
 
+class SuccessEvaluation(TypedDict):
+    match_id: str
+    participant_id: str
+    trial_no: int
+    objective: object
+    constraint: object | None
+    info: object
+    feasible: bool | None
+
+
 def save_success_evaluation(
     dynamodb: DynamoDB,
-    input_item: SuccessEvaluationCreateInput,
+    input_item: SuccessEvaluationCreateParams,
 ) -> None:
     """Save the evaluation information to DynamoDB when the evaluation is success.
 
@@ -83,7 +78,7 @@ def save_success_evaluation(
         input_item (SuccessEvaluationCreateInput): The input data to create a success evaluation.
         dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
     """
-    evaluation = {
+    evaluation: SuccessEvaluationSchema = {
         "ID": f"Evaluations#{input_item["match_id"]}#{input_item["participant_id"]}",
         "Trial": f"Success#{input_item["trial_no"]}",
         "TrialNo": int(input_item["trial_no"]),
@@ -105,7 +100,7 @@ def save_success_evaluation(
 
 def save_failed_evaluation(
     dynamodb: DynamoDB,
-    input_item: FailedEvaluationCreateInput,
+    input_item: FailedEvaluationCreateParams,
 ) -> None:
     """Save the evaluation information to DynamoDB when the evaluation is failed.
 
@@ -113,7 +108,7 @@ def save_failed_evaluation(
         input_item (FailedEvaluationCreateInput): The input data to create a failed evaluation.
         dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
     """
-    evaluation = {
+    evaluation: FailedEvaluationSchema = {
         "ID": f"Evaluations#{input_item["match_id"]}#{input_item['participant_id']}",
         "Trial": f"Failed#{input_item["trial_no"]}",
         "TrialNo": int(input_item["trial_no"]),
@@ -129,12 +124,12 @@ def save_failed_evaluation(
     dynamodb.put_item(evaluation)
 
 
-def fetch_evaluation_by_primary_key(
+def fetch_success_evaluation_by_primary_key(
     match_id: str,
     participant_id: str,
     trial: str,
     dynamodb: DynamoDB,
-) -> Evaluation | None:
+) -> SuccessEvaluation | None:
     """Fetch the evaluation from DynamoDB by primary key.
 
     Args:
@@ -150,107 +145,17 @@ def fetch_evaluation_by_primary_key(
         "ID": f"Evaluations#{match_id}#{participant_id}",
         "Trial": trial,
     }
-    evaluation = cast(
-        Evaluation | None,
-        dynamodb.get_item(primary_key),
-    )
+    evaluation = cast(SuccessEvaluationSchema | None, dynamodb.get_item(primary_key))
+
     if evaluation is None:
         return None
 
-    # Decimal can not be used for score calculation, so convert it to float.
-    if evaluation["Status"] == "Success":
-        evaluation["Objective"] = decimal_to_float(evaluation["Objective"])
-        evaluation["Constraint"] = decimal_to_float(evaluation["Constraint"])
-        evaluation["Info"] = decimal_to_float(evaluation["Info"])
-
-    return evaluation
-
-
-def main() -> None:
-    dynamodb = DynamoDB(
-        "http://localhost:8000",
-        "localhost",
-        "aaaaa",
-        "aaaaa",
-        "opthub-dynamodb-participant-trials-dev",
-    )
-
-    save_success_evaluation(
-        dynamodb,
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        [1.1, 2.2],
-        None,
-        None,
-        None,
-    )
-    save_success_evaluation(
-        "Match#1",
-        "Team#1",
-        "2",
-        "2020-2-21-09:00:00",
-        "2020-2-26-09:00:00",
-        "2020-2-26-12:00:00",
-        [2.2, 4.7],
-        None,
-        None,
-        None,
-        dynamodb,
-    )
-    save_success_evaluation(
-        "Match#1",
-        "Team#2",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        [2.5, 3.1],
-        None,
-        None,
-        None,
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-13:00:00",
-        "2020-2-25-14:00:00",
-        "2020-2-25-15:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-16:00:00",
-        "2020-2-25-17:00:00",
-        "2020-2-25-18:00:00",
-        "Error Message",
-        dynamodb,
-    )
-
-    print("----- fetch evaluations by primary key -----")
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Success#1", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Success#2", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Failed#1#3", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Failed#1#4", dynamodb))
-
-
-if __name__ == "__main__":
-    main()
+    return {
+        "match_id": evaluation["MatchID"],
+        "participant_id": evaluation["ParticipantID"],
+        "trial_no": evaluation["TrialNo"],
+        "objective": decimal_to_float(evaluation["Objective"]),
+        "constraint": decimal_to_float(evaluation["Constraint"]),
+        "info": evaluation["Info"],
+        "feasible": evaluation["Feasible"],
+    }

@@ -3,6 +3,7 @@
 import logging
 import signal
 from types import FrameType
+from typing import TypedDict
 
 import click
 
@@ -15,6 +16,17 @@ def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG0
 
 
 signal.signal(signal.SIGTERM, signal_handler)
+
+
+class Args(TypedDict):
+    """The type of arguments for the CLI."""
+
+    interval: int
+    timeout: int
+    match_id: str
+    rm: bool
+    mode: str
+    command: list[str]
 
 
 @click.command(help="OptHub Runner.")
@@ -54,26 +66,22 @@ def run(
     command: list[str],
 ) -> None:
     """The entrypoint of CLI."""
-    # set loglevel
-    verbosity = 10 * (kwargs["quiet"] - kwargs["verbose"])
-    log_level = 0  # logging.WARNING + verbosity
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s",
-    )
-    LOGGER.info("Log level is set to %d", log_level)
-    LOGGER.debug("run(%s)", kwargs)
-
-    if kwargs["mode"] == "evaluator":
+    args: Args = {
+        "interval": interval,
+        "timeout": timeout,
+        "match_id": match_id,
+        "rm": rm,
+        "mode": mode,
+        "command": command,
+    }
+    if args["mode"] == "evaluator":
         from evaluator.main import evaluate
 
-        evaluate(ctx, **kwargs)
-    elif kwargs["mode"] == "scorer":
+        evaluate(ctx, args)
+    elif args["mode"] == "scorer":
         from scorer.main import calculate_score
 
-        calculate_score(ctx, **kwargs)
+        calculate_score(ctx, args)
     else:
-        raise ValueError(f'Illegal mode: {kwargs["mode"]}')
-
-
-run()
+        msg = f"Invalid mode: {args['mode']}"
+        raise ValueError(msg)

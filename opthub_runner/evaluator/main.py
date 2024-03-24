@@ -4,17 +4,20 @@ import signal
 from datetime import datetime
 from traceback import format_exc
 
+import click
+
+from opthub_runner.main import Args
 from opthub_runner.model.evaluation import save_failed_evaluation, save_success_evaluation
 from opthub_runner.model.match import fetch_match_problem_by_id
 from opthub_runner.model.solution import fetch_solution_by_primary_key
-from opthub_runner.utils.docker_executer import execute_in_docker
-from opthub_runner.utils.dynamodb import DynamoDB
-from opthub_runner.utils.runner_sqs import RunnerSQS
+from opthub_runner.lib.docker_executor import execute_in_docker
+from opthub_runner.lib.dynamodb import DynamoDB
+from opthub_runner.lib.runner_sqs import RunnerSQS
 
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(ctx, **kwargs) -> None:
+def evaluate(ctx: click.Context, args: Args) -> None:
     """
     評価プロセスのコントローラーを行う関数．
 
@@ -41,18 +44,18 @@ def evaluate(ctx, **kwargs) -> None:
         try:
             # Partition KeyのためのParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
-            partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
+            partition_key_data = sqs.get_partition_key_from_queue(args["interval"])
             LOGGER.info("...Found")
 
             # MatchIDからProblemEnvironmentsとProblemDockerImageを取得
             LOGGER.info("Fetch problem data from DB...")
-            problem_data = fetch_match_problem_by_id(kwargs["match_id"])
+            problem_data = fetch_match_problem_by_id(args["match_id"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからSolutionを取得
             LOGGER.info("Fetch Solution from DB...")
             solution = fetch_solution_by_primary_key(
-                kwargs["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
+                args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
             )
             LOGGER.info("...Fetched")
 

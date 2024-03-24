@@ -4,20 +4,23 @@ import signal
 from datetime import datetime
 from traceback import format_exc
 
+import click
+
+from opthub_runner.lib.cache import Cache
+from opthub_runner.lib.docker_executor import execute_in_docker
+from opthub_runner.lib.dynamodb import DynamoDB
+from opthub_runner.lib.runner_sqs import RunnerSQS
+from opthub_runner.lib.scorer_history import make_history, write_to_cache
+from opthub_runner.lib.zfill import zfill
+from opthub_runner.main import Args
 from opthub_runner.model.evaluation import fetch_evaluation_by_primary_key
 from opthub_runner.model.match import fetch_match_indicator_by_id
 from opthub_runner.model.score import save_failed_score, save_success_score
-from opthub_runner.utils.cache import Cache
-from opthub_runner.utils.docker_executer import execute_in_docker
-from opthub_runner.utils.dynamodb import DynamoDB
-from opthub_runner.utils.runner_sqs import RunnerSQS
-from opthub_runner.utils.scorer_history import make_history, write_to_cache
-from opthub_runner.utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_score(ctx, **kwargs) -> None:
+def calculate_score(ctx: click.Context, args: Args) -> None:
     """
     スコア計算プロセスのコントローラーを行う関数．
 
@@ -25,15 +28,15 @@ def calculate_score(ctx, **kwargs) -> None:
 
     # Amazon SQSとのやり取り用
     sqs = RunnerSQS("tmp_name")
-    # sqs = RunnerSQS(kwargs["queue_name"])
+    # sqs = RunnerSQS(args["queue_name"])
 
     # Dynamo DBとのやり取り用
     dynamodb = DynamoDB("http://localhost:8000", "localhost", "aaa", "aaa", "opthub-dynamodb-participant-trials-dev")
-    # dynamodb = DynamoDB(kwargs["endpoint_url"],
-    #                     kwargs["region_name"],
-    #                     kwargs["aws_access_key_id"],
-    #                     kwargs["aws_secret_access_key_id"],
-    #                     kwargs["table_name"])
+    # dynamodb = DynamoDB(args["endpoint_url"],
+    #                     args["region_name"],
+    #                     args["aws_access_key_id"],
+    #                     args["aws_secret_access_key_id"],
+    #                     args["table_name"])
 
     # cacheファイルの管理用
     cache = Cache()
@@ -47,18 +50,18 @@ def calculate_score(ctx, **kwargs) -> None:
         try:
             # Partition KeyのためのMatchID，ParticipantID，TrialNoを取得
             LOGGER.info("Find Evaluation to calculate score...")
-            partition_key_data = sqs.get_partition_key_from_queue(kwargs["interval"])
+            partition_key_data = sqs.get_partition_key_from_queue(args["interval"])
             LOGGER.info("...Found")
 
             # MatchIDからIndicatorEnvironmentsとIndicatorDockerImageを取得
             LOGGER.info("Fetch indicator data from DB...")
-            indicator_data = fetch_match_indicator_by_id(kwargs["match_id"])
+            indicator_data = fetch_match_indicator_by_id(args["match_id"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからEvaluationを取得
             LOGGER.info("Fetch Evaluation from DB...")
             evaluation = fetch_evaluation_by_primary_key(
-                kwargs["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
+                args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
             )
             LOGGER.info("...Fetched")
 
@@ -102,9 +105,9 @@ def calculate_score(ctx, **kwargs) -> None:
             score_result = execute_in_docker(
                 indicator_data["IndicatorDockerImage"],
                 indicator_data["IndicatorEnvironments"],
-                kwargs["command"],
-                kwargs["timeout"],
-                kwargs["rm"],
+                args["command"],
+                args["timeout"],
+                args["rm"],
                 json.dumps(current) + "\n",
                 json.dumps(history) + "\n",
             )

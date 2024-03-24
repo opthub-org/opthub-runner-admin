@@ -6,7 +6,7 @@ from typing import TypedDict
 
 import docker
 
-from opthub_runner.utils.converter import float_to_json_float
+from opthub_runner.lib.converter import float_to_json_float
 
 LOGGER = logging.getLogger(__name__)
 
@@ -100,39 +100,3 @@ def parse_stdout(stdout: str) -> object | None:
             line_object: object = json.loads(line)
             return line_object
     return None
-
-
-def main() -> None:
-    """Test execute_in_docker function."""
-    std_out = execute_in_docker(
-        {
-            "image": "opthub/sphere:latest",
-            "environments": {
-                "SPHERE_OPTIMA": "[[1, 2, 3], [4, 5, 6]]",
-            },
-            "command": [],
-            "timeout": 100,
-            "rm": True,
-        },
-        "[1, 1, 1]\n",
-    )
-
-    print(std_out)
-
-    std_out = execute_in_docker(
-        {
-            "image": "opthub/hypervolume:latest",
-            "environments": {
-                "HV_REF_POINT": "[1, 1]",
-            },
-            "command": [],
-            "timeout": 100,
-            "rm": True,
-        },
-        '{"objective": [0.11999999999999994, 0.2700000000000001], "constraint": null}\n[]\n',
-    )
-    print(std_out)
-
-
-if __name__ == "__main__":
-    main()

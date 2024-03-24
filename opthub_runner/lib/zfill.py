@@ -14,7 +14,7 @@ def zfill(number: int, digit: int) -> str:
         ValueError: If the length of the number is not equal to the digit, an error occurs.
 
     Returns:
-        str: _description_
+        str: The number filled with zeros.
     """
     number_str = str(number).zfill(digit)
 

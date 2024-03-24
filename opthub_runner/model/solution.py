@@ -5,8 +5,8 @@ Solutionの取得
 
 from typing import TypedDict, cast
 
-from opthub_runner.utils.converter import decimal_to_float
-from opthub_runner.utils.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner.lib.converter import decimal_to_float
+from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
 
 
 class Solution(TypedDict):
@@ -48,16 +48,3 @@ def fetch_solution_by_primary_key(
     solution["Variable"] = decimal_to_float(solution["Variable"])
 
     return solution
-
-
-def main() -> None:
-    dynamodb = DynamoDB(
-        "http://localhost:8000", "localhost", "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev"
-    )
-    solution = fetch_solution_by_primary_key("Match#1", "Team#1", "1", dynamodb)
-    print("----- solution -----")
-    print(solution)
-
-
-if __name__ == "__main__":
-    main()
