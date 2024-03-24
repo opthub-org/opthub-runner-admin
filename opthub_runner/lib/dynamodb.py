@@ -8,7 +8,7 @@ from opthub_runner.lib.schema import Schema
 
 # Primary key for Dynamo DB.
 class PrimaryKey(TypedDict):
-    """This class represents the primary key for Dynamo DB."""
+    """This class represents the primary key."""
 
     ID: str
     Trial: str
