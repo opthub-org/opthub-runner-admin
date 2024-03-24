@@ -19,7 +19,20 @@ class Trial(TypedDict):
     Constraint: object | None
     Info: object
     Score: float
-    Feasible: None | bool
+    Feasible: bool | None
+
+
+class PartialEvaluation(TypedDict):
+    TrialNo: str
+    Objective: object | None
+    Constraint: object | None
+    Info: object
+    Feasible: bool | None
+
+
+class PartialScore(TypedDict):
+    TrialNo: str
+    Score: object | None
 
 
 def make_history(match_id: str, participant_id: str, trial_no: str, cache: Cache, dynamodb: DynamoDB) -> list[Trial]:
@@ -83,23 +96,18 @@ def load_until_trial_no(match_id: str, participant_id: str, trial_no: str, cache
     # DBからCacheにないデータを取ってくる
     evaluations = dynamodb.get_item_between_least_and_greatest(
         f"Evaluations#{match_id}#{participant_id}",
-        "Trial",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),
-        "Objective",
-        "Constraint",
-        "Info",
-        "Feasible",
-        "TrialNo",
+        ["Objective", "Constraint", "Info", "Feasible", "TrialNo"],
     )
+    evaluations = cast(list[PartialEvaluation], evaluations)
     scores = dynamodb.get_item_between_least_and_greatest(
         f"Scores#{match_id}#{participant_id}",
-        "Trial",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),
-        "TrialNo",
-        "Score",
+        ["TrialNo", "Score"],
     )
+    scores = cast(list[PartialScore], scores)
 
     for evaluation, score in zip(evaluations, scores, strict=True):
         # 取ってきたEvaluationとScoreをCacheに格納

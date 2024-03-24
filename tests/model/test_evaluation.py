@@ -1,4 +1,4 @@
-from opthub_runner.model.evaluation import save_failed_evaluation, save_success_evaluation
+from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
 from opthub_runner.lib.dynamodb import DynamoDB
 
 

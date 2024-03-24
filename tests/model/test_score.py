@@ -1,4 +1,4 @@
-from opthub_runner.model import save_failed_score, save_success_score
+from opthub_runner.models import save_failed_score, save_success_score
 from opthub_runner.lib.dynamodb import DynamoDB
 
 

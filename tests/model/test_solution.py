@@ -1,4 +1,4 @@
-from opthub_runner.model.solution import fetch_solution_by_primary_key
+from opthub_runner.models.solution import fetch_solution_by_primary_key
 from opthub_runner.lib.dynamodb import DynamoDB
 
 

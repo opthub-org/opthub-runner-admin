@@ -4,25 +4,15 @@ import signal
 from datetime import datetime
 from traceback import format_exc
 
-import click
-
-from opthub_runner.main import Args
-from opthub_runner.model.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner.model.match import fetch_match_problem_by_id
-from opthub_runner.model.solution import fetch_solution_by_primary_key
+from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
+from opthub_runner.models.match import fetch_match_problem_by_id
+from opthub_runner.models.solution import fetch_solution_by_primary_key
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.runner_sqs import RunnerSQS
+from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+from opthub_runner.lib.runner_sqs import EvaluatorSQS
 
-LOGGER = logging.getLogger(__name__)
-
-
-def evaluate(ctx: click.Context, args: Args) -> None:
-    """
-    評価プロセスのコントローラーを行う関数．
-
-    """
-
+def main():
     # Amazon SQSとのやり取り用
     sqs = RunnerSQS("tmp_name")
     # sqs = RunnerSQS(kwargs["queue_name"])
@@ -32,30 +22,16 @@ def evaluate(ctx: click.Context, args: Args) -> None:
     # dynamodb = DynamoDB(kwargs["endpoint_url"],
     #                     kwargs["region_name"],
     #                     kwargs["aws_access_key_id"],
-    #                     kwargs["aws_secret_access_key_id"],
+    #                      kwargs["aws_secret_access_key_id"],
     #                     kwargs["table_name"])
-
-    n_evaluation = 0
-
-    while True:
-        n_evaluation += 1
-        LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
-
-        try:
-            # Partition KeyのためのParticipantID，Trialを取得
-            LOGGER.info("Find Solution to evaluate...")
-            partition_key_data = sqs.get_partition_key_from_queue(args["interval"])
-            LOGGER.info("...Found")
-
-            # MatchIDからProblemEnvironmentsとProblemDockerImageを取得
-            LOGGER.info("Fetch problem data from DB...")
-            problem_data = fetch_match_problem_by_id(args["match_id"])
+    sqs = EvaluatorSQS(QUEUE_NAME, 2.0)
+    # sqs = RunnerSQS(kwargs["queue_  REGION_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, TABLE_NAME)
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからSolutionを取得
             LOGGER.info("Fetch Solution from DB...")
             solution = fetch_solution_by_primary_key(
-                args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
+            args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
             )
             LOGGER.info("...Fetched")
 
@@ -65,11 +41,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.error("Keyboard Interrupt")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
-
-        except Exception:
-            LOGGER.error("Exception")
-            LOGGER.error(format_exc())
+            partition_key_data = sqs.get_partition_key_from_queue()
             continue
 
         try:
@@ -79,10 +51,9 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             started_at = started_at.isoformat()
             LOGGER.info(f"Started at : {started_at}")
 
-            # Docker Imageを使ってObjective，Constraint，Infoを取得
-            evaluation_result = execute_in_docker(
-                problem_data["ProblemDockerImage"],
-                problem_data["ProblemEnvironments"],
+            # Docker Imageを使ってObjective，Constraint，In
+                foを取得   dynamodb
+
                 kwargs["command"],
                 kwargs["timeout"],
                 kwargs["rm"],
@@ -107,11 +78,13 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.info("Save Evaluation...")
             # 成功試行をDynamo DBに保存
             save_success_evaluation(
-                solution["MatchID"],
-                solution["ParticipantID"],
-                solution["TrialNo"],
-                solution["CreatedAt"],
-                started_at,
+
+],
+antID"],
+],
+t"],
+,
+
                 finished_at,
                 evaluation_result["objective"],
                 evaluation_result["constraint"],
@@ -131,27 +104,30 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 solution["MatchID"],
                 solution["ParticipantID"],
                 solution["TrialNo"],
-                solution["CreatedAt"],
-                started_at,
-                finished_at,
-                format_exc(),
-                dynamodb,
-            )
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
-        except Exception:
+
+tion["CreatedAt"],
+           start
+finished_at,
+    format_exc()
+         dynamod
+
+gnal.signal(signTERM, signal.SIG_DFL)
+   signal.signalINT, signal.SIG_DFL)
+            ctx.
+        except Edynamodb,
+xception:
             finished_at = datetime.now()
             finished_at = finished_at.isoformat()
             save_failed_evaluation(
-                solution["MatchID"],
+    solution["MatchID"],
                 solution["ParticipantID"],
-                solution["TrialNo"],
-                solution["CreatedAt"],
-                started_at,
-                finished_at,
-                format_exc(),
+            sqs.delete_partition_key_from_queue()
+
                 dynamodb,
             )
             LOGGER.error(format_exc())
             continue
+
+dynamodb,
+
+                dynamodb,

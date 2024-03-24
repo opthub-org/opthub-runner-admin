@@ -1,63 +1,42 @@
 from time import sleep
-from typing import Any, TypedDict
 
 import boto3
-
-
-class MessageItem(TypedDict):
-    """A type for the sqs message item."""
-
-    ParticipantID: str
-    TrialNo: str  # zero filled trial number
-
-
-# TODO: MessageItemを使って適切に型をつける
-class Message(TypedDict):
-    """A type for the sqs message."""
-
-    ReceiptHandle: str
+from opthub_runner_lib.keys import ACCESS_KEY_ID, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 
 
 class SQS:
-    """A wrapper class for interaction with Amazon SQS."""
+    """
+    A wrapper class for interaction with Amazon SQS.
 
-    queue_name: str
-    interval: float
-    sqs: Any
-    receipt_handle: str | None
-    queue_url: str
-
-    """A wrapper class for interaction with Amazon SQS."""
+    """
 
     def __init__(self, queue_name: str, interval: float) -> None:
-        """Initialize the class.
-
-        Args:
-            queue_name (str): The name of the Amazon SQS.
-            interval (float): The interval for polling.
+        """
+        Parameters
+        ----------
+        queue_name: str
+            The name of queue.
+        interval: float
+            Polling interval.
         """
         self.queue_name = queue_name
         self.interval = interval
 
-        access_key_id = ""
-        secret_access_key = ""
-        region_name = ""
         self.sqs = boto3.client(
-            "sqs",
-            region_name=region_name,
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
+            "sqs", region_name=REGION_NAME, aws_access_key_id=ACCESS_KEY_ID, aws_secret_access_key=SECRET_ACCESS_KEY
         )
 
-        response = self.sqs.create_queue(QueueName=queue_name)
-        self.queue_url = response["QueueUrl"]
+        self.queue_url = QUEUE_URL
         self.receipt_handle = None
 
-    def polling_sqs_message(self) -> Message:
-        """Fetch a message from SQS per interval.
+    def polling_sqs_message(self) -> Dict[str, str]:
+        """
+        fetch a message from SQS per interval.
 
-        Returns:
-            Message: A message from the SQS.
+        Return
+        ------
+        message: dict
+            Message fetched from SQS.
         """
         while True:
             response = self.sqs.receive_message(
@@ -71,7 +50,7 @@ class SQS:
                 break
             sleep(self.interval)
 
-        message: Message = messages[0]
+        message = messages[0]
         self.receipt_handle = message["ReceiptHandle"]
 
         #
@@ -81,13 +60,56 @@ class SQS:
         return message
 
     def delete_sqs_message(self) -> None:
-        """Delete an message in the sqs."""
+        """
+        Delete message.
+
+        """
+
         if self.receipt_handle is None:
-            msg = "No message handled."
-            raise RuntimeError(msg)
+            raise Exception("No message handled.")
 
         self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=self.receipt_handle)
 
         #
         # Stop a thread to extend the queue re-visibility. (has not been implemented)
         #
+
+
+def main():
+    from utils.dynamodb import DynamoDB
+
+    dynamodb = DynamoDB(REGION_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, TABLE_NAME)
+    sqs = SQS(REGION_NAME, 2.0)
+
+    response = sqs.sqs.purge_queue(QueueUrl=sqs.queue_url)
+    print(response)
+
+    for i in range(1, 3):
+        put_item = {
+            "ID": "Solutions#Match#1#Team#1",
+            "Trial": str(i).zfill(2),
+            "ParticipantID": "Team#1",
+            "Variable": [1, 2],
+            "UserID": "User#1",
+            "MatchID": "Match#1",
+            "CreatedAt": f"2024-03-05-00:{str(i).zfill(2)}:00",
+            "ResourceType": "Solutions",
+            "TrialNo": str(i).zfill(2),
+        }
+        dynamodb.put_item(put_item)
+
+    message = sqs.polling_sqs_message()
+
+    print(message)
+
+    sqs.delete_sqs_message()
+
+    message = sqs.polling_sqs_message()
+
+    print(message)
+
+    sqs.delete_sqs_message()
+
+
+if __name__ == "__main__":
+    main()

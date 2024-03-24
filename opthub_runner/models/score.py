@@ -1,7 +1,7 @@
 """This module provides functions to save and fetch scores to and from DynamoDB."""
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from opthub_runner.lib.converter import number_to_decimal
 from opthub_runner.lib.dynamodb import DynamoDB

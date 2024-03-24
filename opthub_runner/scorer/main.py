@@ -4,39 +4,36 @@ import signal
 from datetime import datetime
 from traceback import format_exc
 
-import click
-
 from opthub_runner.lib.cache import Cache
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.runner_sqs import RunnerSQS
+from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+from opthub_runner.lib.runner_sqs import ScorerSQS
 from opthub_runner.lib.scorer_history import make_history, write_to_cache
 from opthub_runner.lib.zfill import zfill
-from opthub_runner.main import Args
-from opthub_runner.model.evaluation import fetch_evaluation_by_primary_key
-from opthub_runner.model.match import fetch_match_indicator_by_id
-from opthub_runner.model.score import save_failed_score, save_success_score
+from opthub_runner.models.evaluation import fetch_evaluation_by_primary_key
+from opthub_runner.models.match import fetch_match_indicator_by_id
+from opthub_runner.models.score import save_failed_score, save_success_score
 
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_score(ctx: click.Context, args: Args) -> None:
+def calculate_score(ctx, **kwargs):
     """
     スコア計算プロセスのコントローラーを行う関数．
 
     """
 
     # Amazon SQSとのやり取り用
-    sqs = RunnerSQS("tmp_name")
-    # sqs = RunnerSQS(args["queue_name"])
+    sqs = ScorerSQS(QUEUE_NAME, 2.0)
 
     # Dynamo DBとのやり取り用
-    dynamodb = DynamoDB("http://localhost:8000", "localhost", "aaa", "aaa", "opthub-dynamodb-participant-trials-dev")
-    # dynamodb = DynamoDB(args["endpoint_url"],
-    #                     args["region_name"],
-    #                     args["aws_access_key_id"],
-    #                     args["aws_secret_access_key_id"],
-    #                     args["table_name"])
+    dynamodb = DynamoDB(REGION_NAME, ACCESS_KEY_ID, SECRET_ACCESS_KEY, TABLE_NAME)
+    # dynamodb = DynamoDB(kwargs["endpoint_url"],
+    #                     kwargs["region_name"],
+    #                     kwargs["aws_access_key_id"],
+    #                     kwargs["aws_secret_access_key_id"],
+    #                     kwargs["table_name"])
 
     # cacheファイルの管理用
     cache = Cache()
@@ -50,18 +47,18 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         try:
             # Partition KeyのためのMatchID，ParticipantID，TrialNoを取得
             LOGGER.info("Find Evaluation to calculate score...")
-            partition_key_data = sqs.get_partition_key_from_queue(args["interval"])
+            partition_key_data = sqs.get_partition_key_from_queue()
             LOGGER.info("...Found")
 
             # MatchIDからIndicatorEnvironmentsとIndicatorDockerImageを取得
             LOGGER.info("Fetch indicator data from DB...")
-            indicator_data = fetch_match_indicator_by_id(args["match_id"])
+            indicator_data = fetch_match_indicator_by_id(kwargs["match_id"])
             LOGGER.info("...Fetched")
 
             # Partition Keyを使ってDynamo DBからEvaluationを取得
             LOGGER.info("Fetch Evaluation from DB...")
             evaluation = fetch_evaluation_by_primary_key(
-                args["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
+                kwargs["match_id"], partition_key_data["ParticipantID"], partition_key_data["Trial"], dynamodb
             )
             LOGGER.info("...Fetched")
 
@@ -105,9 +102,9 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             score_result = execute_in_docker(
                 indicator_data["IndicatorDockerImage"],
                 indicator_data["IndicatorEnvironments"],
-                args["command"],
-                args["timeout"],
-                args["rm"],
+                kwargs["command"],
+                kwargs["timeout"],
+                kwargs["rm"],
                 json.dumps(current) + "\n",
                 json.dumps(history) + "\n",
             )
@@ -147,6 +144,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             )
             LOGGER.info("...Saved")
 
+            sqs.delete_partition_key_from_queue()
+
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -180,4 +179,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 dynamodb,
             )
             LOGGER.error(format_exc())
+
+            sqs.delete_partition_key_from_queue()
+
             continue

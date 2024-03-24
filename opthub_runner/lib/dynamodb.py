@@ -91,7 +91,7 @@ class DynamoDB:
         partition_key: str,
         least_trial_no: str,
         greatest_trial_no: str,
-        *attributes: str,
+        attributes: list[str],
     ) -> list[dict[str, Any]]:
         """
         Partition Keyがpartition_key_valueであるitemのうち，least <= (Sort KeyのValue) <= greatestであるitemをDynamo DBから複数まとめて取得．
