@@ -4,6 +4,7 @@ from typing import TypedDict, cast
 
 from opthub_runner.lib.converter import decimal_to_float
 from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner.lib.schema import SolutionSchema
 
 
 class Solution(TypedDict):
@@ -30,7 +31,7 @@ def fetch_solution_by_primary_key(
         Solution | None: The solution if it exists, otherwise None.
     """
     primary_key: PrimaryKey = {"ID": f"Solutions#{match_id}#{participant_id}", "Trial": trial}
-    solution = cast(Solution | None, dynamodb.get_item(primary_key))
+    solution = cast(SolutionSchema | None, dynamodb.get_item(primary_key))
 
     if solution is None:
         return None

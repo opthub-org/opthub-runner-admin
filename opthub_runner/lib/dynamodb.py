@@ -56,13 +56,13 @@ class DynamoDB:
         self.table_name = options["table_name"]
         self.table = self.dynamoDB.Table(self.table_name)
 
-    def get_item(self, primary_key_value: PrimaryKey) -> dict[str, Any] | None:
+    def get_item(self, primary_key_value: PrimaryKey) -> Any | None:
         """
         Primary Keyを使ってDynamo DBからitemを取得．対応するitemがなければNoneを返す．
 
         Parameter
         ---------
-        primary_key_value : dict[str, str]
+        primary_key_value : Any
             Primary KeyとそのValue．
 
         Return
@@ -92,7 +92,7 @@ class DynamoDB:
         least_trial_no: str,
         greatest_trial_no: str,
         attributes: list[str],
-    ) -> list[dict[str, Any]]:
+    ) -> list[Any]:
         """
         Partition Keyがpartition_key_valueであるitemのうち，least <= (Sort KeyのValue) <= greatestであるitemをDynamo DBから複数まとめて取得．
 

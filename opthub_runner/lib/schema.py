@@ -2,6 +2,19 @@ from decimal import Decimal
 from typing import Literal, TypedDict
 
 
+class SolutionSchema(TypedDict):
+    """The type of the solution."""
+
+    ID: str
+    Trial: str
+    ResourceType: Literal["Solution"]
+    MatchID: str
+    CreatedAt: str
+    ParticipantID: str
+    UserID: str
+    Variable: object
+
+
 class SuccessEvaluationSchema(TypedDict):
     """The type of the success evaluation."""
 
@@ -69,4 +82,4 @@ class FailedScoreSchema(TypedDict):
     ErrorMessage: str
 
 
-Schema = SuccessEvaluationSchema | FailedEvaluationSchema | SuccessScoreSchema | FailedScoreSchema
+Schema = SolutionSchema | SuccessEvaluationSchema | FailedEvaluationSchema | SuccessScoreSchema | FailedScoreSchema
