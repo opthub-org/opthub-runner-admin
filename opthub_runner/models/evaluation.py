@@ -27,13 +27,13 @@ class SuccessEvaluationCreateParams(TypedDict):
 
     match_id: str
     participant_id: str
-    trial_no: int
+    trial_no: str
     created_at: str
     started_at: str
     finished_at: str
     objective: float | list[float]
     constraint: float | list[float] | None
-    info: object
+    info: object | None
     feasible: bool | None
 
 
@@ -61,10 +61,10 @@ class FailedEvaluationCreateParams(TypedDict):
 class SuccessEvaluation(TypedDict):
     match_id: str
     participant_id: str
-    trial_no: int
+    trial_no: str
     objective: object
     constraint: object | None
-    info: object
+    info: object | None
     feasible: bool | None
 
 
@@ -81,7 +81,7 @@ def save_success_evaluation(
     evaluation: SuccessEvaluationSchema = {
         "ID": f"Evaluations#{input_item["match_id"]}#{input_item["participant_id"]}",
         "Trial": f"Success#{input_item["trial_no"]}",
-        "TrialNo": int(input_item["trial_no"]),
+        "TrialNo": input_item["trial_no"],
         "ResourceType": "Evaluation",
         "MatchID": input_item["match_id"],
         "CreatedAt": input_item["created_at"],
@@ -111,7 +111,7 @@ def save_failed_evaluation(
     evaluation: FailedEvaluationSchema = {
         "ID": f"Evaluations#{input_item["match_id"]}#{input_item['participant_id']}",
         "Trial": f"Failed#{input_item["trial_no"]}",
-        "TrialNo": int(input_item["trial_no"]),
+        "TrialNo": input_item["trial_no"],
         "ResourceType": "Evaluation",
         "MatchID": input_item["match_id"],
         "CreatedAt": input_item["created_at"],
@@ -125,11 +125,11 @@ def save_failed_evaluation(
 
 
 def fetch_success_evaluation_by_primary_key(
+    dynamodb: DynamoDB,
     match_id: str,
     participant_id: str,
     trial: str,
-    dynamodb: DynamoDB,
-) -> SuccessEvaluation | None:
+) -> SuccessEvaluation:
     """Fetch the evaluation from DynamoDB by primary key.
 
     Args:
@@ -148,7 +148,8 @@ def fetch_success_evaluation_by_primary_key(
     evaluation = cast(SuccessEvaluationSchema | None, dynamodb.get_item(primary_key))
 
     if evaluation is None:
-        return None
+        msg = "Evaluation not found"
+        raise ValueError(msg)
 
     return {
         "match_id": evaluation["MatchID"],

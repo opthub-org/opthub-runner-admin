@@ -16,6 +16,9 @@ ignore = [
     "FBT001",   # Allow bool type positional arguments
     "TD002",    # Allow unassigned todos
     "TD003",    # Allow todos without issue
+    "TRY301",   # Allow abstract `raise` to an inner function
+    "DTZ005",   # Allow timezone naive datetime
+    "BLE001",   # Allow builtin exceptions
 ]
 
 [tool.ruff.pydocstyle]

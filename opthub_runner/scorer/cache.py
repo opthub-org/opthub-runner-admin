@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from opthub_runner.lib.scorer_history import Trial
+from opthub_runner.scorer.history import Trial
 
 
 class Cache:

@@ -7,6 +7,7 @@ class SolutionSchema(TypedDict):
 
     ID: str
     Trial: str
+    TrialNo: str
     ResourceType: Literal["Solution"]
     MatchID: str
     CreatedAt: str
@@ -20,7 +21,7 @@ class SuccessEvaluationSchema(TypedDict):
 
     ID: str
     Trial: str
-    TrialNo: int
+    TrialNo: str
     ResourceType: Literal["Evaluation"]
     MatchID: str
     CreatedAt: str
@@ -39,7 +40,7 @@ class FailedEvaluationSchema(TypedDict):
 
     ID: str
     Trial: str
-    TrialNo: int
+    TrialNo: str
     ResourceType: Literal["Evaluation"]
     MatchID: str
     CreatedAt: str
@@ -55,7 +56,7 @@ class SuccessScoreSchema(TypedDict):
 
     ID: str
     Trial: str
-    TrialNo: int
+    TrialNo: str
     ResourceType: Literal["Score"]
     MatchID: str
     CreatedAt: str
@@ -71,7 +72,7 @@ class FailedScoreSchema(TypedDict):
 
     ID: str
     Trial: str
-    TrialNo: int
+    TrialNo: str
     ResourceType: Literal["Score"]
     MatchID: str
     CreatedAt: str

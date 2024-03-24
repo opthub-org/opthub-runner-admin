@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 import docker
 
@@ -24,7 +24,7 @@ class DockerConfig(TypedDict):
 def execute_in_docker(
     config: DockerConfig,
     *std_in: str,
-) -> object | None:
+) -> dict[str, Any]:
     """Execute command in docker container.
 
     Args:
@@ -32,7 +32,7 @@ def execute_in_docker(
         std_in (str): standard input
 
     Returns:
-        object | None: parsed standard output
+        dict[str, Any]: parsed standard output
     """
     LOGGER.info("Connect to docker daemon...")
     client = docker.from_env()
@@ -76,27 +76,31 @@ def execute_in_docker(
         LOGGER.info("...Removed")
 
     LOGGER.info("Parse stdout...")
-    out: object = parse_stdout(stdout)
+    out: dict[str, Any] | None = parse_stdout(stdout)
+
+    if out is None:
+        msg = "Failed to parse stdout."
+        raise RuntimeError(msg)
 
     LOGGER.debug(out)
     LOGGER.info("...Parsed")
 
-    return float_to_json_float(out)
+    return cast(dict[str, Any], float_to_json_float(out))
 
 
-def parse_stdout(stdout: str) -> object | None:
+def parse_stdout(stdout: str) -> dict[str, Any] | None:
     """Parse stdout.
 
     Args:
         stdout (str): stdout
 
     Returns:
-        object | None: parsed stdout
+        dict[str, Any] | None: parsed stdout
     """
     lines = stdout.split("\n")
     lines.reverse()
     for line in lines:
         if line:
-            line_object: object = json.loads(line)
-            return line_object
+            line_dict: dict[str, Any] = json.loads(line)
+            return line_dict
     return None

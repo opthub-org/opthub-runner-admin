@@ -5,7 +5,7 @@ scorerで使うhistoryを作成する関数．
 
 from typing import TypedDict, cast
 
-from opthub_runner.lib.cache import Cache
+from opthub_runner.scorer.cache import Cache
 from opthub_runner.lib.converter import decimal_to_float
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.zfill import zfill
@@ -124,10 +124,10 @@ def load_until_trial_no(match_id: str, participant_id: str, trial_no: str, cache
 
 
 def write_to_cache(
+    cache: Cache,
     match_id: str,
     participant_id: str,
     trial: Trial,
-    cache: Cache,
 ) -> None:
     """
     Cacheに書き込む関数．

@@ -14,11 +14,11 @@ class Solution(TypedDict):
 
 
 def fetch_solution_by_primary_key(
+    dynamodb: DynamoDB,
     match_id: str,
     participant_id: str,
     trial: str,
-    dynamodb: DynamoDB,
-) -> Solution | None:
+) -> Solution:
     """Fetch the solution by the primary key.
 
     Args:
@@ -34,7 +34,8 @@ def fetch_solution_by_primary_key(
     solution = cast(SolutionSchema | None, dynamodb.get_item(primary_key))
 
     if solution is None:
-        return None
+        msg = "Solution not found"
+        raise ValueError(msg)
 
     # Decimal can not be used for evaluation, so convert it to float.
     return {

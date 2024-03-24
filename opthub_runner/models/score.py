@@ -24,7 +24,7 @@ class SuccessScoreCreateParams(TypedDict):
 
     match_id: str
     participant_id: str
-    trial_no: int
+    trial_no: str
     created_at: str
     started_at: str
     finished_at: str
@@ -45,7 +45,7 @@ class FailedScoreCreateParams(TypedDict):
 
     match_id: str
     participant_id: str
-    trial_no: int
+    trial_no: str
     created_at: str
     started_at: str
     finished_at: str
@@ -93,7 +93,7 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
     score: FailedScoreSchema = {
         "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
         "Trial": f"Failed#{input_item["trial_no"]}",
-        "TrialNo": int(input_item["trial_no"]),
+        "TrialNo": input_item["trial_no"],
         "ResourceType": "Score",
         "MatchID": input_item["match_id"],
         "CreatedAt": input_item["created_at"],

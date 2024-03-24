@@ -17,7 +17,6 @@ class PrimaryKey(TypedDict):
 class DynamoDBOptions(TypedDict):
     """The options for DynamoDB."""
 
-    endpoint_url: str
     region_name: str
     aws_access_key_id: str
     aws_secret_access_key: str
@@ -48,7 +47,6 @@ class DynamoDB:
         """
         self.dynamoDB = boto3.resource(
             service_name="dynamodb",
-            endpoint_url=options["endpoint_url"],
             region_name=options["region_name"],
             aws_access_key_id=options["aws_access_key_id"],
             aws_secret_access_key=options["aws_secret_access_key"],
