@@ -9,7 +9,7 @@ import click
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.keys import ACCESS_KEY_ID, QUEUE_NAME, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
-from opthub_runner.lib.runner_sqs import ScorerSQS
+from opthub_runner.lib.sqs import ScorerSQS
 from opthub_runner.lib.zfill import zfill
 from opthub_runner.main import Args
 from opthub_runner.models.evaluation import fetch_success_evaluation_by_primary_key
