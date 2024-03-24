@@ -1,7 +1,7 @@
 """This module provides functions to save and fetch scores to and from DynamoDB."""
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict
 
 from opthub_runner.lib.converter import number_to_decimal
 from opthub_runner.lib.dynamodb import DynamoDB
@@ -56,28 +56,12 @@ def save_success_score(
     dynamodb: DynamoDB,
     input_item: SuccessScoreCreateParams,
 ) -> None:
+    """Save the success score to DynamoDB.
+
+    Args:
+        dynamodb (DynamoDB): The DynamoDB instance.
+        input_item (SuccessScoreCreateParams): The input data to create a success score.
     """
-    スコアの計算に成功した場合に，Dynamo DBにScoreを保存するための関数．
-
-    Parameters
-    ----------
-    match_id : str
-        Matchのid．
-    participant_id : str
-        UserIDまたはTeamID．
-    trial_no : str
-        試行回数．
-    created_at : str
-        Solutionが作られた時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    started_at : str
-        Scoreの計算を開始した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    finished_at : str
-        Scoreの計算を終了した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    score : float
-        trial_noまでの解の評価系列をスコアリングした結果．
-
-    """
-
     score = number_to_decimal(input_item["score"])
     if not isinstance(score, Decimal):
         msg = "score must be a float"
@@ -100,26 +84,11 @@ def save_success_score(
 
 
 def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -> None:
-    """
-    Scoreの計算に失敗した場合に，Dynamo DBにScoreを保存するための関数．
+    """Save the failed score to DynamoDB.
 
-    Parameters
-    ----------
-    match_id : str
-        Matchのid．
-    participant_id : str
-        UserIDまたはTeamID．
-    trial_no : str
-        試行回数．
-    created_at : str
-        Solutionが作られた時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    started_at : str
-        Scoreの計算を開始した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    finished_at : str
-        Scoreの計算を終了した時刻．yyyy-mm-dd-hh:mm:ssのフォーマット．
-    error_message : str
-        エラーメッセージ．
-
+    Args:
+        dynamodb (DynamoDB): The DynamoDB instance.
+        input_item (FailedScoreCreateParams): The input data to create a failed score.
     """
     score: FailedScoreSchema = {
         "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
@@ -134,5 +103,4 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
         "Status": "Failed",
         "ErrorMessage": input_item["error_message"],
     }
-
     dynamodb.put_item(score)

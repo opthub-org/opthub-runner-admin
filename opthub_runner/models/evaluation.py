@@ -1,6 +1,6 @@
 """This module provides functions to save and fetch evaluations to and from DynamoDB."""
 
-from typing import Literal, TypedDict, cast
+from typing import TypedDict, cast
 
 from opthub_runner.lib.converter import decimal_to_float, number_to_decimal
 from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey

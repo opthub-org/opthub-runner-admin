@@ -1,7 +1,4 @@
-"""
-Solutionの取得
-
-"""
+"""This module provides functions to save and fetch solutions to and from DynamoDB."""
 
 from typing import TypedDict, cast
 
@@ -10,7 +7,9 @@ from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
 
 
 class Solution(TypedDict):
-    Variable: object
+    """The solution data."""
+
+    variable: object
 
 
 def fetch_solution_by_primary_key(
@@ -19,24 +18,16 @@ def fetch_solution_by_primary_key(
     trial: str,
     dynamodb: DynamoDB,
 ) -> Solution | None:
-    """
-    Primary Keyを使ってDynamo DBからSolutionを取ってくる関数．
+    """Fetch the solution by the primary key.
 
-    Parameters
-    ----------
-    match_id : str
-        Matchのid．
-    participant_id : str
-        UserIDまたはTeamID．
-    trial : str
-        Trial．
-    dynamodb : DynamoDB
-        dynamo DBと通信するためのラッパークラスのオブジェクト．
+    Args:
+        match_id (str): The match ID.
+        participant_id (str): The participant ID.
+        trial (str): The zero-filled trial  number.
+        dynamodb (DynamoDB): The DynamoDB instance.
 
-    Return
-    ------
-    solution : dict
-        取ってきたSolution．
+    Returns:
+        Solution | None: The solution if it exists, otherwise None.
     """
     primary_key: PrimaryKey = {"ID": f"Solutions#{match_id}#{participant_id}", "Trial": trial}
     solution = cast(Solution | None, dynamodb.get_item(primary_key))
@@ -45,6 +36,6 @@ def fetch_solution_by_primary_key(
         return None
 
     # Decimal can not be used for evaluation, so convert it to float.
-    solution["Variable"] = decimal_to_float(solution["Variable"])
-
-    return solution
+    return {
+        "variable": decimal_to_float(solution["Variable"]),
+    }
