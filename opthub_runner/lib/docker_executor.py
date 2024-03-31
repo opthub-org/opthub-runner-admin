@@ -23,13 +23,13 @@ class DockerConfig(TypedDict):
 
 def execute_in_docker(
     config: DockerConfig,
-    *std_in: str,
+    std_in: list[str],
 ) -> dict[str, Any]:
     """Execute command in docker container.
 
     Args:
         config (DockerConfig): docker image name
-        std_in (str): standard input
+        std_in (list[str]): standard input
 
     Returns:
         dict[str, Any]: parsed standard output
@@ -49,7 +49,7 @@ def execute_in_docker(
         image=config["image"],
         command=config["command"],
         environment=config["environments"],
-        std_in_open=True,
+        stdin_open=True,
         detach=True,
     )
     LOGGER.info("...Started: %s", container.name)

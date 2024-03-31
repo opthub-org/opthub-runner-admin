@@ -1,12 +1,12 @@
-from opthub_runner.lib.cache import Cache
 from opthub_runner.lib.dynamodb import DynamoDB
+from opthub_runner.scorer.cache import Cache
 from opthub_runner.utils.converter import number_to_decimal
 
 
 def test() -> None:
     cache = Cache()
     dynamodb = DynamoDB(
-        "http://localhost:8000", "localhost", "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev"
+        {"http://localhost:8000", "localhost", "aaaaa", "aaaaa", "opthub-dynamodb-participant-trials-dev"},
     )
 
     for i in range(1, 11):

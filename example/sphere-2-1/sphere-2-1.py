@@ -2,6 +2,7 @@
 """
 The single-objective sphere function on the 2D euclidean space.
 """
+
 import json
 
 

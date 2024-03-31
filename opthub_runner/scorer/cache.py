@@ -4,8 +4,18 @@ import pickle
 import shutil
 import tempfile
 from pathlib import Path
+from typing import TypedDict
 
-from opthub_runner.scorer.history import Trial
+
+class Trial(TypedDict):
+    """ """
+
+    TrialNo: str
+    Objective: object | None
+    Constraint: object | None
+    Info: object
+    Score: float
+    Feasible: bool | None
 
 
 class Cache:

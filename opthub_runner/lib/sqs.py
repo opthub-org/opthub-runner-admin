@@ -65,7 +65,7 @@ class RunnerSQS:
         )
 
         self.queue_url = options["queue_url"]
-        self.receipt_handle = None
+        self.receipt_handle: str | None = None
 
     def delete_message_from_queue(self) -> None:
         """
@@ -83,7 +83,7 @@ class RunnerSQS:
         # Stop a thread to extend the queue re-visibility. (has not been implemented)
         #
 
-    def __polling_sqs_message(self) -> Message:
+    def _polling_sqs_message(self) -> Message:
         """
         fetch a message from SQS per interval.
 
@@ -125,7 +125,7 @@ class EvaluatorSQS(RunnerSQS):
             ParticipantID，Trialのdict．
 
         """
-        message = self.__polling_sqs_message()
+        message = self._polling_sqs_message()
         body = json.loads(message["body"])
 
         evaluation_message: EvaluationMessage = {
@@ -148,7 +148,7 @@ class ScorerSQS(RunnerSQS):
             ParticipantID，Trialのdict．
 
         """
-        message = self.__polling_sqs_message()
+        message = self._polling_sqs_message()
         body = json.loads(message["body"])
 
         score_message: ScoreMessage = {
