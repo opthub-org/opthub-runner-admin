@@ -55,7 +55,7 @@ def execute_in_docker(
     LOGGER.info("...Started: %s", container.name)
 
     LOGGER.info("Send variable...")
-    socket = container.attach_socket(params={"std_in": 1, "stream": 1, "stdout": 1, "stderr": 1})
+    socket = container.attach_socket(params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1})
 
     for line in std_in:
         socket._sock.sendall(line.encode("utf-8"))  # noqa: SLF001
