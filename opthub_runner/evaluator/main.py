@@ -6,7 +6,14 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.keys import ACCESS_KEY_ID, QUEUE_NAME, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+from opthub_runner.keys import (
+    ACCESS_KEY_ID,
+    EVALUATOR_QUEUE_NAME,
+    EVALUATOR_QUEUE_URL,
+    REGION_NAME,
+    SECRET_ACCESS_KEY,
+    TABLE_NAME,
+)
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import EvaluatorSQS
@@ -28,8 +35,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
     sqs = EvaluatorSQS(
         args["interval"],
         {
-            "queue_name": QUEUE_NAME,
-            "queue_url": QUEUE_URL,
+            "queue_name": EVALUATOR_QUEUE_NAME,
+            "queue_url": EVALUATOR_QUEUE_URL,
             "region_name": REGION_NAME,
             "aws_access_key_id": ACCESS_KEY_ID,
             "aws_secret_access_key": SECRET_ACCESS_KEY,
@@ -76,21 +83,22 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.error("Keyboard Interrupt")
+            LOGGER.exception("Keyboard Interrupt")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             ctx.exit(0)
 
         except Exception:
-            LOGGER.error("Exception")
-            LOGGER.error(format_exc())
+            LOGGER.exception("Exception")
+            LOGGER.exception(format_exc())
             continue
 
         try:
             LOGGER.info("Start to evaluate...")
             # 評価開始時刻の記録
             started_at = datetime.now().isoformat()
-            LOGGER.info(f"Started at : {started_at}")
+            info_msg = "Started at : " + started_at
+            LOGGER.info(info_msg)
 
             # Docker Imageを使ってObjective，Constraint，Infoを取得
             evaluation_result = execute_in_docker(
@@ -101,7 +109,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "timeout": args["timeout"],
                     "rm": args["rm"],
                 },
-                json.dumps(solution["variable"]) + "\n",
+                [json.dumps(solution["variable"]) + "\n"],
             )
 
             if "error" in evaluation_result:
@@ -117,7 +125,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.info("...Evaluated")
             # 評価終了時刻の記録
             finished_at = datetime.now().isoformat()
-            LOGGER.info(f"Finished at : {finished_at}")
+            info_msg = "Finished at : " + finished_at
+            LOGGER.info(info_msg)
 
             LOGGER.info("Save Evaluation...")
             # 成功試行をDynamo DBに保存
@@ -143,7 +152,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.error("Keyboard Interrupt")
+            LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
             save_failed_evaluation(
                 dynamodb,
@@ -177,6 +186,6 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 },
             )
             sqs.delete_message_from_queue()
-            LOGGER.error(format_exc())
+            LOGGER.exception(format_exc())
 
             continue

@@ -17,20 +17,20 @@ def fetch_solution_by_primary_key(
     dynamodb: DynamoDB,
     match_id: str,
     participant_id: str,
-    trial: str,
+    trial_no: str,
 ) -> Solution:
     """Fetch the solution by the primary key.
 
     Args:
         match_id (str): The match ID.
         participant_id (str): The participant ID.
-        trial (str): The zero-filled trial  number.
+        trial_no (str): The zero-filled trial number.
         dynamodb (DynamoDB): The DynamoDB instance.
 
     Returns:
         Solution | None: The solution if it exists, otherwise None.
     """
-    primary_key: PrimaryKey = {"ID": f"Solutions#{match_id}#{participant_id}", "Trial": trial}
+    primary_key: PrimaryKey = {"ID": f"Solutions#{match_id}#{participant_id}", "Trial": trial_no}
     solution = cast(SolutionSchema | None, dynamodb.get_item(primary_key))
 
     if solution is None:

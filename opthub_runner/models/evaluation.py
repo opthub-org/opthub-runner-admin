@@ -128,14 +128,14 @@ def fetch_success_evaluation_by_primary_key(
     dynamodb: DynamoDB,
     match_id: str,
     participant_id: str,
-    trial: str,
+    trial_no: str,
 ) -> SuccessEvaluation:
     """Fetch the evaluation from DynamoDB by primary key.
 
     Args:
         match_id (str): MatchID.
         participant_id (str): ParticipantID.
-        trial (str): The trial number.
+        trial_no (str): The trial number.
         dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
 
     Returns:
@@ -143,7 +143,7 @@ def fetch_success_evaluation_by_primary_key(
     """
     primary_key: PrimaryKey = {
         "ID": f"Evaluations#{match_id}#{participant_id}",
-        "Trial": trial,
+        "Trial": "Success#" + trial_no,
     }
     evaluation = cast(SuccessEvaluationSchema | None, dynamodb.get_item(primary_key))
 

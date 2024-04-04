@@ -6,7 +6,14 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.keys import ACCESS_KEY_ID, QUEUE_NAME, QUEUE_URL, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+from opthub_runner.keys import (
+    ACCESS_KEY_ID,
+    REGION_NAME,
+    SCORER_QUEUE_NAME,
+    SCORER_QUEUE_URL,
+    SECRET_ACCESS_KEY,
+    TABLE_NAME,
+)
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import ScorerSQS
@@ -31,8 +38,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
     sqs = ScorerSQS(
         args["interval"],
         {
-            "queue_name": QUEUE_NAME,
-            "queue_url": QUEUE_URL,
+            "queue_name": SCORER_QUEUE_NAME,
+            "queue_url": SCORER_QUEUE_URL,
             "region_name": REGION_NAME,
             "aws_access_key_id": ACCESS_KEY_ID,
             "aws_secret_access_key": SECRET_ACCESS_KEY,
@@ -98,14 +105,14 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.error("Keyboard Interrupt")
+            LOGGER.exception("Keyboard Interrupt")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             ctx.exit(0)
 
         except Exception:
-            LOGGER.error("Exception")
-            LOGGER.error(format_exc())
+            LOGGER.exception("Exception")
+            LOGGER.exception(format_exc())
             continue
 
         try:
@@ -123,8 +130,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                     "timeout": args["timeout"],
                     "rm": args["rm"],
                 },
-                json.dumps(current) + "\n",
-                json.dumps(history) + "\n",
+                [json.dumps(current) + "\n", json.dumps(history) + "\n"],
             )
 
             if "error" in score_result:
@@ -134,7 +140,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.info("...Calculated")
             # スコア計算終了時刻の記録
             finished_at = datetime.now().isoformat()
-            LOGGER.info(f"Finished at : {finished_at}")
+            info_msg = "Finished at : " + finished_at
+            LOGGER.info(info_msg)
 
             LOGGER.info("Save Score...")
             # cacheにスコアを保存
@@ -172,7 +179,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.error("Keyboard Interrupt")
+            LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
             save_failed_score(
                 dynamodb,
@@ -203,7 +210,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                     "error_message": format_exc(),
                 },
             )
-            LOGGER.error(format_exc())
+            LOGGER.exception(format_exc())
 
             sqs.delete_message_from_queue()
 

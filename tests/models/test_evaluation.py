@@ -1,88 +1,66 @@
-from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
+from datetime import datetime
+
+from opthub_runner.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
 from opthub_runner.lib.dynamodb import DynamoDB
+from opthub_runner.models.evaluation import (
+    SuccessEvaluation,
+    fetch_success_evaluation_by_primary_key,
+    save_failed_evaluation,
+    save_success_evaluation,
+)
 
 
-def test():
+def test() -> None:
     dynamodb = DynamoDB(
-        "http://localhost:8000",
-        "localhost",
-        "aaaaa",
-        "aaaaa",
-        "opthub-dynamodb-participant-trials-dev",
+        {
+            "aws_access_key_id": ACCESS_KEY_ID,
+            "aws_secret_access_key": SECRET_ACCESS_KEY,
+            "region_name": REGION_NAME,
+            "table_name": TABLE_NAME,
+        },
+    )
+    save_failed_evaluation(
+        dynamodb,
+        {
+            "trial_no": "00001",
+            "match_id": "Match#1",
+            "participant_id": "Team#1",
+            "started_at": datetime.now().isoformat(),
+            "finished_at": datetime.now().isoformat(),
+            "created_at": datetime.now().isoformat(),
+            "error_message": "TestErrorMessage",
+        },
     )
 
-    save_success_evaluation(
-        dynamodb,
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        [1.1, 2.2],
-        None,
-        None,
-        None,
-    )
-    save_success_evaluation(
-        "Match#1",
-        "Team#1",
-        "2",
-        "2020-2-21-09:00:00",
-        "2020-2-26-09:00:00",
-        "2020-2-26-12:00:00",
-        [2.2, 4.7],
-        None,
-        None,
-        None,
-        dynamodb,
-    )
-    save_success_evaluation(
-        "Match#1",
-        "Team#2",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        [2.5, 3.1],
-        None,
-        None,
-        None,
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-09:00:00",
-        "2020-2-25-09:00:00",
-        "2020-2-25-12:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-13:00:00",
-        "2020-2-25-14:00:00",
-        "2020-2-25-15:00:00",
-        "Error Message",
-        dynamodb,
-    )
-    save_failed_evaluation(
-        "Match#1",
-        "Team#1",
-        "1",
-        "2020-2-20-16:00:00",
-        "2020-2-25-17:00:00",
-        "2020-2-25-18:00:00",
-        "Error Message",
-        dynamodb,
-    )
+    for i in range(1, 3):
+        save_success_evaluation(
+            dynamodb,
+            {
+                "trial_no": f"0000{i}",
+                "match_id": "Match#1",
+                "participant_id": "Team#1",
+                "started_at": datetime.now().isoformat(),
+                "finished_at": datetime.now().isoformat(),
+                "constraint": None,
+                "created_at": datetime.now().isoformat(),
+                "feasible": None,
+                "info": None,
+                "objective": [1 + i / 10, 1 + i / 5],
+            },
+        )
 
-    print("----- fetch evaluations by primary key -----")
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Success#1", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Success#2", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Failed#1#3", dynamodb))
-    print(fetch_evaluation_by_primary_key("Match#1", "Team#1", "Failed#1#4", dynamodb))
+        expected_evaluation = SuccessEvaluation(
+            {
+                "match_id": "Match#1",
+                "trial_no": "00001",
+                "objective": [1.1, 1.2],
+                "constraint": None,
+                "feasible": None,
+                "info": None,
+                "participant_id": "Team#1",
+            }
+        )
+
+        if fetch_success_evaluation_by_primary_key(dynamodb, "Match#1", "Team#1", "00001") != expected_evaluation:
+            msg = "Evaluation is not correct."
+            raise ValueError(msg)

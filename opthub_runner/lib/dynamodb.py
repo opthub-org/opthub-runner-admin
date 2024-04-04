@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -69,7 +69,7 @@ class DynamoDB:
             取得したitem．
 
         """
-        item: dict[str, Any] | None = self.table.get_item(Key=primary_key_value).get("Item")
+        item: dict[str, Any] | None = self.table.get_item(Key=cast(dict[str, Any], primary_key_value)).get("Item")
         return item
 
     def put_item(self, item: Schema) -> None:
@@ -82,7 +82,7 @@ class DynamoDB:
             Dynamo DBに保存するitem．
 
         """
-        self.table.put_item(Item=item)
+        self.table.put_item(Item=cast(dict[str, Any], item))
 
     def get_item_between_least_and_greatest(
         self,
