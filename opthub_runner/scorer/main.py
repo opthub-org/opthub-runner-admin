@@ -1,3 +1,5 @@
+"""The main module for the score calculation process."""
+
 import json
 import logging
 import signal
@@ -29,12 +31,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 def calculate_score(ctx: click.Context, args: Args) -> None:
-    """
-    スコア計算プロセスのコントローラーを行う関数．
+    """The function that controls the score calculation process.
 
+    Args:
+        ctx (click.Context): The Click context.
+        args (Args): The arguments.
     """
-
-    # Amazon SQSとのやり取り用
+    # for communication with Amazon SQS
     sqs = ScorerSQS(
         args["interval"],
         {
@@ -46,7 +49,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         },
     )
 
-    # Dynamo DBとのやり取り用
+    # for communication with DynamoDB
     dynamodb = DynamoDB(
         {
             "region_name": REGION_NAME,
@@ -56,7 +59,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         },
     )
 
-    # cacheファイルの管理用
+    # cache for the history
     cache = Cache()
 
     n_score = 0
@@ -66,17 +69,14 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
         try:
-            # Partition KeyのためのMatchID，ParticipantID，TrialNoを取得
             LOGGER.info("Find Evaluation to calculate score...")
             message = sqs.get_message_from_queue()
             LOGGER.info("...Found")
 
-            # 競技をエイリアスから取得
             LOGGER.info("Fetch indicator data from DB...")
             match = fetch_match_by_alias(args["match_alias"])
             LOGGER.info("...Fetched")
 
-            # Partition Keyを使ってDynamo DBからEvaluationを取得
             LOGGER.info("Fetch Evaluation from DB...")
             evaluation = fetch_success_evaluation_by_primary_key(
                 dynamodb,
@@ -86,7 +86,6 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             )
             LOGGER.info("...Fetched")
 
-            # currentとhistoryを作成（Dockerの入力）
             LOGGER.info("Make history...")
             current = {
                 "objective": evaluation["objective"],
@@ -117,11 +116,10 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
 
         try:
             LOGGER.info("Start to calculate score...")
-            # スコア計算開始時刻の記録
             started_at = datetime.now().isoformat()
-            LOGGER.info(f"Started at : {started_at}")
+            info_msg = "Started at : " + started_at
+            LOGGER.info(info_msg)
 
-            # Docker Imageを使ってScoreを取得
             score_result = execute_in_docker(
                 {
                     "image": match["indicator_docker_image"],
@@ -138,13 +136,11 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 raise RuntimeError(msg)
 
             LOGGER.info("...Calculated")
-            # スコア計算終了時刻の記録
             finished_at = datetime.now().isoformat()
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
             LOGGER.info("Save Score...")
-            # cacheにスコアを保存
             write_to_cache(
                 cache,
                 match["id"],
@@ -159,7 +155,6 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 },
             )
 
-            # 成功試行をDynamo DBに保存
             save_success_score(
                 dynamodb,
                 {

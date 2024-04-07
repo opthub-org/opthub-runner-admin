@@ -1,7 +1,4 @@
-"""
-scorerで使うhistoryを作成する関数．
-
-"""
+"""This module provides functions to manage the history of the trials."""
 
 from typing import TypedDict, cast
 
@@ -12,6 +9,15 @@ from opthub_runner.utils.zfill import zfill
 
 
 class PartialEvaluation(TypedDict):
+    """The partial type of the evaluation.
+
+    TrialNo (str): The trial number.
+    Objective (object | None): The objective value.
+    Constraint (object | None): The constraint value.
+    Info (object): The information.
+    Feasible (bool | None): The feasibility.
+    """
+
     TrialNo: str
     Objective: object | None
     Constraint: object | None
@@ -20,69 +26,60 @@ class PartialEvaluation(TypedDict):
 
 
 class PartialScore(TypedDict):
+    """The partial type of the score.
+
+    TrialNo (str): The trial number.
+    Score (object | None): The score.
+    """
+
     TrialNo: str
     Score: object | None
 
 
 def make_history(match_id: str, participant_id: str, trial_no: str, cache: Cache, dynamodb: DynamoDB) -> list[Trial]:
-    """
-    match_idとparticipant_idを持つ参加者の，trial_noまでのHistoryを作成する関数．
+    """Make the history up to trial_no.
 
-    Parameters
-    ----------
-    match_id : str
-        MatchID（cacheのキーに用いる）．
-    participant_id : str
-        ParticipantID（cacheのキーに用いる）．
-    trial_no : str
-        TrialNo．
-    cache : Cache
-        Historyを作成するためのcache．
-    dynamodb : DynamoDB
-        cacheにない情報を取ってくるためのDynamoDB．
+    Args:
+        match_id (str): The match ID.
+        participant_id (str): The participant ID.
+        trial_no (str): The trial number.
+        cache (Cache): The cache instance.
+        dynamodb (DynamoDB): The DynamoDB instance.
 
-    Return
-    ------
-    history : list
-        History．
+    Returns:
+        list[Trial]: The history of the trials.
     """
-    load_until_trial_no(match_id, participant_id, trial_no, cache, dynamodb)
+    load_up_to_trial_no(match_id, participant_id, trial_no, cache, dynamodb)
 
     history = []
 
     for hist in cache.get_values():
-        history.append(hist)
-        if hist["TrialNo"] == trial_no:
+        if hist["TrialNo"] > trial_no:
             break
+
+        history.append(hist)
 
     return history
 
 
-def load_until_trial_no(match_id: str, participant_id: str, trial_no: str, cache: Cache, dynamodb: DynamoDB) -> None:
-    """
-    loaded_trial_noからtrial_noまでのスコアと評価をバッチで取得し，取得したScoreとEvaluationの情報をcacheに書き込む関数．
+def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache: Cache, dynamodb: DynamoDB) -> None:
+    """Load the history up to trial_no.
 
-    Parameters
-    ----------
-    match_id : str
-        MatchID（cacheのキーに用いる）．
-    participant_id : str
-        ParticipantID（cacheのキーに用いる）．
-    trial_no : str
-        TrialNo．
-    cache : Cache
-        書き込む対象のcache．
-    dynamodb : DynamoDB
-        cacheにない情報を取ってくるためのDynamoDB．
-
+    Args:
+        match_id (str): The match ID.
+        participant_id (str): The participant ID.
+        trial_no (str): The trial number.
+        cache (Cache): The cache instance.
+        dynamodb (DynamoDB): The DynamoDB instance.
     """
     cache.load(match_id + "#" + participant_id)
     loaded_trial_no = cache.get_values()[-1]["TrialNo"] if len(cache.get_values()) > 0 else None
 
+    # If the loaded trial number is greater than or equal to the trial number, do nothing.
     if loaded_trial_no is not None and loaded_trial_no >= trial_no:
         return
 
-    # DBからCacheにないデータを取ってくる
+    # fetch evaluations from the database
     evaluations = dynamodb.get_item_between_least_and_greatest(
         f"Evaluations#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
@@ -90,6 +87,8 @@ def load_until_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         ["Objective", "Constraint", "Info", "Feasible", "TrialNo"],
     )
     evaluations = cast(list[PartialEvaluation], evaluations)
+
+    # fetch scores from the database
     scores = dynamodb.get_item_between_least_and_greatest(
         f"Scores#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
@@ -98,8 +97,17 @@ def load_until_trial_no(match_id: str, participant_id: str, trial_no: str, cache
     )
     scores = cast(list[PartialScore], scores)
 
-    for evaluation, score in zip(evaluations, scores, strict=True):
-        # 取ってきたEvaluationとScoreをCacheに格納
+    # append the fetched evaluations and scores to the cache
+    evaluation_index = 0
+
+    for score in scores:
+        if evaluations[evaluation_index]["TrialNo"] > score["TrialNo"]:
+            msg = "The evaluation and score do not match."
+            raise ValueError(msg)
+        while evaluations[evaluation_index]["TrialNo"] < score["TrialNo"]:
+            evaluation_index += 1
+
+        evaluation = evaluations[evaluation_index]
 
         current: Trial = {
             "TrialNo": evaluation["TrialNo"],
@@ -118,30 +126,13 @@ def write_to_cache(
     participant_id: str,
     trial: Trial,
 ) -> None:
-    """
-    Cacheに書き込む関数．
+    """Write the trial to the cache.
 
-    Parameters
-    ----------
-    match_id : str
-        MatchID（cacheのキーに用いる）．
-    participant_id : str
-        ParticipantID（cacheのキーに用いる）．
-    trial_no : str
-        TrialNo．
-    objective : float/list
-        Objective．
-    constraint : list
-        Constraint．
-    info : list
-        Info．
-    score : float
-        Score．
-    feasible : bool
-        Feasible.
-    cache : Cache
-        書き込む対象のcache．
-
+    Args:
+        cache (Cache): The cache instance.
+        match_id (str): The match ID.
+        participant_id (str): The participant ID.
+        trial (Trial): The trial to write to the cache.
     """
     cache.load(match_id + "#" + participant_id)
     cache.append(trial)

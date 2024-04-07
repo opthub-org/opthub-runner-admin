@@ -8,7 +8,10 @@ from opthub_runner.utils.converter import decimal_to_float
 
 
 class Solution(TypedDict):
-    """The solution data."""
+    """The solution data.
+
+    variable (object): The variable of the solution.
+    """
 
     variable: object
 

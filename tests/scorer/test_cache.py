@@ -1,9 +1,12 @@
+"""Test for cache.py."""
+
 import pytest
 
 from opthub_runner.scorer.cache import Cache, Trial
 
 
 def test_cache() -> None:
+    """Test for Cache."""
     cache = Cache()
 
     with pytest.raises(ValueError, match="No file loaded."):

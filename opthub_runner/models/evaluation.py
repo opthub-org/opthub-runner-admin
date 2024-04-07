@@ -59,6 +59,17 @@ class FailedEvaluationCreateParams(TypedDict):
 
 
 class SuccessEvaluation(TypedDict):
+    """The fetched success evaluation.
+
+    match_id (str): MatchID.
+    participant_id (str): ParticipantID.
+    trial_no (str): The zero-filled trial number.
+    objective (object): The value of the objective function when the user-submitted solution was evaluated.
+    constraint (object | None): The value of the constraint when the user-submitted solution was evaluated.
+    info (object | None): The accompanying information when the user-submitted solution was evaluated.
+    feasible (bool | None): The feasibility of the user-submitted solution.
+    """
+
     match_id: str
     participant_id: str
     trial_no: str

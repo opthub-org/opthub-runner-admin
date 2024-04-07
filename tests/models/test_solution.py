@@ -1,3 +1,5 @@
+"""Test cases for solution.py."""
+
 from datetime import datetime
 from decimal import Decimal
 
@@ -7,7 +9,8 @@ from opthub_runner.models.schema import SolutionSchema
 from opthub_runner.models.solution import fetch_solution_by_primary_key
 
 
-def test() -> None:
+def test_solution_model() -> None:
+    """Test for fetch_solution_by_primary_key."""
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": ACCESS_KEY_ID,

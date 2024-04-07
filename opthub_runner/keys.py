@@ -1,7 +1,4 @@
-"""
-Do not commit AWS-related keys or URLs with values in them.
-
-"""
+"""Do not commit AWS-related keys or URLs with values in them."""
 
 EVALUATOR_QUEUE_NAME = ""
 EVALUATOR_QUEUE_URL = ""

@@ -1,7 +1,4 @@
-"""
-Amazon SQSをラップするクラス．
-
-"""
+"""This module communicates with Amazon SQS."""
 
 import json
 from time import sleep
@@ -28,31 +25,30 @@ class SQSOptions(TypedDict):
 
 
 class EvaluationMessage(TypedDict):
+    """The message from SQS for evaluation."""
+
     participant_id: str
     trial: str
     trial_no: str
 
 
 class ScoreMessage(TypedDict):
+    """The message from SQS for scoring."""
+
     participant_id: str
     trial: str
     trial_no: str
 
 
 class RunnerSQS:
-    """
-    Amazon SQSをラップするクラス．
-
-    """
+    """The class to communicate with Amazon SQS."""
 
     def __init__(self, interval: float, options: SQSOptions) -> None:
-        """
-        Parameters
-        ----------
-        queue_name : str
-            Amazon SQSの名前．
-        interval : float
-            pollingの間隔．
+        """Initialize the class.
+
+        Args:
+            interval (float): The interval to fetch messages from SQS.
+            options (SQSOptions): The options for SQS.
         """
         self.queue_name = options["queue_name"]
         self.interval = interval
@@ -68,11 +64,7 @@ class RunnerSQS:
         self.receipt_handle: str | None = None
 
     def delete_message_from_queue(self) -> None:
-        """
-        Delete message from queue if succeeded in evaluating the solution.
-
-        """
-
+        """Delete the message from SQS."""
         if self.receipt_handle is None:
             msg = "No message handled."
             raise RuntimeError(msg)
@@ -84,13 +76,10 @@ class RunnerSQS:
         #
 
     def _polling_sqs_message(self) -> Message:
-        """
-        fetch a message from SQS per interval.
+        """Polling the message from SQS.
 
-        Return
-        ------
-        message: dict
-            Message fetched from SQS.
+        Returns:
+            Message: The message from SQS.
         """
         while True:
             response = self.sqs.receive_message(
@@ -115,15 +104,13 @@ class RunnerSQS:
 
 
 class EvaluatorSQS(RunnerSQS):
+    """The class to communicate with Amazon SQS for evaluation."""
+
     def get_message_from_queue(self) -> EvaluationMessage:
-        """
-        Partition Keyに使うParticipantID，Trialをqueueから取得する．
+        """Get the message from SQS.
 
-        Return
-        -------
-        data : dict
-            ParticipantID，Trialのdict．
-
+        Returns:
+            EvaluationMessage: The message from SQS for evaluation.
         """
         message = self._polling_sqs_message()
         body = json.loads(message["body"])
@@ -138,15 +125,13 @@ class EvaluatorSQS(RunnerSQS):
 
 
 class ScorerSQS(RunnerSQS):
+    """The class to communicate with Amazon SQS for scoring."""
+
     def get_message_from_queue(self) -> ScoreMessage:
-        """
-        Partition Keyに使うParticipantID，Trialをqueueから取得する．
+        """Get the message from SQS.
 
-        Return
-        -------
-        data : dict
-            ParticipantID，Trialのdict．
-
+        Returns:
+            ScoreMessage: The message from SQS for scoring.
         """
         message = self._polling_sqs_message()
         body = json.loads(message["body"])

@@ -1,3 +1,5 @@
+"""Test for score.py."""
+
 from datetime import datetime
 from typing import cast
 
@@ -7,7 +9,8 @@ from opthub_runner.models.schema import FailedScoreSchema, SuccessScoreSchema
 from opthub_runner.models.score import save_failed_score, save_success_score
 
 
-def test() -> None:
+def test_score_model() -> None:
+    """Test for save_failed_score and save_success_score."""
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": ACCESS_KEY_ID,

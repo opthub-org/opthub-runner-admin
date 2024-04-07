@@ -1,10 +1,12 @@
+"""Tests for zfill.py."""
+
 import pytest
 
 from opthub_runner.utils.zfill import zfill
 
 
 def test_zfill() -> None:
-    """ """
+    """Test for zfill."""
     if zfill(12, 3) != "012":
         msg = "zfill(12, 3) != 012"
         raise ValueError(msg)

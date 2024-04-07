@@ -1,3 +1,5 @@
+"""This module provides the schema of the solution, evaluation, and score."""
+
 from decimal import Decimal
 from typing import Literal, TypedDict
 

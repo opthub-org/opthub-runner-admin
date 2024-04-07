@@ -8,7 +8,15 @@ from typing import TypedDict
 
 
 class Trial(TypedDict):
-    """ """
+    """The type of the trial.
+
+    TrialNo (str): The trial number.
+    Objective (object | None): The objective value.
+    Constraint (object | None): The constraint value.
+    Info (object): The information.
+    Score (float): The score.
+    Feasible (bool | None): The feasibility.
+    """
 
     TrialNo: str
     Objective: object | None
@@ -79,10 +87,7 @@ class Cache:
                 self.__values = pickle.load(file)
 
     def clear(self) -> None:
-        """
-        このキャッシュのデータを削除する．
-
-        """
+        """Clear the cache."""
         if self.__loaded_filename is not None and not Path.exists(
             Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"),
         ):

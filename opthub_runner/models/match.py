@@ -4,7 +4,14 @@ from typing import TypedDict
 
 
 class Match(TypedDict):
-    """This class represents the match problem type."""
+    """This class represents the match problem type.
+
+    id (str): MatchId.
+    indicator_docker_image (str): The docker image of the indicator.
+    indicator_environments (dict[str, str]): The environments of the indicator.
+    problem_docker_image (str): The docker image of the problem.
+    problem_environments (dict[str, str]): The environments of the problem.
+    """
 
     id: str
     indicator_docker_image: str

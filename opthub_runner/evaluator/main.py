@@ -1,3 +1,5 @@
+"""This module is the main module for the evaluator process."""
+
 import json
 import logging
 import signal
@@ -26,12 +28,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def evaluate(ctx: click.Context, args: Args) -> None:
-    """
-    評価プロセスのコントローラーを行う関数．
-
-    """
-
-    # Amazon SQSとのやり取り用
+    """The function that controls the evaluation process."""
+    # communication with Amazon SQS
     sqs = EvaluatorSQS(
         args["interval"],
         {
@@ -43,7 +41,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         },
     )
 
-    # Dynamo DBとのやり取り用
+    # communication with DynamoDB
     dynamodb = DynamoDB(
         {
             "region_name": REGION_NAME,
@@ -60,17 +58,14 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
         try:
-            # Partition KeyのためのParticipantID，Trialを取得
             LOGGER.info("Find Solution to evaluate...")
             message = sqs.get_message_from_queue()
             LOGGER.info("...Found")
 
-            # 競技をエイリアスから取得
             LOGGER.info("Fetch problem data from DB...")
             match = fetch_match_by_alias(args["match_alias"])
             LOGGER.info("...Fetched")
 
-            # Partition Keyを使ってDynamo DBからSolutionを取得
             LOGGER.info("Fetch Solution from DB...")
             solution = fetch_solution_by_primary_key(
                 dynamodb,
@@ -95,12 +90,10 @@ def evaluate(ctx: click.Context, args: Args) -> None:
 
         try:
             LOGGER.info("Start to evaluate...")
-            # 評価開始時刻の記録
             started_at = datetime.now().isoformat()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
 
-            # Docker Imageを使ってObjective，Constraint，Infoを取得
             evaluation_result = execute_in_docker(
                 {
                     "image": match["problem_docker_image"],
@@ -123,13 +116,11 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 evaluation_result["info"] = {}
 
             LOGGER.info("...Evaluated")
-            # 評価終了時刻の記録
             finished_at = datetime.now().isoformat()
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
             LOGGER.info("Save Evaluation...")
-            # 成功試行をDynamo DBに保存
             save_success_evaluation(
                 dynamodb,
                 {

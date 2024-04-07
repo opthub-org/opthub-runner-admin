@@ -1,3 +1,5 @@
+"""This module provides a wrapper class for Amazon DynamoDB."""
+
 from typing import Any, TypedDict, cast
 
 import boto3
@@ -6,7 +8,6 @@ from boto3.dynamodb.conditions import Key
 from opthub_runner.models.schema import Schema
 
 
-# Primary key for Dynamo DB.
 class PrimaryKey(TypedDict):
     """This class represents the primary key."""
 
@@ -24,26 +25,16 @@ class DynamoDBOptions(TypedDict):
 
 
 class DynamoDB:
-    """The wrapper class for interaction with Amazon DynamoDB."""
+    """This class provides a wrapper for Amazon DynamoDB."""
 
     def __init__(
         self,
         options: DynamoDBOptions,
     ) -> None:
-        """
-        Parameters
-        ----------
-        endpoint_url: str
-            DynamoDBへの接続先URL．
-        region_name: str
-            サービスがデプロイされるリージョン．
-        aws_access_key_id: str
-            AWSアカウントのアクセスキーID．
-        aws_secret_access_key: str
-            AWSアクセスキーIDに対応する秘密アクセスキー．
-        table_name: str
-            テーブル名．
+        """Initialize the class.
 
+        Args:
+            options (DynamoDBOptions): The options for DynamoDB.
         """
         self.dynamoDB = boto3.resource(
             service_name="dynamodb",
@@ -54,76 +45,53 @@ class DynamoDB:
         self.table_name = options["table_name"]
         self.table = self.dynamoDB.Table(self.table_name)
 
-    def get_item(self, primary_key_value: PrimaryKey) -> Any | None:
-        """
-        Primary Keyを使ってDynamo DBからitemを取得．対応するitemがなければNoneを返す．
+    def get_item(self, primary_key_value: PrimaryKey) -> dict[str, Any] | None:
+        """Get item from DynamoDB.
 
-        Parameter
-        ---------
-        primary_key_value : Any
-            Primary KeyとそのValue．
+        Args:
+            primary_key_value (PrimaryKey): The primary key value.
 
-        Return
-        ------
-        item : Dict[str, Any] | None
-            取得したitem．
-
+        Returns:
+            Any | None: The item.
         """
         item: dict[str, Any] | None = self.table.get_item(Key=cast(dict[str, Any], primary_key_value)).get("Item")
         return item
 
     def put_item(self, item: Schema) -> None:
-        """
-        Dynamo DBにitemを保存．
+        """Put item to DynamoDB.
 
-        Parameter
-        ---------
-        item : Dict[str, Any]
-            Dynamo DBに保存するitem．
-
+        Args:
+            item (Schema): The item to put.
         """
         self.table.put_item(Item=cast(dict[str, Any], item))
 
     def get_item_between_least_and_greatest(
         self,
         partition_key: str,
-        least_trial_no: str,
-        greatest_trial_no: str,
+        least_trial: str,
+        greatest_trial: str,
         attributes: list[str],
     ) -> list[Any]:
-        """
-        Partition Keyがpartition_key_valueであるitemのうち，least <= (Sort KeyのValue) <= greatestであるitemをDynamo DBから複数まとめて取得．
+        """Get items from DynamoDB between least_trial and greatest_trial.
 
-        Parameters
-        ----------
-        partition_key_value: Dict[str, str]
-            Partition Key．
-        sort_key: str
-            Sort Key．
-        least: str
-            Sort KeyのValueの下限．
-        greatest: str
-            Sort KeyのValueの上限．
-        attributes : tuple[str, ...]
-            取得してくる属性(個数は任意)．値を渡さなければ，全ての属性を取ってくる．
+        Args:
+            partition_key (str): The partition key.
+            least_trial (str): The least trial.
+            greatest_trial (str): The greatest trial.
+            attributes (list[str]): The attributes to get.
 
-        Return
-        ------
-        items : List[Dict[str, Any]] | None
-            取得したitemのlist．
-
+        Returns:
+            list[Any]: The items.
         """
         if not attributes:
-            # 属性の指定がなく全部取ってくるパターン．
+            # get all attributes
             response = self.table.query(
-                KeyConditionExpression=Key("ID").eq(partition_key)
-                & Key("Trial").between(least_trial_no, greatest_trial_no),
+                KeyConditionExpression=Key("ID").eq(partition_key) & Key("Trial").between(least_trial, greatest_trial),
             )
         else:
-            # 指定された属性のみ取ってくるパターン．
+            # get specific attributes
             response = self.table.query(
-                KeyConditionExpression=Key("ID").eq(partition_key)
-                & Key("Trial").between(least_trial_no, greatest_trial_no),
+                KeyConditionExpression=Key("ID").eq(partition_key) & Key("Trial").between(least_trial, greatest_trial),
                 ProjectionExpression=",".join([f"#attr{i}" for i in range(len(attributes))]),
                 ExpressionAttributeNames={f"#attr{i}": attr for i, attr in enumerate(attributes)},
             )

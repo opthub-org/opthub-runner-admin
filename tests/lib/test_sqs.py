@@ -1,3 +1,5 @@
+"""Tests for the SQS classes."""
+
 from datetime import datetime
 from decimal import Decimal
 
@@ -17,6 +19,7 @@ from opthub_runner.models.schema import FailedEvaluationSchema, SolutionSchema, 
 
 
 def test_evaluator_sqs() -> None:
+    """Test EvaluatorSQS."""
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {
@@ -88,6 +91,7 @@ def test_evaluator_sqs() -> None:
 
 
 def test_scorer_sqs() -> None:
+    """Test ScorerSQS."""
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {

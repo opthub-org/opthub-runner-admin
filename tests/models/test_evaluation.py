@@ -1,3 +1,5 @@
+"""Test for evaluation.py."""
+
 from datetime import datetime
 
 from opthub_runner.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
@@ -10,7 +12,8 @@ from opthub_runner.models.evaluation import (
 )
 
 
-def test() -> None:
+def test_evaluation_model() -> None:
+    """Test for save_failed_evaluation, save_success_evaluation, and fetch_success_evaluation_by_primary_key."""
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": ACCESS_KEY_ID,
@@ -58,7 +61,7 @@ def test() -> None:
                 "feasible": None,
                 "info": None,
                 "participant_id": "Team#1",
-            }
+            },
         )
 
         if fetch_success_evaluation_by_primary_key(dynamodb, "Match#1", "Team#1", "00001") != expected_evaluation:

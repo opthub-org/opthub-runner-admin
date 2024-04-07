@@ -1,3 +1,5 @@
+"""Test DynamoDB class."""
+
 from datetime import datetime
 
 from opthub_runner.keys import (
@@ -10,7 +12,8 @@ from opthub_runner.lib.dynamodb import DynamoDB, DynamoDBOptions, PrimaryKey
 from opthub_runner.models.schema import SolutionSchema
 
 
-def test() -> None:
+def test_dynamodb() -> None:
+    """Test DynamoDB class."""
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {
