@@ -1,19 +1,22 @@
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-from opthub_runner.keys import API_ENDPOINT_URL, API_KEY
 
-
-def get_gql_client() -> Client:
+def get_gql_client(api_endpoint_url: str, api_key: str) -> Client:
     """Get the GraphQL client.
+
+    Parameters:
+    -----------
+    api_endpoint_url: str
+        The API endpoint URL.
+    api_key: str
+        The API key.
 
     Returns:
         Client: The GraphQL client
     """
-    url = API_ENDPOINT_URL
-    api_key = API_KEY
     headers = {"x-api-key": api_key}
-    transport = AIOHTTPTransport(url=url, headers=headers)
+    transport = AIOHTTPTransport(url=api_endpoint_url, headers=headers)
     return Client(transport=transport, fetch_schema_from_transport=True)
 
 

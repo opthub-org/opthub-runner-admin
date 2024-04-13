@@ -8,14 +8,6 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.keys import (
-    ACCESS_KEY_ID,
-    EVALUATOR_QUEUE_NAME,
-    EVALUATOR_QUEUE_URL,
-    REGION_NAME,
-    SECRET_ACCESS_KEY,
-    TABLE_NAME,
-)
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import EvaluatorSQS
@@ -33,21 +25,21 @@ def evaluate(ctx: click.Context, args: Args) -> None:
     sqs = EvaluatorSQS(
         args["interval"],
         {
-            "queue_name": EVALUATOR_QUEUE_NAME,
-            "queue_url": EVALUATOR_QUEUE_URL,
-            "region_name": REGION_NAME,
-            "aws_access_key_id": ACCESS_KEY_ID,
-            "aws_secret_access_key": SECRET_ACCESS_KEY,
+            "queue_name": args["evaluator_queue_name"],
+            "queue_url": args["evaluator_queue_url"],
+            "region_name": args["region_name"],
+            "aws_access_key_id": args["access_key_id"],
+            "aws_secret_access_key": args["secret_access_key"],
         },
     )
 
     # communication with DynamoDB
     dynamodb = DynamoDB(
         {
-            "region_name": REGION_NAME,
-            "aws_access_key_id": ACCESS_KEY_ID,
-            "aws_secret_access_key": SECRET_ACCESS_KEY,
-            "table_name": TABLE_NAME,
+            "region_name": args["region_name"],
+            "aws_access_key_id": args["access_key_id"],
+            "aws_secret_access_key": args["secret_access_key"],
+            "table_name": args["table_name"],
         },
     )
 
