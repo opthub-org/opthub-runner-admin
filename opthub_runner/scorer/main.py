@@ -8,10 +8,10 @@ from traceback import format_exc
 
 import click
 
+from opthub_runner.args import Args
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import ScorerSQS
-from opthub_runner.main import Args
 from opthub_runner.models.evaluation import fetch_success_evaluation_by_primary_key
 from opthub_runner.models.match import fetch_match_by_alias
 from opthub_runner.models.score import save_failed_score, save_success_score
@@ -70,11 +70,12 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.info("...Fetched")
 
             LOGGER.info("Fetch Evaluation from DB...")
+
             evaluation = fetch_success_evaluation_by_primary_key(
                 dynamodb,
                 match["id"],
                 message["participant_id"],
-                message["trial"],
+                message["trial_no"],
             )
             LOGGER.info("...Fetched")
 

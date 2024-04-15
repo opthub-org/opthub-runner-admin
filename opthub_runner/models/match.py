@@ -31,8 +31,8 @@ def fetch_match_by_alias(alias: str) -> Match:
     """
     return {
         "id": "Match#00001",
-        "indicator_docker_image": "opthub/hypervolume:latest",
-        "indicator_environments": {"HV_REF_POINT": "[1, 1]"},
+        "indicator_docker_image": "opthub/best:latest",
+        "indicator_environments": {},
         "problem_docker_image": "opthub/sphere:latest",
-        "problem_environments": {"SPHERE_OPTIMA": "[[1, 1, 1], [1.5, 1.5, 1.5]]"},
+        "problem_environments": {"SPHERE_OPTIMA": "[[1.5, 1.5, 1.5]]"},
     }

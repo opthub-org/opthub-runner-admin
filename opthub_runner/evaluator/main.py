@@ -8,7 +8,7 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.evaluator.args import Args
+from opthub_runner.args import Args
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import EvaluatorSQS

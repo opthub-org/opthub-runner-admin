@@ -156,6 +156,7 @@ def fetch_success_evaluation_by_primary_key(
         "ID": f"Evaluations#{match_id}#{participant_id}",
         "Trial": "Success#" + trial_no,
     }
+
     evaluation = cast(SuccessEvaluationSchema | None, dynamodb.get_item(primary_key))
 
     if evaluation is None:

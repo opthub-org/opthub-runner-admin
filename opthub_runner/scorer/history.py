@@ -36,7 +36,13 @@ class PartialScore(TypedDict):
     Score: object | None
 
 
-def make_history(match_id: str, participant_id: str, trial_no: str, cache: Cache, dynamodb: DynamoDB) -> list[Trial]:
+def make_history(
+    match_id: str,
+    participant_id: str,
+    trial_no: str,
+    cache: Cache,
+    dynamodb: DynamoDB,
+) -> list[dict[str, object]]:
     """Make the history up to trial_no.
 
     Args:
@@ -57,7 +63,15 @@ def make_history(match_id: str, participant_id: str, trial_no: str, cache: Cache
         if hist["TrialNo"] > trial_no:
             break
 
-        history.append(hist)
+        history.append(
+            {
+                "constraint": hist["Constraint"],
+                "objective": hist["Objective"],
+                "score": hist["Score"],
+                "feasible": hist["Feasible"],
+                "info": hist["Info"],
+            },
+        )
 
     return history
 

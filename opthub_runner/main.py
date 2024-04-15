@@ -4,15 +4,16 @@ import logging
 import signal
 from pathlib import Path
 from types import FrameType
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, cast
 
 import click
 import yaml
 
 if TYPE_CHECKING:
-    from opthub_runner.evaluator.args import Args
+    from opthub_runner.args import Args
 
 LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG001
@@ -20,32 +21,17 @@ def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG0
     raise KeyboardInterrupt
 
 
-class Config(TypedDict):
-    """The type of configuration for the CLI."""
-
-    interval: int
-    timeout: int
-    match: str
-    rm: True
-
-    evaluator_queue_name: str
-    evaluator_queue_url: str
-    scorer_queue_name: str
-    scorer_queue_url: str
-    access_key_id: str
-    secret_access_key: str
-    region_name: str
-    table_name: str
-
-
-def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> None:
+def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> dict[str, Any]:
     """Load the configuration file."""
     if not Path(config_file).exists():
         msg = f"Configuration file not found: {config_file}"
         raise FileNotFoundError(msg)
     with Path(config_file).open(encoding="utf-8") as file:
-        config: Config = yaml.safe_load(file)
-    ctx.default_map = config
+        config: Args = yaml.safe_load(file)
+
+    ctx.default_map = cast(dict[str, Any], config)
+
+    return cast(dict[str, Any], config)
 
 
 signal.signal(signal.SIGTERM, signal_handler)
@@ -99,6 +85,9 @@ def run(
     command: list[str],
 ) -> None:
     """The entrypoint of CLI."""
+    if ctx.default_map is None:
+        msg = "Configuration file is not loaded."
+        raise ValueError(msg)
     args: Args = {
         "interval": interval if interval is not None else ctx.default_map["interval"],
         "timeout": timeout if timeout is not None else ctx.default_map["timeout"],
@@ -126,6 +115,3 @@ def run(
     else:
         msg = f"Invalid mode: {args['mode']}"
         raise ValueError(msg)
-
-
-run()
