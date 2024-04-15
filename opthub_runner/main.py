@@ -4,10 +4,13 @@ import logging
 import signal
 from pathlib import Path
 from types import FrameType
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import click
 import yaml
+
+if TYPE_CHECKING:
+    from opthub_runner.evaluator.args import Args
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,29 +18,6 @@ LOGGER = logging.getLogger(__name__)
 def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG001
     """Signal handler."""
     raise KeyboardInterrupt
-
-
-class Args(TypedDict):
-    """The type of arguments for the CLI."""
-
-    interval: int
-    timeout: int
-    match_alias: str
-    rm: bool
-    mode: str
-    command: list[str]
-
-    evaluator_queue_name: str
-    evaluator_queue_url: str
-    scorer_queue_name: str
-    scorer_queue_url: str
-    access_key_id: str
-    secret_access_key: str
-    region_name: str
-    table_name: str
-
-    api_endpoint_url: str
-    api_key: str
 
 
 class Config(TypedDict):
@@ -56,8 +36,6 @@ class Config(TypedDict):
     secret_access_key: str
     region_name: str
     table_name: str
-    api_endpoint_url: str
-    api_key: str
 
 
 def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> None:
@@ -103,6 +81,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     "--config",
     envvar="OPTHUB_RUNNER_CONFIG",
     type=click.Path(dir_okay=False),
+    default="opthub_runner/opthub-runner.yml",
     callback=load_config,
     help="Configuration file.",
 )
@@ -133,8 +112,6 @@ def run(
         "secret_access_key": ctx.default_map["secret_access_key"],
         "region_name": ctx.default_map["region_name"],
         "table_name": ctx.default_map["table_name"],
-        "api_endpoint_url": ctx.default_map["api_endpoint_url"],
-        "api_key": ctx.default_map["api_key"],
         "mode": mode,
         "command": command,
     }
@@ -149,3 +126,6 @@ def run(
     else:
         msg = f"Invalid mode: {args['mode']}"
         raise ValueError(msg)
+
+
+run()

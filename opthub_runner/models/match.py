@@ -30,7 +30,7 @@ def fetch_match_by_alias(alias: str) -> Match:
         Match: The fetched match.
     """
     return {
-        "id": "1",
+        "id": "Match#00001",
         "indicator_docker_image": "opthub/hypervolume:latest",
         "indicator_environments": {"HV_REF_POINT": "[1, 1]"},
         "problem_docker_image": "opthub/sphere:latest",

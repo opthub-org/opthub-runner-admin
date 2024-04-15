@@ -8,10 +8,10 @@ from traceback import format_exc
 
 import click
 
+from opthub_runner.evaluator.args import Args
 from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import EvaluatorSQS
-from opthub_runner.main import Args
 from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
 from opthub_runner.models.match import fetch_match_by_alias
 from opthub_runner.models.solution import fetch_solution_by_primary_key
