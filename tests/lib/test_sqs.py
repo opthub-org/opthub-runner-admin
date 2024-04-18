@@ -2,17 +2,10 @@
 
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
-from opthub_runner.keys import (
-    ACCESS_KEY_ID,
-    EVALUATOR_QUEUE_NAME,
-    EVALUATOR_QUEUE_URL,
-    REGION_NAME,
-    SCORER_QUEUE_NAME,
-    SCORER_QUEUE_URL,
-    SECRET_ACCESS_KEY,
-    TABLE_NAME,
-)
+import yaml
+
 from opthub_runner.lib.dynamodb import DynamoDB, DynamoDBOptions
 from opthub_runner.lib.sqs import EvaluationMessage, EvaluatorSQS, ScoreMessage, ScorerSQS, SQSOptions
 from opthub_runner.models.schema import FailedEvaluationSchema, SolutionSchema, SuccessEvaluationSchema
@@ -20,13 +13,20 @@ from opthub_runner.models.schema import FailedEvaluationSchema, SolutionSchema, 
 
 def test_evaluator_sqs() -> None:
     """Test EvaluatorSQS."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {
-                "region_name": REGION_NAME,
-                "aws_access_key_id": ACCESS_KEY_ID,
-                "aws_secret_access_key": SECRET_ACCESS_KEY,
-                "table_name": TABLE_NAME,
+                "region_name": config["region_name"],
+                "aws_access_key_id": config["access_key_id"],
+                "aws_secret_access_key": config["secret_access_key"],
+                "table_name": config["table_name"],
             },
         ),
     )
@@ -36,11 +36,11 @@ def test_evaluator_sqs() -> None:
         interval,
         SQSOptions(
             {
-                "queue_name": EVALUATOR_QUEUE_NAME,
-                "queue_url": EVALUATOR_QUEUE_URL,
-                "aws_access_key_id": ACCESS_KEY_ID,
-                "aws_secret_access_key": SECRET_ACCESS_KEY,
-                "region_name": REGION_NAME,
+                "queue_name": config["evaluator_queue_name"],
+                "queue_url": config["evaluator_queue_url"],
+                "aws_access_key_id": config["access_key_id"],
+                "aws_secret_access_key": config["secret_access_key"],
+                "region_name": config["region_name"],
             },
         ),
     )
@@ -92,13 +92,20 @@ def test_evaluator_sqs() -> None:
 
 def test_scorer_sqs() -> None:
     """Test ScorerSQS."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {
-                "region_name": REGION_NAME,
-                "aws_access_key_id": ACCESS_KEY_ID,
-                "aws_secret_access_key": SECRET_ACCESS_KEY,
-                "table_name": TABLE_NAME,
+                "region_name": config["region_name"],
+                "aws_access_key_id": config["access_key_id"],
+                "aws_secret_access_key": config["secret_access_key"],
+                "table_name": config["table_name"],
             },
         ),
     )
@@ -108,11 +115,11 @@ def test_scorer_sqs() -> None:
         interval,
         SQSOptions(
             {
-                "queue_name": SCORER_QUEUE_NAME,
-                "queue_url": SCORER_QUEUE_URL,
-                "aws_access_key_id": ACCESS_KEY_ID,
-                "aws_secret_access_key": SECRET_ACCESS_KEY,
-                "region_name": REGION_NAME,
+                "queue_name": config["scorer_queue_name"],
+                "queue_url": config["scorer_queue_url"],
+                "aws_access_key_id": config["access_key_id"],
+                "aws_secret_access_key": config["secret_access_key"],
+                "region_name": config["region_name"],
             },
         ),
     )

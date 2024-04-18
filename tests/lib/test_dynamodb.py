@@ -1,26 +1,29 @@
 """Test DynamoDB class."""
 
 from datetime import datetime
+from pathlib import Path
 
-from opthub_runner.keys import (
-    ACCESS_KEY_ID,
-    REGION_NAME,
-    SECRET_ACCESS_KEY,
-    TABLE_NAME,
-)
+import yaml
+
 from opthub_runner.lib.dynamodb import DynamoDB, DynamoDBOptions, PrimaryKey
 from opthub_runner.models.schema import SolutionSchema
 
 
 def test_dynamodb() -> None:
     """Test DynamoDB class."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
     dynamodb = DynamoDB(
         DynamoDBOptions(
             {
-                "region_name": REGION_NAME,
-                "aws_access_key_id": ACCESS_KEY_ID,
-                "aws_secret_access_key": SECRET_ACCESS_KEY,
-                "table_name": TABLE_NAME,
+                "region_name": config["region_name"],
+                "aws_access_key_id": config["access_key_id"],
+                "aws_secret_access_key": config["secret_access_key"],
+                "table_name": config["table_name"],
             },
         ),
     )

@@ -2,9 +2,11 @@
 
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import TYPE_CHECKING
 
-from opthub_runner.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+import yaml
+
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.scorer.cache import Cache, Trial
 from opthub_runner.scorer.history import make_history, write_to_cache
@@ -15,25 +17,32 @@ if TYPE_CHECKING:
 
 def test_history_all_success() -> None:
     """Test for make_history and write_to_cache."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
     cache = Cache()
     dynamodb = DynamoDB(
         {
-            "aws_access_key_id": ACCESS_KEY_ID,
-            "aws_secret_access_key": SECRET_ACCESS_KEY,
-            "region_name": REGION_NAME,
-            "table_name": TABLE_NAME,
+            "aws_access_key_id": config["access_key_id"],
+            "aws_secret_access_key": config["secret_access_key"],
+            "region_name": config["region_name"],
+            "table_name": config["table_name"],
         },
     )
 
     expected_history = [
         Trial(
             {
-                "TrialNo": str(i).zfill(5),
-                "Objective": [i, i],
-                "Constraint": None,
-                "Info": None,
-                "Score": i / 10,
-                "Feasible": None,
+                "trial_no": str(i).zfill(5),
+                "objective": [i, i],
+                "constraint": None,
+                "info": None,
+                "score": i / 10,
+                "feasible": None,
             },
         )
         for i in range(1, 10)
@@ -93,12 +102,12 @@ def test_history_all_success() -> None:
         "Match#1",
         "Team#1",
         {
-            "TrialNo": "00007",
-            "Objective": [7, 7],
-            "Constraint": None,
-            "Feasible": None,
-            "Info": None,
-            "Score": 7 / 10,
+            "trial_no": "00007",
+            "objective": [7, 7],
+            "constraint": None,
+            "feasible": None,
+            "info": None,
+            "score": 7 / 10,
         },
     )
     if cache.get_values() != expected_history[:7]:
@@ -118,13 +127,19 @@ def test_history_all_success() -> None:
 
 def test_history_not_all_success() -> None:
     """Test for make_history when not all trials are successful."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
     cache = Cache()
     dynamodb = DynamoDB(
         {
-            "aws_access_key_id": ACCESS_KEY_ID,
-            "aws_secret_access_key": SECRET_ACCESS_KEY,
-            "region_name": REGION_NAME,
-            "table_name": TABLE_NAME,
+            "aws_access_key_id": config["access_key_id"],
+            "aws_secret_access_key": config["secret_access_key"],
+            "region_name": config["region_name"],
+            "table_name": config["table_name"],
         },
     )
 
@@ -134,12 +149,12 @@ def test_history_not_all_success() -> None:
     expected_history = [
         Trial(
             {
-                "TrialNo": str(i).zfill(5),
-                "Objective": [i, i],
-                "Constraint": None,
-                "Info": None,
-                "Score": i / 10,
-                "Feasible": None,
+                "trial_no": str(i).zfill(5),
+                "objective": [i, i],
+                "constraint": None,
+                "info": None,
+                "score": i / 10,
+                "feasible": None,
             },
         )
         for i in success_trial_no

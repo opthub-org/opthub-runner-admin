@@ -2,8 +2,10 @@
 
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
-from opthub_runner.keys import ACCESS_KEY_ID, REGION_NAME, SECRET_ACCESS_KEY, TABLE_NAME
+import yaml
+
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.models.schema import SolutionSchema
 from opthub_runner.models.solution import fetch_solution_by_primary_key
@@ -11,12 +13,19 @@ from opthub_runner.models.solution import fetch_solution_by_primary_key
 
 def test_solution_model() -> None:
     """Test for fetch_solution_by_primary_key."""
+    config_file = "opthub_runner/opthub-runner.yml"
+    if not Path(config_file).exists():
+        msg = f"Configuration file not found: {config_file}"
+        raise FileNotFoundError(msg)
+    with Path(config_file).open(encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
     dynamodb = DynamoDB(
         {
-            "aws_access_key_id": ACCESS_KEY_ID,
-            "aws_secret_access_key": SECRET_ACCESS_KEY,
-            "region_name": REGION_NAME,
-            "table_name": TABLE_NAME,
+            "aws_access_key_id": config["access_key_id"],
+            "aws_secret_access_key": config["secret_access_key"],
+            "region_name": config["region_name"],
+            "table_name": config["table_name"],
         },
     )
 

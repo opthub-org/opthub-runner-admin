@@ -11,30 +11,30 @@ def test_cache() -> None:
 
     with pytest.raises(ValueError, match="No file loaded."):
         cache.append(
-            Trial({"TrialNo": "1", "Objective": 0.1, "Constraint": None, "Info": {}, "Score": 0.1, "Feasible": True}),
+            Trial({"trial_no": "1", "objective": 0.1, "constraint": None, "info": {}, "score": 0.1, "feasible": True}),
         )
 
     cache.load("Match#1#Team#1")
     values_of_cache1 = [
-        Trial({"TrialNo": "1", "Objective": 0.1, "Constraint": None, "Info": {}, "Score": 0.1, "Feasible": True}),
-        Trial({"TrialNo": "2", "Objective": 0.2, "Constraint": None, "Info": {}, "Score": 0.2, "Feasible": False}),
-        Trial({"TrialNo": "3", "Objective": 0.3, "Constraint": None, "Info": {}, "Score": 0.3, "Feasible": None}),
+        Trial({"trial_no": "1", "objective": 0.1, "constraint": None, "info": {}, "score": 0.1, "feasible": True}),
+        Trial({"trial_no": "2", "objective": 0.2, "constraint": None, "info": {}, "score": 0.2, "feasible": False}),
+        Trial({"trial_no": "3", "objective": 0.3, "constraint": None, "info": {}, "score": 0.3, "feasible": None}),
     ]
     values_of_cache2 = [
-        Trial({"TrialNo": "1", "Objective": 1.0, "Constraint": None, "Info": {}, "Score": 1.0, "Feasible": None}),
+        Trial({"trial_no": "1", "objective": 1.0, "constraint": None, "info": {}, "score": 1.0, "feasible": None}),
     ]
     cache.append(
-        Trial({"TrialNo": "1", "Objective": 0.1, "Constraint": None, "Info": {}, "Score": 0.1, "Feasible": True}),
+        Trial({"trial_no": "1", "objective": 0.1, "constraint": None, "info": {}, "score": 0.1, "feasible": True}),
     )
     cache.append(
-        Trial({"TrialNo": "2", "Objective": 0.2, "Constraint": None, "Info": {}, "Score": 0.2, "Feasible": False}),
+        Trial({"trial_no": "2", "objective": 0.2, "constraint": None, "info": {}, "score": 0.2, "feasible": False}),
     )
     cache.append(
-        Trial({"TrialNo": "3", "Objective": 0.3, "Constraint": None, "Info": {}, "Score": 0.3, "Feasible": None}),
+        Trial({"trial_no": "3", "objective": 0.3, "constraint": None, "info": {}, "score": 0.3, "feasible": None}),
     )
     cache.load("Match#1#Team#2")
     cache.append(
-        Trial({"TrialNo": "1", "Objective": 1.0, "Constraint": None, "Info": {}, "Score": 1.0, "Feasible": None}),
+        Trial({"trial_no": "1", "objective": 1.0, "constraint": None, "info": {}, "score": 1.0, "feasible": None}),
     )
     cache.load("Match#1#Team#1")
 
@@ -52,7 +52,7 @@ def test_cache() -> None:
         cache.get_values()
     with pytest.raises(ValueError, match="No file loaded."):
         cache.append(
-            Trial({"TrialNo": "1", "Objective": 0.1, "Constraint": None, "Info": {}, "Score": 0.1, "Feasible": True}),
+            Trial({"trial_no": "1", "objective": 0.1, "constraint": None, "info": {}, "score": 0.1, "feasible": True}),
         )
 
     cache.load("Match#1#Team#1")
