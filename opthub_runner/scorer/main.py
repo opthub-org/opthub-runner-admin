@@ -139,12 +139,12 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 match["id"],
                 evaluation["participant_id"],
                 {
-                    "TrialNo": evaluation["trial_no"],
-                    "Objective": evaluation["objective"],
-                    "Constraint": evaluation["constraint"],
-                    "Info": evaluation["info"],
-                    "Feasible": evaluation["feasible"],
-                    "Score": score_result["score"],
+                    "trial_no": evaluation["trial_no"],
+                    "objective": evaluation["objective"],
+                    "constraint": evaluation["constraint"],
+                    "info": evaluation["info"],
+                    "feasible": evaluation["feasible"],
+                    "score": score_result["score"],
                 },
             )
 

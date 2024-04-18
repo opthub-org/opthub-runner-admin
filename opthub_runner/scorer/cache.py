@@ -8,22 +8,22 @@ from typing import TypedDict
 
 
 class Trial(TypedDict):
-    """The type of the trial.
+    """The type of the trial. Conforming to Docker input by using snake case.
 
-    TrialNo (str): The trial number.
-    Objective (object | None): The objective value.
-    Constraint (object | None): The constraint value.
-    Info (object): The information.
-    Score (float): The score.
-    Feasible (bool | None): The feasibility.
+    trial_no (str): The trial number.
+    objective (object | None): The objective value.
+    constraint (object | None): The constraint value.
+    info (object): The information.
+    score (float): The score.
+    feasible (bool | None): The feasibility.
     """
 
-    TrialNo: str
-    Objective: object | None
-    Constraint: object | None
-    Info: object
-    Score: float
-    Feasible: bool | None
+    trial_no: str
+    objective: object | None
+    constraint: object | None
+    info: object
+    score: float
+    feasible: bool | None
 
 
 class Cache:
@@ -31,10 +31,10 @@ class Cache:
 
     def __init__(self) -> None:
         """Initialize the cache class."""
-        self.__loaded_filename: str | None = None  # 現在読み込んでいるキャッシュのファイル名
-        self.__values: list[Trial] | None = None  # 現在持っているキャッシュの値
+        self.__loaded_filename: str | None = None  # file name of the loaded cache
+        self.__values: list[Trial] | None = None  # values in the cache
 
-        # キャッシュ保管用のディレクトリを作っておく
+        # Create a temporary directory for the cache
         temp_dir = tempfile.gettempdir()
         self.__cache_dir_path = Path(temp_dir) / "cache"
         if Path.exists(self.__cache_dir_path):

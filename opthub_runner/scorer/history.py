@@ -42,7 +42,7 @@ def make_history(
     trial_no: str,
     cache: Cache,
     dynamodb: DynamoDB,
-) -> list[dict[str, object]]:
+) -> list[Trial]:
     """Make the history up to trial_no.
 
     Args:
@@ -60,18 +60,10 @@ def make_history(
     history = []
 
     for hist in cache.get_values():
-        if hist["TrialNo"] > trial_no:
+        if hist["trial_no"] > trial_no:
             break
 
-        history.append(
-            {
-                "constraint": hist["Constraint"],
-                "objective": hist["Objective"],
-                "score": hist["Score"],
-                "feasible": hist["Feasible"],
-                "info": hist["Info"],
-            },
-        )
+        history.append(hist)
 
     return history
 
@@ -87,7 +79,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         dynamodb (DynamoDB): The DynamoDB instance.
     """
     cache.load(match_id + "#" + participant_id)
-    loaded_trial_no = cache.get_values()[-1]["TrialNo"] if len(cache.get_values()) > 0 else None
+    loaded_trial_no = cache.get_values()[-1]["trial_no"] if len(cache.get_values()) > 0 else None
 
     # If the loaded trial number is greater than or equal to the trial number, do nothing.
     if loaded_trial_no is not None and loaded_trial_no >= trial_no:
@@ -124,12 +116,12 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         evaluation = evaluations[evaluation_index]
 
         current: Trial = {
-            "TrialNo": evaluation["TrialNo"],
-            "Objective": decimal_to_float(evaluation["Objective"]),
-            "Constraint": decimal_to_float(evaluation["Constraint"]),
-            "Info": decimal_to_float(evaluation["Info"]),
-            "Feasible": evaluation["Feasible"],
-            "Score": cast(float, decimal_to_float(score["Score"])),
+            "trial_no": evaluation["TrialNo"],
+            "objective": decimal_to_float(evaluation["Objective"]),
+            "constraint": decimal_to_float(evaluation["Constraint"]),
+            "info": decimal_to_float(evaluation["Info"]),
+            "feasible": evaluation["Feasible"],
+            "score": cast(float, decimal_to_float(score["Score"])),
         }
         cache.append(current)
 
