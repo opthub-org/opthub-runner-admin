@@ -52,10 +52,12 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         try:
             LOGGER.info("Find Solution to evaluate...")
             message = sqs.get_message_from_queue()
+            LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
 
             LOGGER.info("Fetch problem data from DB...")
             match = fetch_match_by_alias(args["match_alias"])
+            LOGGER.debug("Match: %s", match)
             LOGGER.info("...Fetched")
 
             LOGGER.info("Fetch Solution from DB...")
@@ -65,6 +67,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 message["participant_id"],
                 message["trial"],
             )
+            LOGGER.debug("Solution: %s", solution)
             LOGGER.info("...Fetched")
 
         except KeyboardInterrupt:
@@ -107,6 +110,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             if "info" not in evaluation_result:
                 evaluation_result["info"] = {}
 
+            LOGGER.debug("Evaluation Result: %s", evaluation_result)
+
             LOGGER.info("...Evaluated")
             finished_at = datetime.now().isoformat()
             info_msg = "Finished at : " + finished_at
@@ -115,6 +120,21 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.info("Save Evaluation...")
             save_success_evaluation(
                 dynamodb,
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "objective": evaluation_result["objective"],
+                    "constraint": evaluation_result["constraint"],
+                    "info": evaluation_result["info"],
+                    "feasible": evaluation_result["feasible"],
+                },
+            )
+            LOGGER.debug(
+                "Evaluation to save: %s",
                 {
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
@@ -137,6 +157,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
+            LOGGER.info("Save Failed Evaluation...")
             save_failed_evaluation(
                 dynamodb,
                 {
@@ -149,6 +170,19 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "error_message": format_exc(),
                 },
             )
+            LOGGER.debug(
+                "Evaluation to save: %s",
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "error_message": format_exc(),
+                },
+            )
+            LOGGER.info("...Saved")
             sqs.delete_message_from_queue()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -156,6 +190,8 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             ctx.exit(0)
         except Exception:
             finished_at = datetime.now().isoformat()
+            LOGGER.exception(format_exc())
+            LOGGER.info("Save Failed Evaluation...")
             save_failed_evaluation(
                 dynamodb,
                 {
@@ -168,7 +204,19 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "error_message": format_exc(),
                 },
             )
+            LOGGER.debug(
+                "Evaluation to save: %s",
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "error_message": format_exc(),
+                },
+            )
+            LOGGER.info("...Saved")
             sqs.delete_message_from_queue()
-            LOGGER.exception(format_exc())
 
             continue

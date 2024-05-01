@@ -12,13 +12,26 @@ import yaml
 if TYPE_CHECKING:
     from opthub_runner.args import Args
 
-LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
 
 def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG001
     """Signal handler."""
     raise KeyboardInterrupt
+
+
+def set_log_level(log_level: str) -> None:
+    """Set log level.
+
+    Args:
+        log_level (str): Log level. One of "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL".
+    """
+    log_level = log_level.upper()
+    level_num = getattr(logging, log_level, None)
+
+    if level_num is None:
+        msg = f"Invalid log level: {log_level}"
+        raise ValueError(msg)
+
+    logging.basicConfig(level=level_num)
 
 
 def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> dict[str, Any]:
@@ -63,6 +76,13 @@ signal.signal(signal.SIGTERM, signal_handler)
 )
 @click.option("--rm", envvar="OPTHUB_REMOVE", default=None, is_flag=True, help="Remove containers after exit.")
 @click.option(
+    "--log_level",
+    envvar="OPTHUB_LOG_LEVEL",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    default="INFO",
+    help="Log level.",
+)
+@click.option(
     "-c",
     "--config",
     envvar="OPTHUB_RUNNER_CONFIG",
@@ -80,6 +100,7 @@ def run(
     timeout: int,
     match: str,
     rm: bool,
+    log_level: str,
     config: str,
     mode: str,
     command: list[str],
@@ -104,6 +125,9 @@ def run(
         "mode": mode,
         "command": command,
     }
+
+    set_log_level(log_level)
+
     if args["mode"] == "evaluator":
         from opthub_runner.evaluator.main import evaluate
 
