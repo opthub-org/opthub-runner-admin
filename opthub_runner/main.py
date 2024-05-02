@@ -79,7 +79,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     "--log_level",
     envvar="OPTHUB_LOG_LEVEL",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-    default="INFO",
+    default=None,
     help="Log level.",
 )
 @click.option(
@@ -125,6 +125,8 @@ def run(
         "mode": mode,
         "command": command,
     }
+
+    log_level = log_level if log_level is not None else ctx.default_map["log_level"]
 
     set_log_level(log_level)
 

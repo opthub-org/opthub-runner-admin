@@ -30,7 +30,7 @@ def fetch_match_by_alias(alias: str) -> Match:
         Match: The fetched match.
     """
     return {
-        "id": "Match#00001",
+        "id": "Match#dcc32372-f02d-19c7-866d-f9742d5372ca",
         "indicator_docker_image": "opthub/best:latest",
         "indicator_environments": {},
         "problem_docker_image": "opthub/sphere:latest",
