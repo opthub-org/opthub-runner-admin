@@ -1,10 +1,12 @@
 """This module communicates with Amazon SQS."""
 
 import json
-from time import sleep
+from time import sleep, time
 from typing import TypedDict
 
 import boto3
+
+from opthub_runner.lib.thread import StoppableThread
 
 
 class Message(TypedDict):
@@ -63,6 +65,10 @@ class RunnerSQS:
         self.queue_url = options["queue_url"]
         self.receipt_handle: str | None = None
 
+        self.visibility_timeout_extender: StoppableThread | None = None
+
+        self.start: float | None = None
+
     def delete_message_from_queue(self) -> None:
         """Delete the message from SQS."""
         if self.receipt_handle is None:
@@ -71,9 +77,12 @@ class RunnerSQS:
 
         self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=self.receipt_handle)
 
-        #
-        # Stop a thread to extend the queue re-visibility. (has not been implemented)
-        #
+        # Stop a thread to extend the queue re-visibility.
+        if self.visibility_timeout_extender is None:
+            msg = "Visibility timeout extender is None."
+            raise ValueError(msg)
+        self.visibility_timeout_extender.stop()
+        self.visibility_timeout_extender.join()
 
     def _polling_sqs_message(self) -> Message:
         """Polling the message from SQS.
@@ -82,11 +91,14 @@ class RunnerSQS:
             Message: The message from SQS.
         """
         while True:
+            self.start = time()
+
             response = self.sqs.receive_message(
                 QueueUrl=self.queue_url,
                 MaxNumberOfMessages=1,
                 WaitTimeSeconds=10,
             )
+
             messages = response.get("Messages", [])
 
             if messages:
@@ -96,11 +108,41 @@ class RunnerSQS:
         message: Message = {"receipt_handle": messages[0]["ReceiptHandle"], "body": messages[0]["Body"]}
         self.receipt_handle = messages[0]["ReceiptHandle"]
 
-        #
-        # Launch a thread to extend the queue re-visibility. (has not been implemented)
-        #
+        # Launch a thread to extend the queue re-visibility.
+        self.visibility_timeout_extender = StoppableThread(self.__extend_visibility_timeout, ())
+        self.visibility_timeout_extender.start()
 
         return message
+
+    def __extend_visibility_timeout(self) -> None:
+        """Extend the visibility timeout of the message."""
+        if self.start is None:
+            msg = "Start time is None."
+            raise ValueError(msg)
+
+        current_visibility_timeout = 8
+
+        while True:
+            if self.visibility_timeout_extender is None:
+                msg = "Visibility timeout extender is None."
+                raise RuntimeError(msg)
+            if self.receipt_handle is None:
+                msg = "No message handled."
+                raise RuntimeError(msg)
+
+            if self.visibility_timeout_extender.is_stop_requested():
+                break
+
+            current_time = time()
+            sleep(max(0, (current_visibility_timeout - 4) - (current_time - self.start)))
+
+            self.sqs.change_message_visibility(
+                QueueUrl=self.queue_url,
+                ReceiptHandle=self.receipt_handle,
+                VisibilityTimeout=current_visibility_timeout * 2,
+            )
+
+            current_visibility_timeout *= 2
 
 
 class EvaluatorSQS(RunnerSQS):
