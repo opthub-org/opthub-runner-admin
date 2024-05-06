@@ -8,7 +8,6 @@ class Args(TypedDict):
 
     interval: int
     timeout: int
-    match_alias: str
     rm: bool
     mode: str
     command: list[str]

@@ -67,13 +67,6 @@ signal.signal(signal.SIGTERM, signal_handler)
     default=None,
     help="Timeout to process a query.",
 )
-@click.option(
-    "--match",
-    envvar="OPTHUB_MATCH_ID",
-    type=str,
-    default=None,
-    help="MatchId handled un this server.",
-)
 @click.option("--rm", envvar="OPTHUB_REMOVE", default=None, is_flag=True, help="Remove containers after exit.")
 @click.option(
     "--log_level",
@@ -98,7 +91,6 @@ def run(
     ctx: click.Context,
     interval: int,
     timeout: int,
-    match: str,
     rm: bool,
     log_level: str,
     config: str,
@@ -112,7 +104,6 @@ def run(
     args: Args = {
         "interval": interval if interval is not None else ctx.default_map["interval"],
         "timeout": timeout if timeout is not None else ctx.default_map["timeout"],
-        "match_alias": match if match is not None else ctx.default_map["match"],
         "rm": rm if rm is not None else ctx.default_map["rm"],
         "evaluator_queue_name": ctx.default_map["evaluator_queue_name"],
         "evaluator_queue_url": ctx.default_map["evaluator_queue_url"],

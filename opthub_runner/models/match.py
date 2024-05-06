@@ -20,11 +20,11 @@ class Match(TypedDict):
     problem_environments: dict[str, str]
 
 
-def fetch_match_by_alias(alias: str) -> Match:
+def fetch_match_by_id(id: str) -> Match:
     """Fetch the match by GraphQL.
 
     Args:
-        alias (str): The id of the match.
+        id (str): The id of the match.
 
     Returns:
         Match: The fetched match.

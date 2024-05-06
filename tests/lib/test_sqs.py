@@ -77,6 +77,7 @@ def test_evaluator_sqs() -> None:
     for i in range(3):
         expected_message = EvaluationMessage(
             {
+                "match_id": put_items[i]["MatchID"],
                 "participant_id": put_items[i]["ParticipantID"],
                 "trial": put_items[i]["TrialNo"],
                 "trial_no": put_items[i]["TrialNo"],
@@ -183,6 +184,7 @@ def test_scorer_sqs() -> None:
             continue
         expected_message = ScoreMessage(
             {
+                "match_id": put_items[i]["MatchID"],
                 "participant_id": put_items[i]["ParticipantID"],
                 "trial": put_items[i]["Trial"],
                 "trial_no": put_items[i]["TrialNo"],

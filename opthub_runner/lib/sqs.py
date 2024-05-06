@@ -29,6 +29,7 @@ class SQSOptions(TypedDict):
 class EvaluationMessage(TypedDict):
     """The message from SQS for evaluation."""
 
+    match_id: str
     participant_id: str
     trial: str
     trial_no: str
@@ -37,6 +38,7 @@ class EvaluationMessage(TypedDict):
 class ScoreMessage(TypedDict):
     """The message from SQS for scoring."""
 
+    match_id: str
     participant_id: str
     trial: str
     trial_no: str
@@ -158,6 +160,7 @@ class EvaluatorSQS(RunnerSQS):
         body = json.loads(message["body"])
 
         evaluation_message: EvaluationMessage = {
+            "match_id": body["MatchID"],
             "participant_id": body["ParticipantID"],
             "trial": body["TrialNo"],
             "trial_no": body["TrialNo"],
@@ -179,6 +182,7 @@ class ScorerSQS(RunnerSQS):
         body = json.loads(message["body"])
 
         score_message: ScoreMessage = {
+            "match_id": body["MatchID"],
             "participant_id": body["ParticipantID"],
             "trial": "Success#" + body["TrialNo"],
             "trial_no": body["TrialNo"],
