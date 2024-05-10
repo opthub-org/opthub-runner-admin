@@ -31,7 +31,9 @@ def test_evaluator_sqs() -> None:
         ),
     )
 
+    match_uuid = "dcc32372-f02d-19c7-866d-f9742d5372ca"
     interval = 1.0
+
     sqs = EvaluatorSQS(
         interval,
         SQSOptions(
@@ -50,12 +52,12 @@ def test_evaluator_sqs() -> None:
     put_items = [
         SolutionSchema(
             {
-                "ID": "Solutions#Match#1#Team#1",
+                "ID": "Solutions#Match#" + match_uuid + "#User#1",
                 "Trial": str(i + 1).zfill(5),
-                "ParticipantID": "Team#1",
-                "Variable": [1, 2],
+                "ParticipantID": "User#1",
+                "Variable": [Decimal(1), Decimal(2)],
                 "UserID": "User#1",
-                "MatchID": "Match#1",
+                "MatchID": "Match#" + match_uuid,
                 "CreatedAt": datetime.now().isoformat(),
                 "ResourceType": "Solution",
                 "TrialNo": str(i + 1).zfill(5),
