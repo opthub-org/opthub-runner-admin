@@ -85,11 +85,6 @@ class RunnerSQS:
 
         self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=self.receipt_handle)
 
-        # Stop a thread to extend the queue re-visibility.
-        if self.visibility_timeout_extender is None:
-            msg = "Visibility timeout extender is None."
-            raise ValueError(msg)
-
         self.receipt_handle = None
         self.start = None
 
