@@ -121,10 +121,6 @@ class RunnerSQS:
 
     def __extend_visibility_timeout(self) -> None:
         """Extend the visibility timeout of the message."""
-        if self.visibility_timeout_extender is None:
-            msg = "Visibility timeout extender is None."
-            raise RuntimeError(msg)
-
         current_visibility_timeout = 8
 
         while True:
