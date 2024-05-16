@@ -1,173 +1,128 @@
+"""This module contains functions to interact with AppSync API."""
+
+from typing import TypedDict
+
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
+from opthub_runner.utils.credentials import Credentials
 
-def get_gql_client(api_endpoint_url: str, api_key: str) -> Client:
+API_ENDPOINT_URL = "https://jciqso7l7rhajfkt5s3dhybpcu.appsync-api.ap-northeast-1.amazonaws.com/graphql"
+
+
+class KeyValue(TypedDict):
+    """The type of the KeyValue."""
+
+    key: str
+    value: str
+
+
+class NullableKeyValue(TypedDict):
+    """The type of the NullableKeyValue."""
+
+    key: str
+    value: str | None
+
+
+class Problem(TypedDict):
+    """The type of the Problem."""
+
+    dockerImage: str
+
+
+class Indicator(TypedDict):
+    """The type of the Indicator."""
+
+    dockerImage: str
+
+
+class Response(TypedDict):
+    """The type of the response."""
+
+    id: str
+    problem: Problem
+    indicator: Indicator
+    problemPublicEnvironments: list[KeyValue]
+    indicatorPublicEnvironments: list[KeyValue]
+    problemPrivateEnvironments: list[NullableKeyValue]
+    indicatorPrivateEnvironments: list[NullableKeyValue]
+
+
+def get_gql_client() -> Client:
     """Get the GraphQL client.
 
-    Parameters:
-    -----------
-    api_endpoint_url: str
-        The API endpoint URL.
-    api_key: str
-        The API key.
-
     Returns:
-        Client: The GraphQL client
+        The GraphQL client.
     """
-    headers = {"x-api-key": api_key}
-    transport = AIOHTTPTransport(url=api_endpoint_url, headers=headers)
+    credentials = Credentials()
+    credentials.load()
+    if credentials.access_token is None:
+        msg = "Please login first."
+        raise Exception(msg)
+    headers = {"Authorization": f"Bearer {credentials.access_token}"}
+    transport = AIOHTTPTransport(url=API_ENDPOINT_URL, headers=headers)
     return Client(transport=transport, fetch_schema_from_transport=True)
 
 
-def fetch_match_problem_by_match_id(match_id: str, alias: str, client: Client):
-    """Fetch problemID and problemEnvironments by MatchID using GraphQL.
+def fetch_match_response_by_match_uuid(match_uuid: str) -> Response:
+    """Fetch match by MatchUUID using GraphQL.
 
-    Parameters
-    ----------
-    match_id: str
-      MatchID.
-    alias: str
-      Match alias.
-    client: Client
-      GraphQL client.
+    Args:
+        match_uuid: The match UUID.
 
-    Return
-    ------
-    response: dict
-      Dict containing problemID, problemPublicEnvironment, problemSecretEnvironment.
 
+    Returns:
+        The match.
     """
-    variables = {"id": match_id, "alias": alias}
+    client = get_gql_client()
+    variables = {"id": match_uuid}
 
     query = gql("""query getMatch(
-                $id: String,
-                $alias: String) {
+                $id: String) {
                 getMatch(
-                id: $id,
-                alias: $alias) {
-                problemID
-                problemPublicEnvironment,
-                problemSecretEnvironment,
-                }
-                }""")
-
-    response = client.execute(query, variable_values=variables)
-
-    return response
-
-
-def fetch_match_indicator_by_match_id(match_id: str, alias: str, client: Client):
-    """Fetch indicatorID and indicatorEnvironments by MatchID using GraphQL.
-
-    Parameters
-    ----------
-    match_id: str
-      MatchID.
-    alias: str
-      Match alias.
-    client: Client
-      GraphQL client.
-
-    Return
-    ------
-    response: dict
-      Dict containing indicatorID, indicatorPublicEnvironment, indicatorSecretEnvironment.
-
-    """
-    variables = {"id": match_id, "alias": alias}
-
-    query = gql("""query getMatch(
-                $id: String,
-                $alias: String) {
-                getMatch(
-                id: $id,
-                alias: $alias) {
-                indicatorID
-                indicatorPublicEnvironment,
-                indicatorSecretEnvironment,
-                }
-                }""")
-
-    response = client.execute(query, variable_values=variables)
-
-    return response
-
-
-def fetch_docker_image_by_problem_id(problem_id: str, alias: str, client: Client):
-    """Fetch problemDockerImage by ProblemID using GraphQL.
-
-    Parameters
-    ----------
-    problem_id: str
-      ProblemID.
-    alias: str
-      Problem alias.
-    client: Client
-      GraphQL client.
-
-    Return
-    ------
-    response: dict
-      Dict containing problemDockerImage.
-
-    """
-    variables = {"id": problem_id, "alias": alias}
-
-    query = gql("""query getProblem(
-                $id: String,
-                $alias: String) {
-                getProblem(
-                id: $id,
-                alias: $alias) {
+                id: $id) {
+                id
+                problem {
                 dockerImage
                 }
-                }""")
-    response = client.execute(query, variable_values=variables)
-
-    return response
-
-
-def fetch_docker_image_by_indicator_id(indicator_id: str, alias: str, client: Client):
-    """Fetch indicatorDockerImage by indicatorID using GraphQL.
-
-    Parameters
-    ----------
-    indicator_id: str
-      indicatorID.
-    alias: str
-      Indicator alias.
-    client: Client
-      GraphQL client.
-
-    Return
-    ------
-    response: dict
-      Dict containing indicatorDockerImage.
-
-    """
-    variables = {"id": indicator_id, "alias": alias}
-
-    query = gql("""
-                query getIndicator(
-                $id: String,
-                $alias: String) {
-                getIndicator(
-                id: $id,
-                alias: $alias) {
-                  dockerImage
+                indicator {
+                dockerImage
                 }
-                }""")
+                problemPublicEnvironments {
+                  key
+                  value
+                }
+                indicatorPublicEnvironments {
+                  key
+                  value
+                }
+                problemPrivateEnvironments {
+                  key
+                  value
+                }
+                indicatorPrivateEnvironments {
+                  key
+                  value
+                }}}""")
+
     response = client.execute(query, variable_values=variables)
 
-    return response
+    match = response["getMatch"]
 
-
-def main():
-    client = get_gql_client()
-    result = fetch_docker_image_by_indicator_id("dd69dc7f-5d82-4f2c-9be7-420a6f77202b", "sphere", client)
-    print(result)
-
-
-if __name__ == "__main__":
-    main()
+    return {
+        "id": match["id"],
+        "problem": {"dockerImage": match["problem"]["dockerImage"]},
+        "indicator": {"dockerImage": match["indicator"]["dockerImage"]},
+        "problemPublicEnvironments": [
+            {"key": env["key"], "value": env["value"]} for env in match["problemPublicEnvironments"]
+        ],
+        "indicatorPublicEnvironments": [
+            {"key": env["key"], "value": env["value"]} for env in match["indicatorPublicEnvironments"]
+        ],
+        "problemPrivateEnvironments": [
+            {"key": env["key"], "value": env.get("value")} for env in match["problemPrivateEnvironments"]
+        ],
+        "indicatorPrivateEnvironments": [
+            {"key": env["key"], "value": env.get("value")} for env in match["indicatorPrivateEnvironments"]
+        ],
+    }

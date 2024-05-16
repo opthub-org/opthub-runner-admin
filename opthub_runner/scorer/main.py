@@ -68,7 +68,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
 
             LOGGER.info("Fetch indicator data from DB...")
             match = fetch_match_by_id(message["match_id"])
-            LOGGER.debug("Match: %s", match)
+            LOGGER.debug("Match %s:\n%s", message["match_id"], match)
             LOGGER.info("...Fetched")
 
             LOGGER.info("Fetch Evaluation from DB...")

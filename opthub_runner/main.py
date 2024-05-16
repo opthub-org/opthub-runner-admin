@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Any, cast
 
 import click
 import yaml
+from botocore.exceptions import ClientError
+
+from opthub_runner.utils.credentials import Credentials
 
 if TYPE_CHECKING:
     from opthub_runner.args import Args
@@ -47,10 +50,32 @@ def load_config(ctx: click.Context, param: click.Parameter, config_file: str) ->
     return cast(dict[str, Any], config)
 
 
+def auth(username: str, password: str) -> None:
+    """Sign in."""
+    credentials = Credentials()
+    try:
+        credentials.cognito_login(username, password)
+        click.echo("Successfully signed in.")
+    except ClientError as error:
+        error_code = error.response["Error"]["Code"]
+        if error_code == "NotAuthorizedException":
+            # user not exist or incorrect password
+            click.echo("Authentication failed. Please verify that your username and password are correct.")
+        elif error_code == "TooManyRequestsException":
+            click.echo("Too many requests. Please try again later.")
+        else:
+            click.echo(f"An error occurred: {error_code}")
+    except Exception as e:
+        # another exception
+        click.echo(f"An unexpected error occurred: {e}")
+
+
 signal.signal(signal.SIGTERM, signal_handler)
 
 
 @click.command(help="OptHub Runner.")
+@click.option("--username", "-u", "username", required=True, prompt=True)
+@click.option("--password", "-p", "password", prompt=True, hide_input=True)
 @click.option(
     "-i",
     "--interval",
@@ -89,6 +114,8 @@ signal.signal(signal.SIGTERM, signal_handler)
 @click.pass_context
 def run(
     ctx: click.Context,
+    username: str,
+    password: str,
     interval: int,
     timeout: int,
     rm: bool,
@@ -116,6 +143,8 @@ def run(
         "mode": mode,
         "command": command,
     }
+
+    auth(username, password)
 
     log_level = log_level if log_level is not None else ctx.default_map["log_level"]
 
