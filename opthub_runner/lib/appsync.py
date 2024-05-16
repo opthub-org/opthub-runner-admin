@@ -42,8 +42,6 @@ class Response(TypedDict):
     id: str
     problem: Problem
     indicator: Indicator
-    successTrialsBudget: int
-    submissionsBudget: int
     problemPublicEnvironments: list[KeyValue]
     indicatorPublicEnvironments: list[KeyValue]
     problemPrivateEnvironments: list[NullableKeyValue]
@@ -67,7 +65,7 @@ def get_gql_client() -> Client:
 
 
 def fetch_match_response_by_match_uuid(match_uuid: str) -> Response:
-    """Fetch problemID and problemEnvironments by MatchUUID using GraphQL.
+    """Fetch match by MatchUUID using GraphQL.
 
     Args:
         match_uuid: The match UUID.
@@ -117,8 +115,6 @@ def fetch_match_response_by_match_uuid(match_uuid: str) -> Response:
         "id": match["id"],
         "problem": {"dockerImage": match["problem"]["dockerImage"]},
         "indicator": {"dockerImage": match["indicator"]["dockerImage"]},
-        "successTrialsBudget": match["successTrialsBudget"],
-        "submissionsBudget": match["submissionsBudget"],
         "problemPublicEnvironments": [
             {"key": env["key"], "value": env["value"]} for env in match["problemPublicEnvironments"]
         ],
