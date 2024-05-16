@@ -6,7 +6,7 @@ from opthub_runner.utils.credentials import Credentials
 
 def test_fetch_match_by_id() -> None:
     """Test the fetch_match_by_match_id function."""
-    # "If you run tests, you need to log in as a user participating in the match."
+    # "If you run this test, you need to log in as a user participating in the match."
     username = ""
     password = ""
 
