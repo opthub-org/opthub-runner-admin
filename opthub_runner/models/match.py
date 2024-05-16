@@ -2,6 +2,8 @@
 
 from typing import TypedDict
 
+from opthub_runner.lib.appsync import fetch_match_response_by_match_uuid
+
 
 class Match(TypedDict):
     """This class represents the match problem type.
@@ -20,19 +22,46 @@ class Match(TypedDict):
     problem_environments: dict[str, str]
 
 
-def fetch_match_by_id(id: str) -> Match:
+def fetch_match_by_match_id(match_id: str) -> Match:
     """Fetch the match by GraphQL.
 
     Args:
-        id (str): The id of the match.
+        match_id (str): The id of the match.
 
     Returns:
         Match: The fetched match.
     """
+    if not match_id.startswith("Match#"):
+        msg = "The match_id should start with 'Match#'."
+        raise ValueError(msg)
+
+    match_uuid = match_id[6:]
+    response = fetch_match_response_by_match_uuid(match_uuid)
+
+    problem_environments: dict[str, str] = {}
+    for public_keyvalue in response["problemPublicEnvironments"]:
+        problem_environments[public_keyvalue["key"]] = public_keyvalue["value"]
+
+    for private_keyvalue in response["problemPrivateEnvironments"]:
+        if private_keyvalue["value"] is None:
+            msg = "The private environment is None."
+            raise ValueError(msg)
+        problem_environments[private_keyvalue["key"]] = private_keyvalue["value"]
+
+    indicator_environments = {}
+    for public_keyvalue in response["indicatorPublicEnvironments"]:
+        indicator_environments[public_keyvalue["key"]] = public_keyvalue["value"]
+
+    for private_keyvalue in response["indicatorPrivateEnvironments"]:
+        if private_keyvalue["value"] is None:
+            msg = "The value of the private environment is None."
+            raise ValueError(msg)
+        indicator_environments[private_keyvalue["key"]] = private_keyvalue["value"]
+
     return {
-        "id": "Match#dcc32372-f02d-19c7-866d-f9742d5372ca",
-        "indicator_docker_image": "opthub/best:latest",
-        "indicator_environments": {},
-        "problem_docker_image": "opthub/sphere:latest",
-        "problem_environments": {"SPHERE_OPTIMA": "[[1.5, 1.5, 1.5]]"},
+        "id": response["id"],
+        "indicator_docker_image": response["indicator"]["dockerImage"],
+        "indicator_environments": indicator_environments,
+        "problem_docker_image": response["problem"]["dockerImage"],
+        "problem_environments": problem_environments,
     }
