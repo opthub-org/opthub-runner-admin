@@ -13,7 +13,7 @@ from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import ScorerSQS
 from opthub_runner.models.evaluation import fetch_success_evaluation_by_primary_key
-from opthub_runner.models.match import fetch_match_by_match_id
+from opthub_runner.models.match import fetch_match_by_id
 from opthub_runner.models.score import save_failed_score, save_success_score
 from opthub_runner.scorer.cache import Cache
 from opthub_runner.scorer.history import make_history, write_to_cache
@@ -67,7 +67,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.info("...Found")
 
             LOGGER.info("Fetch indicator data from DB...")
-            match = fetch_match_by_match_id(message["match_id"])
+            match = fetch_match_by_id(message["match_id"])
             LOGGER.debug("Match %s:\n%s", message["match_id"], match)
             LOGGER.info("...Fetched")
 

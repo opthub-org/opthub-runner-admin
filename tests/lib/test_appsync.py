@@ -8,6 +8,7 @@ def test_fetch_match_response_by_match_uuid() -> None:
     """Test fetch_match_by_match_id function."""
     match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
 
+    # "If you run tests, you need to log in as a user participating in the match."
     username = ""
     password = ""
 

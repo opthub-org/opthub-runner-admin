@@ -22,7 +22,7 @@ class Match(TypedDict):
     problem_environments: dict[str, str]
 
 
-def fetch_match_by_match_id(match_id: str) -> Match:
+def fetch_match_by_id(match_id: str) -> Match:
     """Fetch the match by GraphQL.
 
     Args:

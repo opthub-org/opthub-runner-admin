@@ -88,8 +88,6 @@ def fetch_match_response_by_match_uuid(match_uuid: str) -> Response:
                 indicator {
                 dockerImage
                 }
-                successTrialsBudget
-                submissionsBudget
                 problemPublicEnvironments {
                   key
                   value

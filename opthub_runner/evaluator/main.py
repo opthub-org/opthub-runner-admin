@@ -13,7 +13,7 @@ from opthub_runner.lib.docker_executor import execute_in_docker
 from opthub_runner.lib.dynamodb import DynamoDB
 from opthub_runner.lib.sqs import EvaluatorSQS
 from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner.models.match import fetch_match_by_match_id
+from opthub_runner.models.match import fetch_match_by_id
 from opthub_runner.models.solution import fetch_solution_by_primary_key
 
 LOGGER = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.info("...Found")
 
             LOGGER.info("Fetch problem data from DB...")
-            match = fetch_match_by_match_id(message["match_id"])
+            match = fetch_match_by_id(message["match_id"])
             LOGGER.debug("Match %s:\n%s", message["match_id"], match)
             LOGGER.info("...Fetched")
 
