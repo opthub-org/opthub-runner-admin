@@ -1,11 +1,17 @@
 """This module communicates with Amazon SQS."""
 
 import json
+import logging
 from threading import Thread
 from time import sleep, time
+from traceback import format_exc
 from typing import TypedDict
 
 import boto3
+import botocore
+import botocore.exceptions
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Message(TypedDict):
@@ -134,13 +140,27 @@ class RunnerSQS:
                 sleep(1)
                 continue
 
-            self.sqs.change_message_visibility(
-                QueueUrl=self.queue_url,
-                ReceiptHandle=self.receipt_handle,
-                VisibilityTimeout=current_visibility_timeout * 2,
-            )
+            try:
+                # To prevent the main thread from changing receipt_handle into None during the except block,
+                # causing error handling to fail, store self.receipt_handle in a temporary variable.
+                current_receipt_handle = self.receipt_handle
 
-            current_visibility_timeout *= 2
+                self.sqs.change_message_visibility(
+                    QueueUrl=self.queue_url,
+                    ReceiptHandle=current_receipt_handle,
+                    VisibilityTimeout=current_visibility_timeout * 2,
+                )
+
+                current_visibility_timeout *= 2
+
+            except botocore.exceptions.ClientError:
+                LOGGER.warning(format_exc())
+
+            except botocore.exceptions.ParamValidationError as e:
+                if current_receipt_handle is None:
+                    LOGGER.warning("Can not extend visibility since no message handled.")
+                else:
+                    raise botocore.exceptions.ParamValidationError from e
 
 
 class EvaluatorSQS(RunnerSQS):

@@ -24,7 +24,8 @@
   "cSpell.userWords": ["opthub", "hypervolume"],
   "cSpell.words": [
     "aiohttp",
-    "boto"
+    "boto",
+    "botocore"
   ],
 
   // Format setting
