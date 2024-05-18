@@ -1,8 +1,6 @@
 """The module provides a class to handle the cache file for the score calculation."""
 
 import pickle
-import shutil
-import tempfile
 from pathlib import Path
 from typing import TypedDict
 
@@ -34,12 +32,18 @@ class Cache:
         self.__loaded_filename: str | None = None  # file name of the loaded cache
         self.__values: list[Trial] | None = None  # values in the cache
 
-        # Create a temporary directory for the cache
-        temp_dir = tempfile.gettempdir()
-        self.__cache_dir_path = Path(temp_dir) / "cache"
-        if Path.exists(self.__cache_dir_path):
-            shutil.rmtree(self.__cache_dir_path)
-        Path.mkdir(self.__cache_dir_path)
+        # Create a directory for the cache
+        home_dir = Path.home()
+
+        # .opthub_runner_adminディレクトリのパスを作成
+        opthub_runner_admin_dir = home_dir / ".opthub_runner_admin"
+
+        # ディレクトリの存在をチェック
+        if opthub_runner_admin_dir.exists():
+            opthub_runner_admin_dir.mkdir()
+        self.__cache_dir_path = Path(opthub_runner_admin_dir) / "cache"
+        if not Path.exists(self.__cache_dir_path):
+            Path.mkdir(self.__cache_dir_path)
 
     def append(self, value: Trial) -> None:
         """Append a value to the cache.

@@ -1,11 +1,15 @@
 """This module provides a wrapper class for Amazon DynamoDB."""
 
+import logging
 from typing import Any, TypedDict, cast
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
+from botocore.exceptions import BotoCoreError
 
 from opthub_runner.models.schema import Schema
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PrimaryKey(TypedDict):
@@ -63,7 +67,16 @@ class DynamoDB:
         Args:
             item (Schema): The item to put.
         """
-        self.table.put_item(Item=cast(dict[str, Any], item))
+        try:
+            self.table.put_item(
+                Item=cast(dict[str, Any], item),
+                ConditionExpression=Attr("ID").not_exists() & Attr("Trial").not_exists(),
+            )
+        except self.table.meta.client.exceptions.ConditionalCheckFailedException:
+            LOGGER.warning("The item already exists.")
+        except BotoCoreError as e:
+            msg = "Failed to put item to DynamoDB."
+            raise Exception(msg) from e
 
     def get_item_between_least_and_greatest(
         self,

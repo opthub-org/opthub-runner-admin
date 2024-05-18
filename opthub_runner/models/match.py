@@ -59,7 +59,7 @@ def fetch_match_by_id(match_id: str) -> Match:
         indicator_environments[private_keyvalue["key"]] = private_keyvalue["value"]
 
     return {
-        "id": response["id"],
+        "id": match_id,
         "indicator_docker_image": response["indicator"]["dockerImage"],
         "indicator_environments": indicator_environments,
         "problem_docker_image": response["problem"]["dockerImage"],

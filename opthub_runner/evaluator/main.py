@@ -55,9 +55,11 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
 
+            match_id = "Match#" + message["match_id"]
+
             LOGGER.info("Fetch problem data from DB...")
-            match = fetch_match_by_id(message["match_id"])
-            LOGGER.debug("Match %s:\n%s", message["match_id"], match)
+            match = fetch_match_by_id(match_id)
+            LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
 
             LOGGER.info("Fetch Solution from DB...")
