@@ -35,6 +35,8 @@ def set_log_level(log_level: str) -> None:
         raise ValueError(msg)
 
     logging.basicConfig(level=level_num)
+    gql_loglevel = max(level_num, logging.WARNING)
+    logging.getLogger("gql").setLevel(gql_loglevel)
 
 
 def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> dict[str, Any]:

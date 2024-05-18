@@ -39,8 +39,8 @@ class Cache:
         opthub_runner_admin_dir = home_dir / ".opthub_runner_admin"
 
         # ディレクトリの存在をチェック
-        if opthub_runner_admin_dir.exists():
-            opthub_runner_admin_dir.mkdir()
+        if not opthub_runner_admin_dir.exists():
+            Path.mkdir(opthub_runner_admin_dir)
         self.__cache_dir_path = Path(opthub_runner_admin_dir) / "cache"
         if not Path.exists(self.__cache_dir_path):
             Path.mkdir(self.__cache_dir_path)
