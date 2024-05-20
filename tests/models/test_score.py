@@ -60,7 +60,7 @@ def test_score_model() -> None:
             SuccessScoreSchema,
             dynamodb.get_item({"ID": "Scores#Match#1#Team#1", "Trial": f"Success#0000{i}"}),
         )
-        if float(success_item["Score"]) != i / 10:
+        if float(success_item["Value"]) != i / 10:
             msg = "Failed in saving score."
             raise ValueError(msg)
 

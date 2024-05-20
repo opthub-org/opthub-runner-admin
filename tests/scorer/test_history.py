@@ -76,7 +76,7 @@ def test_history_all_success() -> None:
             "StartedAt": datetime.now().isoformat(),
             "FinishedAt": datetime.now().isoformat(),
             "Status": "Success",
-            "Score": Decimal(str(i / 10)),
+            "Value": Decimal(str(i / 10)),
         }
         dynamodb.put_item(put_item_evaluation)
         dynamodb.put_item(put_item_score)
@@ -192,7 +192,7 @@ def test_history_not_all_success() -> None:
                 "StartedAt": datetime.now().isoformat(),
                 "FinishedAt": datetime.now().isoformat(),
                 "Status": "Success",
-                "Score": Decimal(str(i / 10)),
+                "Value": Decimal(str(i / 10)),
             }
             dynamodb.put_item(put_item_score_success)
         elif i in failed_trial_no:
