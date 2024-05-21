@@ -23,6 +23,8 @@ def test_evaluation_model() -> None:
     with Path(config_file).open(encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
+    match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
+
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": config["access_key_id"],
@@ -35,7 +37,7 @@ def test_evaluation_model() -> None:
         dynamodb,
         {
             "trial_no": "00001",
-            "match_id": "Match#1",
+            "match_id": "Match#" + match_uuid,
             "participant_id": "Team#1",
             "started_at": datetime.now().isoformat(),
             "finished_at": datetime.now().isoformat(),
@@ -49,7 +51,7 @@ def test_evaluation_model() -> None:
             dynamodb,
             {
                 "trial_no": f"0000{i}",
-                "match_id": "Match#1",
+                "match_id": "Match#" + match_uuid,
                 "participant_id": "Team#1",
                 "started_at": datetime.now().isoformat(),
                 "finished_at": datetime.now().isoformat(),
@@ -63,7 +65,7 @@ def test_evaluation_model() -> None:
 
         expected_evaluation = SuccessEvaluation(
             {
-                "match_id": "Match#1",
+                "match_id": "Match#" + match_uuid,
                 "trial_no": "00001",
                 "objective": [1.1, 1.2],
                 "constraint": None,
@@ -73,6 +75,9 @@ def test_evaluation_model() -> None:
             },
         )
 
-        if fetch_success_evaluation_by_primary_key(dynamodb, "Match#1", "Team#1", "00001") != expected_evaluation:
+        if (
+            fetch_success_evaluation_by_primary_key(dynamodb, "Match#" + match_uuid, "Team#1", "00001")
+            != expected_evaluation
+        ):
             msg = "Evaluation is not correct."
             raise ValueError(msg)

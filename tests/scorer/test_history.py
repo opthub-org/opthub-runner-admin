@@ -25,6 +25,9 @@ def test_history_all_success() -> None:
         config = yaml.safe_load(file)
 
     cache = Cache()
+
+    match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
+
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": config["access_key_id"],
@@ -50,7 +53,7 @@ def test_history_all_success() -> None:
 
     for i in range(1, 10):
         put_item_evaluation: SuccessEvaluationSchema = {
-            "ID": "Evaluations#Match#1#Team#1",
+            "ID": "Evaluations#Match#" + match_uuid + "#Team#1",
             "Trial": f"Success#{str(i).zfill(5)}",
             "TrialNo": str(i).zfill(5),
             "ResourceType": "Evaluation",
@@ -66,11 +69,11 @@ def test_history_all_success() -> None:
             "Feasible": None,
         }
         put_item_score: SuccessScoreSchema = {
-            "ID": "Scores#Match#1#Team#1",
+            "ID": "Scores#Match#" + match_uuid + "#Team#1",
             "Trial": f"Success#{str(i).zfill(5)}",
             "TrialNo": str(i).zfill(5),
             "ResourceType": "Score",
-            "MatchID": "Match#1",
+            "MatchID": "Match#" + match_uuid,
             "CreatedAt": datetime.now().isoformat(),
             "ParticipantID": "Team#1",
             "StartedAt": datetime.now().isoformat(),
@@ -81,7 +84,7 @@ def test_history_all_success() -> None:
         dynamodb.put_item(put_item_evaluation)
         dynamodb.put_item(put_item_score)
 
-    history = make_history("Match#1", "Team#1", "00002", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00002", cache, dynamodb)
 
     if history != expected_history[:2]:
         msg = "History is not correct."
@@ -91,7 +94,7 @@ def test_history_all_success() -> None:
         msg = "Cache values are not correct."
         raise ValueError(msg)
 
-    history = make_history("Match#1", "Team#1", "00006", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00006", cache, dynamodb)
 
     if history != expected_history[:6]:
         msg = "History is not correct."
@@ -99,7 +102,7 @@ def test_history_all_success() -> None:
 
     write_to_cache(
         cache,
-        "Match#1",
+        "Match#" + match_uuid,
         "Team#1",
         {
             "trial_no": "00007",
@@ -114,7 +117,7 @@ def test_history_all_success() -> None:
         msg = "Cache values are not correct."
         raise ValueError(msg)
 
-    history = make_history("Match#1", "Team#1", "00003", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00003", cache, dynamodb)
 
     if history != expected_history[:3]:
         msg = "History is not correct."
@@ -133,6 +136,9 @@ def test_history_not_all_success() -> None:
         raise FileNotFoundError(msg)
     with Path(config_file).open(encoding="utf-8") as file:
         config = yaml.safe_load(file)
+
+    match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
+
     cache = Cache()
     dynamodb = DynamoDB(
         {
@@ -162,11 +168,11 @@ def test_history_not_all_success() -> None:
 
     for i in range(1, 6):
         put_item_evaluation: SuccessEvaluationSchema = {
-            "ID": "Evaluations#Match#1#Team#1",
+            "ID": "Evaluations#Match#" + match_uuid + "#Team#1",
             "Trial": f"Success#{str(i).zfill(5)}",
             "TrialNo": str(i).zfill(5),
             "ResourceType": "Evaluation",
-            "MatchID": "Match#1",
+            "MatchID": "Match#" + match_uuid,
             "CreatedAt": datetime.now().isoformat(),
             "ParticipantID": "Team#1",
             "StartedAt": datetime.now().isoformat(),
@@ -182,11 +188,11 @@ def test_history_not_all_success() -> None:
 
         if i in success_trial_no:
             put_item_score_success: SuccessScoreSchema = {
-                "ID": "Scores#Match#1#Team#1",
+                "ID": "Scores#Match#" + match_uuid + "#Team#1",
                 "Trial": f"Success#{str(i).zfill(5)}",
                 "TrialNo": str(i).zfill(5),
                 "ResourceType": "Score",
-                "MatchID": "Match#1",
+                "MatchID": "Match#" + match_uuid,
                 "CreatedAt": datetime.now().isoformat(),
                 "ParticipantID": "Team#1",
                 "StartedAt": datetime.now().isoformat(),
@@ -197,11 +203,11 @@ def test_history_not_all_success() -> None:
             dynamodb.put_item(put_item_score_success)
         elif i in failed_trial_no:
             put_item_score_failed: FailedScoreSchema = {
-                "ID": "Scores#Match#1#Team#1",
+                "ID": "Scores#Match#" + match_uuid + "#Team#1",
                 "Trial": f"Failed#{str(i).zfill(5)}",
                 "TrialNo": str(i).zfill(5),
                 "ResourceType": "Score",
-                "MatchID": "Match#1",
+                "MatchID": "Match#" + match_uuid,
                 "CreatedAt": datetime.now().isoformat(),
                 "ParticipantID": "Team#1",
                 "StartedAt": datetime.now().isoformat(),
@@ -211,19 +217,19 @@ def test_history_not_all_success() -> None:
             }
             dynamodb.put_item(put_item_score_failed)
 
-    history = make_history("Match#1", "Team#1", "00002", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00002", cache, dynamodb)
 
     if history != expected_history[:2]:
         msg = "History is not correct."
         raise ValueError(msg)
 
-    history = make_history("Match#1", "Team#1", "00004", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00004", cache, dynamodb)
 
     if history != expected_history[:2]:
         msg = "History is not correct."
         raise ValueError(msg)
 
-    history = make_history("Match#1", "Team#1", "00005", cache, dynamodb)
+    history = make_history("Match#" + match_uuid, "Team#1", "00005", cache, dynamodb)
 
     if history != expected_history:
         msg = "History is not correct."
