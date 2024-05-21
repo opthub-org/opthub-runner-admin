@@ -100,7 +100,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         f"Scores#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),
-        ["TrialNo", "Score"],
+        ["TrialNo", "Value"],
     )
     scores = cast(list[PartialScore], scores)
 
