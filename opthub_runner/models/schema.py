@@ -66,7 +66,7 @@ class SuccessScoreSchema(TypedDict):
     StartedAt: str
     FinishedAt: str
     Status: Literal["Success"]
-    Score: Decimal
+    Value: Decimal
 
 
 class FailedScoreSchema(TypedDict):

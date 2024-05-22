@@ -20,6 +20,8 @@ def test_solution_model() -> None:
     with Path(config_file).open(encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
+    match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
+
     dynamodb = DynamoDB(
         {
             "aws_access_key_id": config["access_key_id"],
@@ -32,9 +34,9 @@ def test_solution_model() -> None:
     dynamodb.put_item(
         SolutionSchema(
             {
-                "ID": "Solutions#Match#1#Team#1",
+                "ID": "Solutions#Match#" + match_uuid + "#Team#1",
                 "Trial": "00001",
-                "MatchID": "Match#1",
+                "MatchID": "Match#" + match_uuid,
                 "TrialNo": "00001",
                 "CreatedAt": datetime.now().isoformat(),
                 "ParticipantID": "Team#1",
@@ -45,7 +47,7 @@ def test_solution_model() -> None:
         ),
     )
 
-    solution = fetch_solution_by_primary_key(dynamodb, "Match#1", "Team#1", "00001")
+    solution = fetch_solution_by_primary_key(dynamodb, "Match#" + match_uuid, "Team#1", "00001")
 
     if solution["variable"] != [0.01, 0.01]:
         msg = "Variable is not correct."

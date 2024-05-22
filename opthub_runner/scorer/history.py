@@ -1,5 +1,6 @@
 """This module provides functions to manage the history of the trials."""
 
+from decimal import Decimal
 from typing import TypedDict, cast
 
 from opthub_runner.lib.dynamodb import DynamoDB
@@ -29,11 +30,11 @@ class PartialScore(TypedDict):
     """The partial type of the score.
 
     TrialNo (str): The trial number.
-    Score (object | None): The score.
+    Value (float | None): The score.
     """
 
     TrialNo: str
-    Score: object | None
+    Value: Decimal | None
 
 
 def make_history(
@@ -99,7 +100,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         f"Scores#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),
-        ["TrialNo", "Score"],
+        ["TrialNo", "Value"],
     )
     scores = cast(list[PartialScore], scores)
 
@@ -121,7 +122,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
             "constraint": decimal_to_float(evaluation["Constraint"]),
             "info": decimal_to_float(evaluation["Info"]),
             "feasible": evaluation["Feasible"],
-            "score": cast(float, decimal_to_float(score["Score"])),
+            "score": cast(float, decimal_to_float(score["Value"])),
         }
         cache.append(current)
 

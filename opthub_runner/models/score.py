@@ -78,7 +78,7 @@ def save_success_score(
         "StartedAt": input_item["started_at"],
         "FinishedAt": input_item["finished_at"],
         "Status": "Success",
-        "Score": score,
+        "Value": score,
     }
     dynamodb.put_item(score_data)
 
