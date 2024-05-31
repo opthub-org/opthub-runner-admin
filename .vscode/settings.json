@@ -6,13 +6,18 @@
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
       "source.organizeImports": "explicit"
     },
   },
 
   // Runff setting
   "ruff.organizeImports": true,
+  "ruff.configuration": "pyproject.toml",
   "ruff.format.args": [
+    "--config=pyproject.toml"
+  ],
+  "ruff.lint.args": [
     "--config=pyproject.toml"
   ],
 
