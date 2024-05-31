@@ -1,7 +1,5 @@
-# coding: utf-8
-"""
-Best fitness value.
-"""
+"""Best fitness value."""
+
 import json
 
 

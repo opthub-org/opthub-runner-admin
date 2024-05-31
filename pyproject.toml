@@ -20,6 +20,9 @@ lint.ignore = [
     "DTZ005",   # Allow timezone naive datetime
     "BLE001",   # Allow builtin exceptions
 ]
+lint.exclude = [
+    "examples/**/*",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

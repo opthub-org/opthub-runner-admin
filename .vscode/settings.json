@@ -24,6 +24,7 @@
   // Mypy setting
   "mypy.runUsingActiveInterpreter": true,
   "mypy.dmypyExecutable": ".venv/bin/dmypy",
+  "mypy.configFile": "mypy.ini",
 
   // Spell check setting
   "cSpell.userWords": ["opthub", "hypervolume"],
@@ -35,4 +36,5 @@
 
   // Format setting
   "files.insertFinalNewline": true,
+
 }
