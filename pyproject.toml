@@ -8,8 +8,8 @@ readme = "README.md"
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-select = ["ALL"]
-ignore = [
+lint.select = ["ALL"]
+lint.ignore = [
     "ANN101",   # Don't require type hints for self.
     "D104",     # Don't require docstrings for public packages.
     "RET504",   # Allow assignment before return
@@ -21,7 +21,7 @@ ignore = [
     "BLE001",   # Allow builtin exceptions
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.poetry.dependencies]
