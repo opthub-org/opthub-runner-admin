@@ -55,6 +55,20 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
 
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            LOGGER.exception("Keyboard Interrupt")
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            ctx.exit(0)
+
+        except Exception:
+            LOGGER.exception("Exception")
+            LOGGER.exception(format_exc())
+            continue
+
+        try:
             match_id = "Match#" + message["match_id"]
 
             LOGGER.info("Fetch problem data from DB...")
@@ -72,20 +86,6 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Solution: %s", solution)
             LOGGER.info("...Fetched")
 
-        except KeyboardInterrupt:
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Keyboard Interrupt")
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
-
-        except Exception:
-            LOGGER.exception("Exception")
-            LOGGER.exception(format_exc())
-            continue
-
-        try:
             LOGGER.info("Start to evaluate...")
             started_at = datetime.now().isoformat()
             info_msg = "Started at : " + started_at
