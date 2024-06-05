@@ -3,10 +3,10 @@
 from decimal import Decimal
 from typing import TypedDict, cast
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.scorer.cache import Cache, Trial
-from opthub_runner.utils.converter import decimal_to_float
-from opthub_runner.utils.zfill import zfill
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.scorer.cache import Cache, Trial
+from opthub_runner_admin.utils.converter import decimal_to_float
+from opthub_runner_admin.utils.zfill import zfill
 
 
 class PartialEvaluation(TypedDict):

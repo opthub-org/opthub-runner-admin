@@ -1,4 +1,4 @@
-"""This module is the main module for the evaluator process."""
+"""The main module for the score calculation process."""
 
 import json
 import logging
@@ -8,32 +8,40 @@ from traceback import format_exc
 
 import click
 
-from opthub_runner.args import Args
-from opthub_runner.lib.docker_executor import execute_in_docker
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.lib.sqs import EvaluatorSQS
-from opthub_runner.models.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner.models.match import fetch_match_by_id
-from opthub_runner.models.solution import fetch_solution_by_primary_key
+from opthub_runner_admin.args import Args
+from opthub_runner_admin.lib.docker_executor import execute_in_docker
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.lib.sqs import ScorerSQS
+from opthub_runner_admin.models.evaluation import fetch_success_evaluation_by_primary_key
+from opthub_runner_admin.models.match import fetch_match_by_id
+from opthub_runner_admin.models.score import save_failed_score, save_success_score
+from opthub_runner_admin.scorer.cache import Cache
+from opthub_runner_admin.scorer.history import make_history, write_to_cache
+from opthub_runner_admin.utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(ctx: click.Context, args: Args) -> None:
-    """The function that controls the evaluation process."""
-    # communication with Amazon SQS
-    sqs = EvaluatorSQS(
+def calculate_score(ctx: click.Context, args: Args) -> None:
+    """The function that controls the score calculation process.
+
+    Args:
+        ctx (click.Context): The Click context.
+        args (Args): The arguments.
+    """
+    # for communication with Amazon SQS
+    sqs = ScorerSQS(
         args["interval"],
         {
-            "queue_name": args["evaluator_queue_name"],
-            "queue_url": args["evaluator_queue_url"],
+            "queue_name": args["scorer_queue_name"],
+            "queue_url": args["scorer_queue_url"],
             "region_name": args["region_name"],
             "aws_access_key_id": args["access_key_id"],
             "aws_secret_access_key": args["secret_access_key"],
         },
     )
 
-    # communication with DynamoDB
+    # for communication with DynamoDB
     dynamodb = DynamoDB(
         {
             "region_name": args["region_name"],
@@ -43,14 +51,17 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         },
     )
 
-    n_evaluation = 0
+    # cache for the history
+    cache = Cache()
+
+    n_score = 0
 
     while True:
-        n_evaluation += 1
-        LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
+        n_score += 1
+        LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
         try:
-            LOGGER.info("Find Solution to evaluate...")
+            LOGGER.info("Find Evaluation to calculate score...")
             message = sqs.get_message_from_queue()
             LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
@@ -71,56 +82,95 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         try:
             match_id = "Match#" + message["match_id"]
 
-            LOGGER.info("Fetch problem data from DB...")
+            LOGGER.info("Fetch indicator data from DB...")
             match = fetch_match_by_id(match_id)
             LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Fetch Solution from DB...")
-            solution = fetch_solution_by_primary_key(
+            LOGGER.info("Fetch Evaluation from DB...")
+
+            evaluation = fetch_success_evaluation_by_primary_key(
                 dynamodb,
                 match["id"],
                 message["participant_id"],
-                message["trial"],
+                message["trial_no"],
             )
-            LOGGER.debug("Solution: %s", solution)
+            LOGGER.debug("Evaluation: %s", evaluation)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Start to evaluate...")
+            LOGGER.info("Make history...")
+            current = {
+                "objective": evaluation["objective"],
+                "constraint": evaluation["constraint"],
+                "info": evaluation["info"],
+            }
+            LOGGER.debug("Current: %s", current)
+            history = make_history(
+                match["id"],
+                evaluation["participant_id"],
+                zfill(int(evaluation["trial_no"]) - 1, len(evaluation["trial_no"])),
+                cache,
+                dynamodb,
+            )
+            LOGGER.debug("History: %s", history)
+            LOGGER.info("...Made")
+
+            LOGGER.info("Start to calculate score...")
             started_at = datetime.now().isoformat()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
 
-            evaluation_result = execute_in_docker(
+            score_result = execute_in_docker(
                 {
-                    "image": match["problem_docker_image"],
-                    "environments": match["problem_environments"],
+                    "image": match["indicator_docker_image"],
+                    "environments": match["indicator_environments"],
                     "command": args["command"],
                     "timeout": args["timeout"],
                     "rm": args["rm"],
                 },
-                [json.dumps(solution["variable"]) + "\n"],
+                [json.dumps(current) + "\n", json.dumps(history) + "\n"],
             )
 
-            if "error" in evaluation_result:
-                msg = "Error occurred while evaluating solution:\n" + evaluation_result["error"]
+            LOGGER.debug("Score Result: %s", score_result)
+
+            if "error" in score_result:
+                msg = "Error occurred while calculating score:\n" + score_result["error"]
                 raise RuntimeError(msg)
-            if "feasible" not in evaluation_result:
-                evaluation_result["feasible"] = None
-            if "constraint" not in evaluation_result:
-                evaluation_result["constraint"] = None
-            if "info" not in evaluation_result:
-                evaluation_result["info"] = {}
 
-            LOGGER.debug("Evaluation Result: %s", evaluation_result)
-
-            LOGGER.info("...Evaluated")
+            LOGGER.info("...Calculated")
             finished_at = datetime.now().isoformat()
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
-            LOGGER.info("Save Evaluation...")
-            save_success_evaluation(
+            LOGGER.info("Save Score...")
+            write_to_cache(
+                cache,
+                match["id"],
+                evaluation["participant_id"],
+                {
+                    "trial_no": evaluation["trial_no"],
+                    "objective": evaluation["objective"],
+                    "constraint": evaluation["constraint"],
+                    "info": evaluation["info"],
+                    "feasible": evaluation["feasible"],
+                    "score": score_result["score"],
+                },
+            )
+            LOGGER.debug(
+                "Trial written to cache: match_id: %s, participant_id: %s\n%s",
+                match["id"],
+                evaluation["participant_id"],
+                {
+                    "trial_no": evaluation["trial_no"],
+                    "objective": evaluation["objective"],
+                    "constraint": evaluation["constraint"],
+                    "info": evaluation["info"],
+                    "feasible": evaluation["feasible"],
+                    "score": score_result["score"],
+                },
+            )
+
+            save_success_score(
                 dynamodb,
                 {
                     "match_id": match["id"],
@@ -129,14 +179,11 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "objective": evaluation_result["objective"],
-                    "constraint": evaluation_result["constraint"],
-                    "info": evaluation_result["info"],
-                    "feasible": evaluation_result["feasible"],
+                    "score": score_result["score"],
                 },
             )
+
             LOGGER.debug(
-                "Evaluation to save: %s",
                 {
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
@@ -144,10 +191,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "objective": evaluation_result["objective"],
-                    "constraint": evaluation_result["constraint"],
-                    "info": evaluation_result["info"],
-                    "feasible": evaluation_result["feasible"],
+                    "score": score_result["score"],
                 },
             )
             LOGGER.info("...Saved")
@@ -159,8 +203,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
-            LOGGER.info("Save Failed Evaluation...")
-            save_failed_evaluation(
+            save_failed_score(
                 dynamodb,
                 {
                     "match_id": match["id"],
@@ -173,7 +216,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                 },
             )
             LOGGER.debug(
-                "Evaluation to save: %s",
+                "Failed Score: %s",
                 {
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
@@ -184,17 +227,25 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "error_message": format_exc(),
                 },
             )
-            LOGGER.info("...Saved")
-            sqs.delete_message_from_queue()
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-
             ctx.exit(0)
         except Exception:
             finished_at = datetime.now().isoformat()
             LOGGER.exception(format_exc())
-            LOGGER.info("Save Failed Evaluation...")
-            save_failed_evaluation(
+            LOGGER.debug(
+                "Failed Score: %s",
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "error_message": format_exc(),
+                },
+            )
+            save_failed_score(
                 dynamodb,
                 {
                     "match_id": match["id"],
@@ -206,19 +257,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
                     "error_message": format_exc(),
                 },
             )
-            LOGGER.debug(
-                "Evaluation to save: %s",
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            LOGGER.info("...Saved")
+
             sqs.delete_message_from_queue()
 
             continue

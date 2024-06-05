@@ -6,9 +6,9 @@ from pathlib import Path
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.models.schema import SolutionSchema
-from opthub_runner.models.solution import fetch_solution_by_primary_key
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.models.schema import SolutionSchema
+from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 
 
 def test_solution_model() -> None:

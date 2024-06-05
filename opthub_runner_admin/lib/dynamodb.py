@@ -7,7 +7,7 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import BotoCoreError
 
-from opthub_runner.models.schema import Schema
+from opthub_runner_admin.models.schema import Schema
 
 LOGGER = logging.getLogger(__name__)
 

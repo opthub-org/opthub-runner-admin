@@ -1,6 +1,6 @@
 """Tests for docker_executor.py."""
 
-from opthub_runner.lib.docker_executor import execute_in_docker
+from opthub_runner_admin.lib.docker_executor import execute_in_docker
 
 
 def test_execute_in_docker() -> None:

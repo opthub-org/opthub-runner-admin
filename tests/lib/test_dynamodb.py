@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB, DynamoDBOptions, PrimaryKey
-from opthub_runner.models.schema import SolutionSchema
+from opthub_runner_admin.lib.dynamodb import DynamoDB, DynamoDBOptions, PrimaryKey
+from opthub_runner_admin.models.schema import SolutionSchema
 
 
 def test_dynamodb() -> None:

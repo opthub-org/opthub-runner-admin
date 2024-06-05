@@ -2,9 +2,9 @@
 
 from typing import TypedDict, cast
 
-from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
-from opthub_runner.models.schema import FailedEvaluationSchema, SuccessEvaluationSchema
-from opthub_runner.utils.converter import decimal_to_float, number_to_decimal
+from opthub_runner_admin.lib.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner_admin.models.schema import FailedEvaluationSchema, SuccessEvaluationSchema
+from opthub_runner_admin.utils.converter import decimal_to_float, number_to_decimal
 
 
 class SuccessEvaluationCreateParams(TypedDict):

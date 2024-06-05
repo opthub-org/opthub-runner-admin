@@ -5,7 +5,7 @@ from typing import TypedDict
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
-from opthub_runner.utils.credentials import Credentials
+from opthub_runner_admin.utils.credentials import Credentials
 
 API_ENDPOINT_URL = "https://jciqso7l7rhajfkt5s3dhybpcu.appsync-api.ap-northeast-1.amazonaws.com/graphql"
 

@@ -1,7 +1,7 @@
 """This module provides tests for the lib/appsync.py module."""
 
-from opthub_runner.lib.appsync import fetch_match_response_by_match_uuid
-from opthub_runner.utils.credentials import Credentials
+from opthub_runner_admin.lib.appsync import fetch_match_response_by_match_uuid
+from opthub_runner_admin.utils.credentials import Credentials
 
 
 def test_fetch_match_response_by_match_uuid() -> None:

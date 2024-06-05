@@ -2,9 +2,9 @@
 
 from typing import TypedDict, cast
 
-from opthub_runner.lib.dynamodb import DynamoDB, PrimaryKey
-from opthub_runner.models.schema import SolutionSchema
-from opthub_runner.utils.converter import decimal_to_float
+from opthub_runner_admin.lib.dynamodb import DynamoDB, PrimaryKey
+from opthub_runner_admin.models.schema import SolutionSchema
+from opthub_runner_admin.utils.converter import decimal_to_float
 
 
 class Solution(TypedDict):

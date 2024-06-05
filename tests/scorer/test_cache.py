@@ -2,7 +2,7 @@
 
 import pytest
 
-from opthub_runner.scorer.cache import Cache, Trial
+from opthub_runner_admin.scorer.cache import Cache, Trial
 
 
 def test_cache() -> None:

@@ -10,10 +10,10 @@ import click
 import yaml
 from botocore.exceptions import ClientError
 
-from opthub_runner.utils.credentials import Credentials
+from opthub_runner_admin.utils.credentials import Credentials
 
 if TYPE_CHECKING:
-    from opthub_runner.args import Args
+    from opthub_runner_admin.args import Args
 
 
 def signal_handler(sig_num: int, frame: FrameType | None) -> None:  # noqa: ARG001
@@ -153,11 +153,11 @@ def run(
     set_log_level(log_level)
 
     if args["mode"] == "evaluator":
-        from opthub_runner.evaluator.main import evaluate
+        from opthub_runner_admin.evaluator.main import evaluate
 
         evaluate(ctx, args)
     elif args["mode"] == "scorer":
-        from opthub_runner.scorer.main import calculate_score
+        from opthub_runner_admin.scorer.main import calculate_score
 
         calculate_score(ctx, args)
     else:
