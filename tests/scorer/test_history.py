@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.scorer.cache import Cache, Trial
-from opthub_runner.scorer.history import make_history, write_to_cache
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.scorer.cache import Cache, Trial
+from opthub_runner_admin.scorer.history import make_history, write_to_cache
 
 if TYPE_CHECKING:
-    from opthub_runner.models.schema import FailedScoreSchema, SuccessEvaluationSchema, SuccessScoreSchema
+    from opthub_runner_admin.models.schema import FailedScoreSchema, SuccessEvaluationSchema, SuccessScoreSchema
 
 
 def test_history_all_success() -> None:

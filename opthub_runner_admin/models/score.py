@@ -3,11 +3,11 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING, TypedDict
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.utils.converter import number_to_decimal
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.utils.converter import number_to_decimal
 
 if TYPE_CHECKING:
-    from opthub_runner.models.schema import FailedScoreSchema, SuccessScoreSchema
+    from opthub_runner_admin.models.schema import FailedScoreSchema, SuccessScoreSchema
 
 
 class SuccessScoreCreateParams(TypedDict):

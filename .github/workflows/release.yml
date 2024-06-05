@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    branches:
+    - dev
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for accurate versioning
+    - uses: ./.github/workflows/actions/poetry_publish
+      with:
+        testpypi: true
+        testpypi_token: ${{ secrets.TEST_PYPI_API_TOKEN }}
+

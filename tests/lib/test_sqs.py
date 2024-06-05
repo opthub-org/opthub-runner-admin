@@ -6,9 +6,9 @@ from pathlib import Path
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB, DynamoDBOptions
-from opthub_runner.lib.sqs import EvaluationMessage, EvaluatorSQS, ScoreMessage, ScorerSQS, SQSOptions
-from opthub_runner.models.schema import FailedEvaluationSchema, SolutionSchema, SuccessEvaluationSchema
+from opthub_runner_admin.lib.dynamodb import DynamoDB, DynamoDBOptions
+from opthub_runner_admin.lib.sqs import EvaluationMessage, EvaluatorSQS, ScoreMessage, ScorerSQS, SQSOptions
+from opthub_runner_admin.models.schema import FailedEvaluationSchema, SolutionSchema, SuccessEvaluationSchema
 
 
 def test_evaluator_sqs() -> None:

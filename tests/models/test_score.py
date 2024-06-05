@@ -6,9 +6,9 @@ from typing import cast
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.models.schema import FailedScoreSchema, SuccessScoreSchema
-from opthub_runner.models.score import save_failed_score, save_success_score
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.models.schema import FailedScoreSchema, SuccessScoreSchema
+from opthub_runner_admin.models.score import save_failed_score, save_success_score
 
 
 def test_score_model() -> None:

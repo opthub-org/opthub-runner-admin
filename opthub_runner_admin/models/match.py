@@ -2,7 +2,7 @@
 
 from typing import TypedDict
 
-from opthub_runner.lib.appsync import fetch_match_response_by_match_uuid
+from opthub_runner_admin.lib.appsync import fetch_match_response_by_match_uuid
 
 
 class Match(TypedDict):

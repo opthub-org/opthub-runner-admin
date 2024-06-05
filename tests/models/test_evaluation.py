@@ -5,8 +5,8 @@ from pathlib import Path
 
 import yaml
 
-from opthub_runner.lib.dynamodb import DynamoDB
-from opthub_runner.models.evaluation import (
+from opthub_runner_admin.lib.dynamodb import DynamoDB
+from opthub_runner_admin.models.evaluation import (
     SuccessEvaluation,
     fetch_success_evaluation_by_primary_key,
     save_failed_evaluation,
