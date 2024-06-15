@@ -61,7 +61,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
         try:
-            LOGGER.info("Find Evaluation to calculate score...")
+            LOGGER.info("Finding Evaluation to calculate score...")
             message = sqs.get_message_from_queue()
             LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
@@ -82,12 +82,12 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         try:
             match_id = "Match#" + message["match_id"]
 
-            LOGGER.info("Fetch indicator data from DB...")
+            LOGGER.info("Fetching indicator data from DB...")
             match = fetch_match_by_id(match_id)
             LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Fetch Evaluation from DB...")
+            LOGGER.info("Fetching Evaluation from DB...")
 
             evaluation = fetch_success_evaluation_by_primary_key(
                 dynamodb,
@@ -98,7 +98,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Evaluation: %s", evaluation)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Make history...")
+            LOGGER.info("Making history...")
             current = {
                 "objective": evaluation["objective"],
                 "constraint": evaluation["constraint"],
@@ -115,7 +115,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("History: %s", history)
             LOGGER.info("...Made")
 
-            LOGGER.info("Start to calculate score...")
+            LOGGER.info("Calculating score...")
             started_at = datetime.now().isoformat()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
@@ -142,7 +142,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
-            LOGGER.info("Save Score...")
+            LOGGER.info("Saving Score...")
             write_to_cache(
                 cache,
                 match["id"],
@@ -203,6 +203,7 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
+            LOGGER.info("Saving Failed Score...")
             save_failed_score(
                 dynamodb,
                 {
@@ -217,36 +218,6 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             )
             LOGGER.debug(
                 "Failed Score: %s",
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
-        except Exception:
-            finished_at = datetime.now().isoformat()
-            LOGGER.exception(format_exc())
-            LOGGER.debug(
-                "Failed Score: %s",
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            save_failed_score(
-                dynamodb,
                 {
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
@@ -258,6 +229,40 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                 },
             )
 
+            LOGGER.info("...Saved")
+            sqs.delete_message_from_queue()
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            ctx.exit(0)
+        except Exception:
+            finished_at = datetime.now().isoformat()
+            LOGGER.exception(format_exc())
+            LOGGER.info("Saving Failed Score...")
+            LOGGER.debug(
+                "Failed Score: %s",
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "error_message": format_exc(),
+                },
+            )
+            save_failed_score(
+                dynamodb,
+                {
+                    "match_id": match["id"],
+                    "participant_id": message["participant_id"],
+                    "trial_no": message["trial_no"],
+                    "created_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "finished_at": finished_at,
+                    "error_message": format_exc(),
+                },
+            )
+            LOGGER.info("...Saved")
             sqs.delete_message_from_queue()
 
             continue
