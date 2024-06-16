@@ -50,7 +50,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
         try:
-            LOGGER.info("Find Solution to evaluate...")
+            LOGGER.info("Finding Solution to evaluate...")
             message = sqs.get_message_from_queue()
             LOGGER.debug("Message: %s", message)
             LOGGER.info("...Found")
@@ -71,12 +71,12 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         try:
             match_id = "Match#" + message["match_id"]
 
-            LOGGER.info("Fetch problem data from DB...")
+            LOGGER.info("Fetching problem data from DB...")
             match = fetch_match_by_id(match_id)
             LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Fetch Solution from DB...")
+            LOGGER.info("Fetching Solution from DB...")
             solution = fetch_solution_by_primary_key(
                 dynamodb,
                 match["id"],
@@ -86,7 +86,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Solution: %s", solution)
             LOGGER.info("...Fetched")
 
-            LOGGER.info("Start to evaluate...")
+            LOGGER.info("Evaluating...")
             started_at = datetime.now().isoformat()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
@@ -119,7 +119,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
-            LOGGER.info("Save Evaluation...")
+            LOGGER.info("Saving Evaluation...")
             save_success_evaluation(
                 dynamodb,
                 {
@@ -159,7 +159,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             LOGGER.exception("Keyboard Interrupt")
             finished_at = datetime.now().isoformat()
-            LOGGER.info("Save Failed Evaluation...")
+            LOGGER.info("Saving Failed Evaluation...")
             save_failed_evaluation(
                 dynamodb,
                 {
@@ -193,7 +193,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         except Exception:
             finished_at = datetime.now().isoformat()
             LOGGER.exception(format_exc())
-            LOGGER.info("Save Failed Evaluation...")
+            LOGGER.info("Saving Failed Evaluation...")
             save_failed_evaluation(
                 dynamodb,
                 {
