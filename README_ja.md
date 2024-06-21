@@ -48,7 +48,7 @@ Password: (your password)
 #### Scorerの実行方法
 まず、以下のコマンドでScorerを起動します。
 
-`--config`には、Configure Optionsで設定したYAMLファイルのパスを設定します。
+`--config`には、Configure Optionsで設定したYAMLファイルのパスを設定します。指定しない場合は、実行ディレクトリ直下の`config.yml`が使用されます。
 
 ```bash
 opthub-runner scorer --config (yaml file path)

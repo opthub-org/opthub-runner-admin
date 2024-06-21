@@ -107,7 +107,7 @@ signal.signal(signal.SIGTERM, signal_handler)
     "--config",
     envvar="OPTHUB_RUNNER_CONFIG",
     type=click.Path(dir_okay=False),
-    default="opthub_runner/opthub-runner.yml",
+    default="config.yml",
     callback=load_config,
     help="Configuration file.",
 )
