@@ -103,6 +103,9 @@ log_level | [DEBUG、INFO、WARNING、ERROR、CRITICAL] | INFO | 出力するロ
     - ms-python.black-formatter
     - ms-python.flake8
     - ms-python.isort
+6. `config.default.yml`を参考に、オプションを記述した`config.yml`を作成
+    - config.ymlはopthub-runner-admin直下に配置してください。
+    - config.default.ymlでコメントアウトされているオプションの設定値は、Opthubの担当者に確認してください。連絡先は[こちら](#Contact)です。
 
 上記のセットアップ完了後、プロジェクトのrootディレクトリで`opthub-runner`コマンドが使用可能になります。
 
