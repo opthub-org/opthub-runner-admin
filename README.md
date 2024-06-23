@@ -103,6 +103,9 @@ Follow these steps to set up the environment:
     - ms-python.black-formatter
     - ms-python.flake8
     - ms-python.isort
+6. Create `config.yml` with options based on `config.default.yml`.
+    - Place `config.yml` directly under opthub-runner-admin.
+    - For the values of the options commented out in `config.default.yml`, please contact the Opthub representative. Contact information is [here](#Contact).
 
 Once you have completed the above setup, you can use the `opthub-runner` command in the project's root directory.
 
