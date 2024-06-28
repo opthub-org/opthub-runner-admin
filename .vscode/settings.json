@@ -1,0 +1,40 @@
+{
+  // Auto save
+  "files.autoSave": "onFocusChange",
+
+  // Python editor setting
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.organizeImports": "explicit"
+    },
+  },
+
+  // Runff setting
+  "ruff.organizeImports": true,
+  "ruff.configuration": "pyproject.toml",
+  "ruff.format.args": [
+    "--config=pyproject.toml"
+  ],
+  "ruff.lint.args": [
+    "--config=pyproject.toml"
+  ],
+
+  // Mypy setting
+  "mypy.runUsingActiveInterpreter": true,
+  "mypy.dmypyExecutable": ".venv/bin/dmypy",
+  "mypy.configFile": "mypy.ini",
+
+  // Spell check setting
+  "cSpell.userWords": ["opthub", "hypervolume"],
+  "cSpell.words": [
+    "aiohttp",
+    "boto",
+    "botocore"
+  ],
+
+  // Format setting
+  "files.insertFinalNewline": true,
+
+}

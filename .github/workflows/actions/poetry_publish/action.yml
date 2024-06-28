@@ -1,0 +1,63 @@
+name: "Poetry Publish"
+description: "A composite action that publishes a Python package using poetry to PyPI and TestPyPI."
+inputs:
+  testpypi:
+    description: "If you want to publish to TestPyPI, set this to true"
+    required: false
+    default: false
+  pypi:
+    description: "If you want to publish to PyPI, set this to true"
+    required: false
+    default: false
+  testpypi_token:
+    description: "Test PyPI API token"
+    required: false
+  pypi_token:
+    description: "PyPI API token"
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.1'
+
+    - name: Install Poetry
+      shell: bash
+      run: |
+        echo "Installing Poetry..."
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        echo "Installing dependencies..."
+        poetry install
+        poetry self add poetry-dynamic-versioning
+
+    - name: Build
+      shell: bash
+      run: |
+        echo "Building package..."
+        poetry build
+
+    - name: Publish to TestPyPI
+      shell: bash
+      if: ${{ inputs.testpypi == 'true' }}
+      env:
+        TEST_PYPI_API_TOKEN: ${{ inputs.testpypi_token }}
+      run: |
+        echo "Publishing to TestPyPI..."
+        poetry config repositories.testpypi https://test.pypi.org/legacy/
+        poetry publish -r testpypi --username __token__ --password $TEST_PYPI_API_TOKEN
+
+    - name: Publish to PyPI
+      shell: bash
+      if: ${{ inputs.pypi == 'true' }}
+      env:
+        PYPI_API_TOKEN: ${{ inputs.pypi_token }}
+      run: |
+        echo "Publishing to PyPI..."
+        poetry publish --username __token__ --password $PYPI_API_TOKEN

@@ -1,0 +1,5 @@
+__pycache__
+.DS_Store
+tests/add_solution.py
+dist/
+config.yml

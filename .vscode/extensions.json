@@ -1,0 +1,35 @@
+{
+  "recommendations": [
+    // Basic python extensions
+    "ms-python.python",
+    "ms-python.debugpy",
+    "ms-python.vscode-pylance",
+
+    // Python type hint
+    "matangover.mypy",
+
+    // Ruff
+    "charliermarsh.ruff",
+
+    // Easy to read error message
+    "usernamehw.errorlens",
+
+    // TOML syntax highlight
+    "tamasfe.even-better-toml",
+
+    // GraphQL syntax highlight
+    "graphql.vscode-graphql-syntax",
+
+    // Spell check
+    "streetsidesoftware.code-spell-checker",
+
+    // Todo highlight
+    "wayou.vscode-todo-highlight",
+
+    // Git emoji
+    "seatonjiang.gitmoji-vscode",
+
+    // Doc string
+    "njpwerner.autodocstring",
+  ]
+}
