@@ -1,4 +1,5 @@
-[English Version](README.md) 👈
+[English Version](https://github.com/opthub-org/opthub-runner-admin) 👈
+
 # OptHub Runner
 
 ![Skills](https://skillicons.dev/icons?i=py,aws,graphql,docker,vscode,github)

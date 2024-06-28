@@ -1,4 +1,5 @@
-[日本語版](README_ja.md) 👈
+[日本語版](https://github.com/opthub-org/opthub-runner-admin/blob/main/README_ja.md) 👈
+
 # OptHub Runner
 
 ![Skills](https://skillicons.dev/icons?i=py,aws,graphql,docker,vscode,github)
