@@ -13,7 +13,7 @@ This repository describes how to install and run Opthub Runner.
 
 ## Getting Started
 ### Prerequisites
-- Install Python 3.8 or newer.
+- Install Python 3.10 or newer.
 - Set up pip for package management.
 - Install and start Docker.*
 
