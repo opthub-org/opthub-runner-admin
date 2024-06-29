@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/opthub-org/opthub-runner-admin/compare/v0.1.0...v0.1.1) (2024-06-29)
+
+
+### Bug Fixes
+
+* Change python version (3.12.1 -&gt; >=3.10, &lt; 4.0) ([7d85b3a](https://github.com/opthub-org/opthub-runner-admin/commit/7d85b3ab8910f4573b07a3f5a337857836a125c2))
+
 ## 0.1.0 (2024-06-28)
 
 
