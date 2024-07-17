@@ -155,11 +155,11 @@ def run(
     if args["mode"] == "evaluator":
         from opthub_runner_admin.evaluator.main import evaluate
 
-        evaluate(ctx, args)
+        evaluate(args)
     elif args["mode"] == "scorer":
         from opthub_runner_admin.scorer.main import calculate_score
 
-        calculate_score(ctx, args)
+        calculate_score(args)
     else:
         msg = f"Invalid mode: {args['mode']}"
         raise ValueError(msg)

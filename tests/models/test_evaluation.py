@@ -43,6 +43,7 @@ def test_evaluation_model() -> None:
             "finished_at": datetime.now().isoformat(),
             "created_at": datetime.now().isoformat(),
             "error_message": "TestErrorMessage",
+            "admin_error_message": "TestAdminErrorMessage",
         },
     )
 

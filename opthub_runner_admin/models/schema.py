@@ -51,6 +51,7 @@ class FailedEvaluationSchema(TypedDict):
     FinishedAt: str
     Status: Literal["Failed"]
     ErrorMessage: str
+    AdminErrorMessage: str
 
 
 class SuccessScoreSchema(TypedDict):
@@ -83,6 +84,7 @@ class FailedScoreSchema(TypedDict):
     FinishedAt: str
     Status: Literal["Failed"]
     ErrorMessage: str
+    AdminErrorMessage: str
 
 
 Schema = SolutionSchema | SuccessEvaluationSchema | FailedEvaluationSchema | SuccessScoreSchema | FailedScoreSchema

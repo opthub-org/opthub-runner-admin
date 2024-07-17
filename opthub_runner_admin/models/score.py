@@ -40,7 +40,8 @@ class FailedScoreCreateParams(TypedDict):
     created_at (str): The time when the score to be calculated was created. ISOString format.
     started_at (str): The time when the calculation of the score started. ISOString format.
     finished_at (str): The time when the calculation of the score finished. ISOString format.
-    error_message (str): The error message when the calculation of score is failed.
+    error_message (str): The error message shown to the participant when the calculation of score is failed.
+    admin_error_message (str): The error message for the admin when the calculation of score is failed.
     """
 
     match_id: str
@@ -50,6 +51,7 @@ class FailedScoreCreateParams(TypedDict):
     started_at: str
     finished_at: str
     error_message: str
+    admin_error_message: str
 
 
 def save_success_score(
@@ -102,5 +104,6 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
         "FinishedAt": input_item["finished_at"],
         "Status": "Failed",
         "ErrorMessage": input_item["error_message"],
+        "AdminErrorMessage": input_item["admin_error_message"],
     }
     dynamodb.put_item(score)
