@@ -46,7 +46,8 @@ class FailedEvaluationCreateParams(TypedDict):
     created_at (str): The time when the solution to be evaluated was created. ISOString format.
     started_at (str): The time when the evaluation of the solution started. ISOString format.
     finished_at (str): The time when the evaluation of the solution finished. ISOString format.
-    error_message (str): The error message when the evaluation is failed.
+    error_message (str): The error message shown to the participant when the evaluation is failed.
+    admin_error_message (str): The error message for the admin when the evaluation is failed.
     """
 
     match_id: str
@@ -56,6 +57,7 @@ class FailedEvaluationCreateParams(TypedDict):
     started_at: str
     finished_at: str
     error_message: str
+    admin_error_message: str
 
 
 class SuccessEvaluation(TypedDict):
@@ -131,6 +133,7 @@ def save_failed_evaluation(
         "FinishedAt": input_item["finished_at"],
         "Status": "Failed",
         "ErrorMessage": input_item["error_message"],
+        "AdminErrorMessage": input_item["admin_error_message"],
     }
     dynamodb.put_item(evaluation)
 

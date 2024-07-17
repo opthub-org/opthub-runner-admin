@@ -163,6 +163,7 @@ def test_scorer_sqs() -> None:
                 "ResourceType": "Evaluation",
                 "Status": "Failed",
                 "ErrorMessage": "KeyboardInterrupt\n",
+                "AdminErrorMessage": "KeyboardInterrupt\n",
                 "TrialNo": str(i + 1).zfill(5),
             },
         )

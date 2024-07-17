@@ -3,16 +3,16 @@
 import json
 import logging
 import signal
+import sys
 from datetime import datetime
 from traceback import format_exc
-
-import click
 
 from opthub_runner_admin.args import Args
 from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import ScorerSQS
 from opthub_runner_admin.models.evaluation import fetch_success_evaluation_by_primary_key
+from opthub_runner_admin.models.exception import DockerError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.score import save_failed_score, save_success_score
 from opthub_runner_admin.scorer.cache import Cache
@@ -22,11 +22,10 @@ from opthub_runner_admin.utils.zfill import zfill
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_score(ctx: click.Context, args: Args) -> None:
+def calculate_score(args: Args) -> None:  # noqa: PLR0915
     """The function that controls the score calculation process.
 
     Args:
-        ctx (click.Context): The Click context.
         args (Args): The arguments.
     """
     # for communication with Amazon SQS
@@ -69,17 +68,18 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Keyboard Interrupt")
+            LOGGER.exception("Error occurred while fetching message from SQS.")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
+            sys.exit(0)
 
         except Exception:
-            LOGGER.exception("Exception")
-            LOGGER.exception(format_exc())
+            LOGGER.exception("Error occurred while fetching message from SQS.")
             continue
 
         try:
+            started_at = None
+            finished_at = None
             match_id = "Match#" + message["match_id"]
 
             LOGGER.info("Fetching indicator data from DB...")
@@ -134,8 +134,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
             LOGGER.debug("Score Result: %s", score_result)
 
             if "error" in score_result:
-                msg = "Error occurred while calculating score:\n" + score_result["error"]
-                raise RuntimeError(msg)
+                msg = "Error occurred while calculating score.\n" + score_result["error"]
+                raise DockerError(msg)
 
             LOGGER.info("...Calculated")
             finished_at = datetime.now().isoformat()
@@ -198,45 +198,15 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
 
             sqs.delete_message_from_queue()
 
-        except KeyboardInterrupt:
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Keyboard Interrupt")
-            finished_at = datetime.now().isoformat()
-            LOGGER.info("Saving Failed Score...")
-            save_failed_score(
-                dynamodb,
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            LOGGER.debug(
-                "Failed Score: %s",
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
+        except (Exception, KeyboardInterrupt) as error:
+            if isinstance(error, KeyboardInterrupt):
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            LOGGER.info("...Saved")
-            sqs.delete_message_from_queue()
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
-        except Exception:
-            finished_at = datetime.now().isoformat()
-            LOGGER.exception(format_exc())
+            started_at = started_at if started_at is not None else datetime.now().isoformat()
+            finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
+            error_msg = format_exc() if isinstance(error, DockerError) else "Internal Server Error"
+            LOGGER.exception("Error occurred while calculating score.")
             LOGGER.info("Saving Failed Score...")
             LOGGER.debug(
                 "Failed Score: %s",
@@ -247,7 +217,8 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": format_exc(),
+                    "error_message": error_msg,
+                    "admin_error_message": format_exc(),
                 },
             )
             save_failed_score(
@@ -259,10 +230,14 @@ def calculate_score(ctx: click.Context, args: Args) -> None:
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": format_exc(),
+                    "error_message": error_msg,
+                    "admin_error_message": format_exc(),
                 },
             )
             LOGGER.info("...Saved")
             sqs.delete_message_from_queue()
-
+            if isinstance(error, KeyboardInterrupt):
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
+                signal.signal(signal.SIGINT, signal.SIG_DFL)
+                sys.exit(0)
             continue

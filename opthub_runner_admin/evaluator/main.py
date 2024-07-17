@@ -3,24 +3,28 @@
 import json
 import logging
 import signal
+import sys
 from datetime import datetime
 from traceback import format_exc
-
-import click
 
 from opthub_runner_admin.args import Args
 from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import EvaluatorSQS
 from opthub_runner_admin.models.evaluation import save_failed_evaluation, save_success_evaluation
+from opthub_runner_admin.models.exception import DockerError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(ctx: click.Context, args: Args) -> None:
-    """The function that controls the evaluation process."""
+def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
+    """The function that controls the evaluation process.
+
+    Args:
+        args (Args): The arguments for the evaluation process.
+    """
     # communication with Amazon SQS
     sqs = EvaluatorSQS(
         args["interval"],
@@ -58,17 +62,18 @@ def evaluate(ctx: click.Context, args: Args) -> None:
         except KeyboardInterrupt:
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
             signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Keyboard Interrupt")
+            LOGGER.exception("Error occurred while fetching message from SQS.")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-            ctx.exit(0)
+            sys.exit(0)
 
         except Exception:
-            LOGGER.exception("Exception")
-            LOGGER.exception(format_exc())
+            LOGGER.exception("Error occurred while fetching message from SQS.")
             continue
 
         try:
+            started_at = None
+            finished_at = None
             match_id = "Match#" + message["match_id"]
 
             LOGGER.info("Fetching problem data from DB...")
@@ -79,7 +84,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.info("Fetching Solution from DB...")
             solution = fetch_solution_by_primary_key(
                 dynamodb,
-                match["id"],
+                match_id,
                 message["participant_id"],
                 message["trial"],
             )
@@ -104,7 +109,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
 
             if "error" in evaluation_result:
                 msg = "Error occurred while evaluating solution:\n" + evaluation_result["error"]
-                raise RuntimeError(msg)
+                raise DockerError(msg)
             if "feasible" not in evaluation_result:
                 evaluation_result["feasible"] = None
             if "constraint" not in evaluation_result:
@@ -123,7 +128,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             save_success_evaluation(
                 dynamodb,
                 {
-                    "match_id": match["id"],
+                    "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
@@ -138,7 +143,7 @@ def evaluate(ctx: click.Context, args: Args) -> None:
             LOGGER.debug(
                 "Evaluation to save: %s",
                 {
-                    "match_id": match["id"],
+                    "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
@@ -154,71 +159,46 @@ def evaluate(ctx: click.Context, args: Args) -> None:
 
             sqs.delete_message_from_queue()
 
-        except KeyboardInterrupt:
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Keyboard Interrupt")
-            finished_at = datetime.now().isoformat()
+        except (KeyboardInterrupt, Exception) as error:
+            if isinstance(error, KeyboardInterrupt):
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+            started_at = started_at if started_at is not None else datetime.now().isoformat()
+            finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
+            error_msg = format_exc() if isinstance(error, DockerError) else "Internal Server Error"
+            LOGGER.exception("Error occurred while evaluating solution.")
             LOGGER.info("Saving Failed Evaluation...")
             save_failed_evaluation(
                 dynamodb,
                 {
-                    "match_id": match["id"],
+                    "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": format_exc(),
+                    "error_message": error_msg,
+                    "admin_error_message": format_exc(),
                 },
             )
             LOGGER.debug(
                 "Evaluation to save: %s",
                 {
-                    "match_id": match["id"],
+                    "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": datetime.now().isoformat(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": format_exc(),
+                    "error_message": error_msg,
+                    "admin_error_message": format_exc(),
                 },
             )
             LOGGER.info("...Saved")
             sqs.delete_message_from_queue()
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-            ctx.exit(0)
-        except Exception:
-            finished_at = datetime.now().isoformat()
-            LOGGER.exception(format_exc())
-            LOGGER.info("Saving Failed Evaluation...")
-            save_failed_evaluation(
-                dynamodb,
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            LOGGER.debug(
-                "Evaluation to save: %s",
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": format_exc(),
-                },
-            )
-            LOGGER.info("...Saved")
-            sqs.delete_message_from_queue()
-
+            if isinstance(error, KeyboardInterrupt):
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
+                signal.signal(signal.SIGINT, signal.SIG_DFL)
+                sys.exit(0)
             continue

@@ -214,6 +214,7 @@ def test_history_not_all_success() -> None:
                 "FinishedAt": datetime.now().isoformat(),
                 "Status": "Failed",
                 "ErrorMessage": "TestErrorMessage",
+                "AdminErrorMessage": "TestAdminErrorMessage",
             }
             dynamodb.put_item(put_item_score_failed)
 
