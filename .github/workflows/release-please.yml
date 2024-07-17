@@ -29,7 +29,5 @@ jobs:
         fetch-depth: 0 # Fetch all history for accurate versioning
     - uses: ./.github/workflows/actions/poetry_publish
       with:
-        testpypi: true
-        testpypi_token: ${{ secrets.TEST_PYPI_API_TOKEN }}
         pypi: true
         pypi_token: ${{ secrets.PYPI_API_TOKEN }}
