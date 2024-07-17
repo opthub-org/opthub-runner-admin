@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.1.1...v0.2.0) (2024-07-17)
+
+
+### Features
+
+* Change error handling method ([#48](https://github.com/opthub-org/opthub-runner-admin/issues/48)) ([b29b20d](https://github.com/opthub-org/opthub-runner-admin/commit/b29b20de6359f72c5a29b8e3e3386610b24c4a8d))
+
 ## [0.1.1](https://github.com/opthub-org/opthub-runner-admin/compare/v0.1.0...v0.1.1) (2024-06-29)
 
 
