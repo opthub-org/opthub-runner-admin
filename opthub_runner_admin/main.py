@@ -10,7 +10,7 @@ import click
 import yaml
 from botocore.exceptions import ClientError
 
-from opthub_runner_admin.utils.credentials import Credentials
+from opthub_runner_admin.utils.credentials.credentials import Credentials
 
 if TYPE_CHECKING:
     from opthub_runner_admin.args import Args
