@@ -65,7 +65,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             LOGGER.exception("Error occurred while fetching message from SQS.")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-            sys.exit(0)
+            sys.exit(1)
 
         except Exception:
             LOGGER.exception("Error occurred while fetching message from SQS.")
@@ -200,5 +200,5 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGINT, signal.SIG_DFL)
-                sys.exit(0)
+                sys.exit(1)
             continue

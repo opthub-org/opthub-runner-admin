@@ -2,6 +2,7 @@
 
 import logging
 import signal
+import sys
 from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any, cast
@@ -67,9 +68,11 @@ def auth(username: str, password: str) -> None:
             click.echo("Too many requests. Please try again later.")
         else:
             click.echo(f"An error occurred: {error_code}")
+        sys.exit(1)
     except Exception as e:
         # another exception
         click.echo(f"An unexpected error occurred: {e}")
+        sys.exit(1)
 
 
 signal.signal(signal.SIGTERM, signal_handler)
