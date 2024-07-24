@@ -19,6 +19,7 @@ jobs:
       uses: googleapis/release-please-action@v4
       with:
         release-type: python
+        target-branch: main
   pypi:
     needs: github-release
     if: ${{ needs.github-release.outputs.release_created }}
