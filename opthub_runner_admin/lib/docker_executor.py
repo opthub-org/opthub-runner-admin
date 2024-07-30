@@ -5,6 +5,7 @@ import logging
 from typing import Any, TypedDict, cast
 
 import docker
+from docker.errors import APIError
 
 from opthub_runner_admin.utils.converter import float_to_json_float
 
@@ -39,7 +40,11 @@ def execute_in_docker(
     LOGGER.info("...Connected")
 
     LOGGER.info("Pull image...")
-    client.images.pull(config["image"])  # pull image
+    try:
+        client.images.pull(config["image"])  # pull image
+    except APIError:
+        client.images.get(config["image"])  # If image in local, get it
+
     LOGGER.debug(config["image"])
     LOGGER.info("...Pulled")
     # run container
