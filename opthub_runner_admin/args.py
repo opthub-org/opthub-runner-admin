@@ -12,9 +12,7 @@ class Args(TypedDict):
     mode: str
     command: list[str]
 
-    evaluator_queue_name: str
     evaluator_queue_url: str
-    scorer_queue_name: str
     scorer_queue_url: str
     access_key_id: str
     secret_access_key: str

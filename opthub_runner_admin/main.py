@@ -2,6 +2,7 @@
 
 import logging
 import signal
+import sys
 from pathlib import Path
 from types import FrameType
 from typing import TYPE_CHECKING, Any, cast
@@ -10,7 +11,8 @@ import click
 import yaml
 from botocore.exceptions import ClientError
 
-from opthub_runner_admin.utils.credentials import Credentials
+from opthub_runner_admin.utils.credentials.credentials import Credentials
+from opthub_runner_admin.utils.docker import check_docker
 
 if TYPE_CHECKING:
     from opthub_runner_admin.args import Args
@@ -67,9 +69,11 @@ def auth(username: str, password: str) -> None:
             click.echo("Too many requests. Please try again later.")
         else:
             click.echo(f"An error occurred: {error_code}")
+        sys.exit(1)
     except Exception as e:
         # another exception
         click.echo(f"An unexpected error occurred: {e}")
+        sys.exit(1)
 
 
 signal.signal(signal.SIGTERM, signal_handler)
@@ -134,9 +138,7 @@ def run(
         "interval": interval if interval is not None else ctx.default_map["interval"],
         "timeout": timeout if timeout is not None else ctx.default_map["timeout"],
         "rm": rm if rm is not None else ctx.default_map["rm"],
-        "evaluator_queue_name": ctx.default_map["evaluator_queue_name"],
         "evaluator_queue_url": ctx.default_map["evaluator_queue_url"],
-        "scorer_queue_name": ctx.default_map["scorer_queue_name"],
         "scorer_queue_url": ctx.default_map["scorer_queue_url"],
         "access_key_id": ctx.default_map["access_key_id"],
         "secret_access_key": ctx.default_map["secret_access_key"],
@@ -145,6 +147,8 @@ def run(
         "mode": mode,
         "command": command,
     }
+
+    check_docker()
 
     auth(username, password)
 

@@ -1,7 +1,7 @@
 """This module provides tests for the models/match.py module."""
 
 from opthub_runner_admin.models.match import fetch_match_by_id
-from opthub_runner_admin.utils.credentials import Credentials
+from opthub_runner_admin.utils.credentials.credentials import Credentials
 
 
 def test_fetch_match_by_id() -> None:

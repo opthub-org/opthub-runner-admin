@@ -12,7 +12,7 @@ from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import EvaluatorSQS
 from opthub_runner_admin.models.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner_admin.models.exception import DockerError
+from opthub_runner_admin.models.exception import ContainerRuntimeError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 
@@ -29,13 +29,18 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
     sqs = EvaluatorSQS(
         args["interval"],
         {
-            "queue_name": args["evaluator_queue_name"],
             "queue_url": args["evaluator_queue_url"],
             "region_name": args["region_name"],
             "aws_access_key_id": args["access_key_id"],
             "aws_secret_access_key": args["secret_access_key"],
         },
     )
+    try:
+        sqs.check_accessible()  # check if the queue is accessible
+    except Exception:
+        sys.exit(1)
+
+    sqs.wake_up_visibility_extender()  # wake up the visibility extender
 
     # communication with DynamoDB
     dynamodb = DynamoDB(
@@ -46,6 +51,10 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             "table_name": args["table_name"],
         },
     )
+    try:
+        dynamodb.check_accessible()  # check if the table is accessible
+    except Exception:
+        sys.exit(1)
 
     n_evaluation = 0
 
@@ -65,7 +74,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             LOGGER.exception("Error occurred while fetching message from SQS.")
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGINT, signal.SIG_DFL)
-            sys.exit(0)
+            sys.exit(1)
 
         except Exception:
             LOGGER.exception("Error occurred while fetching message from SQS.")
@@ -109,7 +118,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
 
             if "error" in evaluation_result:
                 msg = "Error occurred while evaluating solution:\n" + evaluation_result["error"]
-                raise DockerError(msg)
+                raise ContainerRuntimeError(msg)
             if "feasible" not in evaluation_result:
                 evaluation_result["feasible"] = None
             if "constraint" not in evaluation_result:
@@ -166,7 +175,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
 
             started_at = started_at if started_at is not None else datetime.now().isoformat()
             finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
-            error_msg = format_exc() if isinstance(error, DockerError) else "Internal Server Error"
+            error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
             LOGGER.exception("Error occurred while evaluating solution.")
             LOGGER.info("Saving Failed Evaluation...")
             save_failed_evaluation(
@@ -200,5 +209,5 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGINT, signal.SIG_DFL)
-                sys.exit(0)
+                sys.exit(1)
             continue
