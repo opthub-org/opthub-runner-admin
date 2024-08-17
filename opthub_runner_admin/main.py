@@ -12,6 +12,7 @@ import yaml
 from botocore.exceptions import ClientError
 
 from opthub_runner_admin.utils.credentials.credentials import Credentials
+from opthub_runner_admin.utils.docker import check_docker
 
 if TYPE_CHECKING:
     from opthub_runner_admin.args import Args
@@ -148,6 +149,8 @@ def run(
         "mode": mode,
         "command": command,
     }
+
+    check_docker()
 
     auth(username, password)
 
