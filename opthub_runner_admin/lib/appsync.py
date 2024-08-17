@@ -7,7 +7,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 
 from opthub_runner_admin.utils.credentials.credentials import Credentials
 
-API_ENDPOINT_URL = "https://jciqso7l7rhajfkt5s3dhybpcu.appsync-api.ap-northeast-1.amazonaws.com/graphql"
+API_ENDPOINT_URL = "https://tf5tepcpn5bori46x5cyxh3ehe.appsync-api.ap-northeast-1.amazonaws.com/graphql"
 
 
 class KeyValue(TypedDict):
