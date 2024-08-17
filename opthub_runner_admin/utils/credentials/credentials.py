@@ -15,8 +15,8 @@ from opthub_runner_admin.utils.credentials.cipher_suite import CipherSuite
 from opthub_runner_admin.utils.credentials.utils import get_opthub_runner_dir
 
 FILE_NAME = "credentials"
-CLIENT_ID = "24nvfsrgbuvu75h4o8oj2c2oek"
-JWKS_URL = "https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_1Y69fktA0/.well-known/jwks.json"
+CLIENT_ID = "7t7snlnn801j8mjsf97eaart1s"
+JWKS_URL = "https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_9TAMGx5NT/.well-known/jwks.json"
 
 
 class Credentials:
