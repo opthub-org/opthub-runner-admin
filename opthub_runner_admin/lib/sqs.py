@@ -72,6 +72,23 @@ class RunnerSQS:
         self.queue_url = options["queue_url"]
         self.receipt_handle: str | None = None
 
+    def check_accessible(self) -> None:
+        """Check if the queue is accessible."""
+        try:
+            self.sqs.receive_message(
+                QueueUrl=self.queue_url,
+                MaxNumberOfMessages=1,
+                WaitTimeSeconds=0,
+                VisibilityTimeout=1,
+            )  # Receive a message from the queue to check if the queue is accessible
+
+        except Exception as e:
+            msg = "Failed to access the queue."
+            LOGGER.exception(msg)
+            raise Exception(msg) from e
+
+    def wake_up_visibility_extender(self) -> None:
+        """Wake up the visibility extender."""
         # Launch a thread to extend the queue re-visibility.
         self.visibility_timeout_extender: Thread = Thread(
             target=self.__extend_visibility_timeout,

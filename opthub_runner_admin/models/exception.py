@@ -16,7 +16,7 @@ class AuthenticationErrorMessage(Enum):
     DECODE_JWT_TOKEN_FAILED = "Failed to decode JWT token. Please try again later."  # noqa: S105
 
 
-class DockerError(Exception):
+class ContainerRuntimeError(Exception):
     """Exception raised for errors in the docker execution."""
 
     def __init__(self, message: str) -> None:

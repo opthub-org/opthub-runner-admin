@@ -49,6 +49,15 @@ class DynamoDB:
         self.table_name = options["table_name"]
         self.table = self.dynamoDB.Table(self.table_name)
 
+    def check_accessible(self) -> None:
+        """Check if the table is accessible."""
+        try:
+            self.table.get_item(Key={"ID": "dummyID", "Trial": "dummyTrial"})
+        except Exception as e:
+            msg = "Failed to access DynamoDB."
+            LOGGER.exception(msg)
+            raise Exception from e
+
     def get_item(self, primary_key_value: PrimaryKey) -> dict[str, Any] | None:
         """Get item from DynamoDB.
 
@@ -76,7 +85,8 @@ class DynamoDB:
             LOGGER.warning("The item already exists.")
         except BotoCoreError as e:
             msg = "Failed to put item to DynamoDB."
-            raise Exception(msg) from e
+            LOGGER.exception(msg)
+            raise BotoCoreError from e
 
     def get_item_between_least_and_greatest(
         self,

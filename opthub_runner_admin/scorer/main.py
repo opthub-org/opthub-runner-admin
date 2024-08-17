@@ -12,7 +12,7 @@ from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import ScorerSQS
 from opthub_runner_admin.models.evaluation import fetch_success_evaluation_by_primary_key
-from opthub_runner_admin.models.exception import DockerError
+from opthub_runner_admin.models.exception import ContainerRuntimeError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.score import save_failed_score, save_success_score
 from opthub_runner_admin.scorer.cache import Cache
@@ -39,6 +39,12 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
             "aws_secret_access_key": args["secret_access_key"],
         },
     )
+    try:
+        sqs.check_accessible()  # check if the queue is accessible
+    except Exception:
+        sys.exit(1)
+
+    sqs.wake_up_visibility_extender()  # wake up the visibility extender
 
     # for communication with DynamoDB
     dynamodb = DynamoDB(
@@ -49,6 +55,10 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
             "table_name": args["table_name"],
         },
     )
+    try:
+        dynamodb.check_accessible()  # check if the table is accessible
+    except Exception:
+        sys.exit(1)
 
     # cache for the history
     cache = Cache()
@@ -135,7 +145,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
 
             if "error" in score_result:
                 msg = "Error occurred while calculating score.\n" + score_result["error"]
-                raise DockerError(msg)
+                raise ContainerRuntimeError(msg)
 
             LOGGER.info("...Calculated")
             finished_at = datetime.now().isoformat()
@@ -205,7 +215,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
 
             started_at = started_at if started_at is not None else datetime.now().isoformat()
             finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
-            error_msg = format_exc() if isinstance(error, DockerError) else "Internal Server Error"
+            error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
             LOGGER.exception("Error occurred while calculating score.")
             LOGGER.info("Saving Failed Score...")
             LOGGER.debug(
