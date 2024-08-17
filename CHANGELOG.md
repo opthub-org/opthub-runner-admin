@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.2.0...v0.3.0) (2024-08-17)
+
+
+### Features
+
+* accessibility validation for SQS and DynamoDB ([417d1cd](https://github.com/opthub-org/opthub-runner-admin/commit/417d1cdf14745ef61921d4f1c04f6240127d147f))
+* Change to more secure credentials ([#52](https://github.com/opthub-org/opthub-runner-admin/issues/52)) ([8e203a8](https://github.com/opthub-org/opthub-runner-admin/commit/8e203a830e9b5d45c781f500d2c4dd8a0fc8a1fb))
+* Check if docker is running and accessible ([#57](https://github.com/opthub-org/opthub-runner-admin/issues/57)) ([6f37581](https://github.com/opthub-org/opthub-runner-admin/commit/6f37581018f8b82b37551cbce657eec731095f14))
+
+
+### Bug Fixes
+
+* Fix exit status ([#53](https://github.com/opthub-org/opthub-runner-admin/issues/53)) ([b5514cd](https://github.com/opthub-org/opthub-runner-admin/commit/b5514cdc614623dcb4c80e6417b9104d1bcf1710))
+* Use local images ([725426b](https://github.com/opthub-org/opthub-runner-admin/commit/725426b125657c5fbcf867953ead2027a6a99773))
+
 ## [0.2.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.1.1...v0.2.0) (2024-07-17)
 
 
