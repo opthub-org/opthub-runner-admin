@@ -72,9 +72,7 @@ The following table describes the options to be specified in the YAML file, incl
 | timeout | int | 43200 | Timeout for evaluation and score calculation using Docker Image. |
 | rm | bool | True | Whether to remove the Docker Container after evaluation and score calculation. |
 | log_level | [DEBUG, INFO, WARNING, ERROR, CRITICAL] | INFO | Log level to output. |
-| evaluator_queue_name | str | - | Amazon SQS queue name used by the Evaluator. |
 | evaluator_queue_url | path | - | Amazon SQS queue URL used by the Evaluator. |
-| scorer_queue_name | str | - | Amazon SQS queue name used by the Scorer. |
 | scorer_queue_url | path | - | Amazon SQS queue URL used by the Scorer. |
 | access_key_id | str | - | AWS Access Key ID. |
 | secret_access_key | str | - | AWS Secret Access Key. |
@@ -83,9 +81,7 @@ The following table describes the options to be specified in the YAML file, incl
 
 Please check the values for the following options with the OptHub representative. Contact information is [here](#Contact).
 
-- evaluator_queue_name
 - evaluator_queue_url
-- scorer_queue_name
 - scorer_queue_url
 - access_key_id
 - secret_access_key

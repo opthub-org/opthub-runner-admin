@@ -2,9 +2,7 @@ interval: 2
 timeout: 43200
 rm: True
 log_level: "INFO"
-# evaluator_queue_name:
 # evaluator_queue_url:
-# scorer_queue_name:
 # scorer_queue_url:
 # access_key_id:
 # secret_access_key:

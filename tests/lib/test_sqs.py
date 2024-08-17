@@ -38,7 +38,6 @@ def test_evaluator_sqs() -> None:
         interval,
         SQSOptions(
             {
-                "queue_name": config["evaluator_queue_name"],
                 "queue_url": config["evaluator_queue_url"],
                 "aws_access_key_id": config["access_key_id"],
                 "aws_secret_access_key": config["secret_access_key"],
@@ -118,7 +117,6 @@ def test_scorer_sqs() -> None:
         interval,
         SQSOptions(
             {
-                "queue_name": config["scorer_queue_name"],
                 "queue_url": config["scorer_queue_url"],
                 "aws_access_key_id": config["access_key_id"],
                 "aws_secret_access_key": config["secret_access_key"],
