@@ -24,7 +24,6 @@ class Message(TypedDict):
 class SQSOptions(TypedDict):
     """The options for SQS."""
 
-    queue_name: str
     queue_url: str
     region_name: str
     aws_access_key_id: str
@@ -59,7 +58,6 @@ class RunnerSQS:
             interval (float): The interval to fetch messages from SQS.
             options (SQSOptions): The options for SQS.
         """
-        self.queue_name = options["queue_name"]
         self.interval = interval
 
         self.sqs = boto3.client(

@@ -32,7 +32,6 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
     sqs = ScorerSQS(
         args["interval"],
         {
-            "queue_name": args["scorer_queue_name"],
             "queue_url": args["scorer_queue_url"],
             "region_name": args["region_name"],
             "aws_access_key_id": args["access_key_id"],

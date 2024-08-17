@@ -70,10 +70,8 @@ Password: (your password)
 | interval | int | 2 | Amazon SQSからメッセージを取得する間隔 |
 | timeout | int | 43200 | Docker Imageを使った解評価・スコア計算の制限時間 |
 | rm | bool | True | 解評価・スコア計算後にDocker Containerを削除するかどうか |
-log_level | [DEBUG、INFO、WARNING、ERROR、CRITICAL] | INFO | 出力するログのレベル |evaluator_queue_name | str | opthub_evaluator_sqs_Default_dev | Evaluatorが用いるAmazon SQSのキュー名 |
-| evaluator_queue_name | str | - | Evaluatorが用いるAmazon SQSのキュー名 |
+log_level | [DEBUG、INFO、WARNING、ERROR、CRITICAL] | INFO | 出力するログのレベル |
 | evaluator_queue_url | path | - | Evaluatorが用いるAmazon SQSのキューURL |
-| scorer_queue_name | str | - | Scorerが用いるAmazon SQSのキュー名 |
 | scorer_queue_url | path | - | Scorerが用いるAmazon SQSのキューURL |
 | access_key_id | str | - | AWS Access Key ID |
 | secret_access_key | str | - | AWS Secret Access Key |
@@ -83,9 +81,7 @@ log_level | [DEBUG、INFO、WARNING、ERROR、CRITICAL] | INFO | 出力するロ
 以下のオプションの設定値は、OptHubの担当者に確認してください。連絡先は[こちら](#Contact
 )です。
 
-- evaluator_queue_name
 - evaluator_queue_url
-- scorer_queue_name
 - scorer_queue_url
 - access_key_id
 - secret_access_key

@@ -29,7 +29,6 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
     sqs = EvaluatorSQS(
         args["interval"],
         {
-            "queue_name": args["evaluator_queue_name"],
             "queue_url": args["evaluator_queue_url"],
             "region_name": args["region_name"],
             "aws_access_key_id": args["access_key_id"],
