@@ -12,7 +12,7 @@ from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import ScorerSQS
 from opthub_runner_admin.models.evaluation import fetch_success_evaluation_by_primary_key
-from opthub_runner_admin.models.exception import ContainerRuntimeError
+from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.score import save_failed_score, save_success_score
 from opthub_runner_admin.scorer.cache import Cache
@@ -87,15 +87,27 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
             continue
 
         try:
-            started_at = None
-            finished_at = None
             match_id = "Match#" + message["match_id"]
 
             LOGGER.info("Fetching indicator data from DB...")
             match = fetch_match_by_id(match_id)
             LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            LOGGER.exception("Error occurred while fetching indicator data from DB.")
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            sys.exit(1)
+        except Exception as error:
+            LOGGER.exception("Error occurred while fetching indicator data from DB.")
+            if isinstance(error, DockerImageNotFoundError):
+                sys.exit(1)
 
+        try:
+            started_at = None
+            finished_at = None
             LOGGER.info("Fetching Evaluation from DB...")
 
             evaluation = fetch_success_evaluation_by_primary_key(

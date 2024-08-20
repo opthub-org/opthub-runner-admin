@@ -12,7 +12,7 @@ from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import EvaluatorSQS
 from opthub_runner_admin.models.evaluation import save_failed_evaluation, save_success_evaluation
-from opthub_runner_admin.models.exception import ContainerRuntimeError
+from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 
@@ -81,14 +81,31 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             continue
 
         try:
-            started_at = None
-            finished_at = None
             match_id = "Match#" + message["match_id"]
 
             LOGGER.info("Fetching problem data from DB...")
             match = fetch_match_by_id(match_id)
+
             LOGGER.debug("Match %s:\n%s", match_id, match)
             LOGGER.info("...Fetched")
+
+            if match["problem_docker_image"] is None or match["indicator_docker_image"] is None:
+                raise DockerImageNotFoundError
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            LOGGER.exception("Error occurred while fetching problem data from DB.")
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            sys.exit(1)
+
+        except Exception as error:
+            LOGGER.exception("Error occurred while fetching problem data from DB.")
+            if isinstance(error, DockerImageNotFoundError):
+                sys.exit(1)
+        try:
+            started_at = None
+            finished_at = None
 
             LOGGER.info("Fetching Solution from DB...")
             solution = fetch_solution_by_primary_key(
