@@ -35,3 +35,15 @@ class AuthenticationError(Exception):
         """Handle the GraphQL error."""
         click.echo(str(self))
         sys.exit(1)
+
+
+class DockerImageNotFoundError(Exception):
+    """Exception raised when the Docker image is not found. It may occur if you lack the permissions to access it."""
+
+    def __init__(self) -> None:
+        """Initialize the exception."""
+        msg = (
+            "Cannot access the Docker image. Please check your permissions. "
+            "If you're not authenticated using the competition administrator's account, please do so."
+        )
+        super().__init__(msg)

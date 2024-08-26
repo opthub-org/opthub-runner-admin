@@ -80,8 +80,6 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 @click.command(help="OptHub Runner.")
-@click.option("--username", "-u", "username", required=True, prompt=True)
-@click.option("--password", "-p", "password", prompt=True, hide_input=True)
 @click.option(
     "-i",
     "--interval",
@@ -120,8 +118,6 @@ signal.signal(signal.SIGTERM, signal_handler)
 @click.pass_context
 def run(
     ctx: click.Context,
-    username: str,
-    password: str,
     interval: int,
     timeout: int,
     rm: bool,
@@ -131,6 +127,13 @@ def run(
     command: list[str],
 ) -> None:
     """The entrypoint of CLI."""
+    # Show the message to the user and ask for the username and password
+    click.echo(
+        click.style("Note: Make sure to authenticate using the competition administrator's account.", fg="yellow"),
+    )
+    username = click.prompt("Username", type=str)
+    password = click.prompt("Password", type=str, hide_input=True)
+
     if ctx.default_map is None:
         msg = "Configuration file is not loaded."
         raise ValueError(msg)
