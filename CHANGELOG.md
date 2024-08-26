@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.0...v0.3.1) (2024-08-26)
+
+
+### Bug Fixes
+
+* Error handling when authentication fails and the Docker image ca… ([#64](https://github.com/opthub-org/opthub-runner-admin/issues/64)) ([15814ea](https://github.com/opthub-org/opthub-runner-admin/commit/15814ea47f19867c93cf39ad033917958af57804))
+
 ## [0.3.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.2.0...v0.3.0) (2024-08-17)
 
 
