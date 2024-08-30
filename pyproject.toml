@@ -30,7 +30,7 @@ dependencies = [
     "pyjwt >= 2.8.0",
     "cryptography >= 42.0.7",
     "jwcrypto >= 1.5.6",
-    "requests >= 2.31.0"
+    "requests >= 2.31.0",
 ]
 
 [project.urls]
