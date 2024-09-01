@@ -4,7 +4,6 @@ import json
 import logging
 import signal
 import sys
-from datetime import datetime
 from traceback import format_exc
 
 from opthub_runner_admin.args import Args
@@ -15,6 +14,7 @@ from opthub_runner_admin.models.evaluation import save_failed_evaluation, save_s
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
+from opthub_runner_admin.utils.time import get_utcnow
 
 LOGGER = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             LOGGER.info("...Fetched")
 
             LOGGER.info("Evaluating...")
-            started_at = datetime.now().isoformat()
+            started_at = get_utcnow()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
 
@@ -146,7 +146,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             LOGGER.debug("Evaluation Result: %s", evaluation_result)
 
             LOGGER.info("...Evaluated")
-            finished_at = datetime.now().isoformat()
+            finished_at = get_utcnow()
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
@@ -157,7 +157,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
                     "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "objective": evaluation_result["objective"],
@@ -172,7 +172,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
                     "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "objective": evaluation_result["objective"],
@@ -190,8 +190,8 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
                 signal.signal(signal.SIGTERM, signal.SIG_IGN)
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            started_at = started_at if started_at is not None else datetime.now().isoformat()
-            finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
+            started_at = started_at if started_at is not None else get_utcnow()
+            finished_at = finished_at if finished_at is not None else get_utcnow()
             error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
             LOGGER.exception("Error occurred while evaluating solution.")
             LOGGER.info("Saving Failed Evaluation...")
@@ -201,7 +201,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
                     "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": error_msg,
@@ -214,7 +214,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
                     "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": error_msg,

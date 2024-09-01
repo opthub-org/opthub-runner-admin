@@ -4,7 +4,6 @@ import json
 import logging
 import signal
 import sys
-from datetime import datetime
 from traceback import format_exc
 
 from opthub_runner_admin.args import Args
@@ -17,6 +16,7 @@ from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.score import save_failed_score, save_success_score
 from opthub_runner_admin.scorer.cache import Cache
 from opthub_runner_admin.scorer.history import make_history, write_to_cache
+from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
@@ -137,7 +137,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
             LOGGER.info("...Made")
 
             LOGGER.info("Calculating score...")
-            started_at = datetime.now().isoformat()
+            started_at = get_utcnow()
             info_msg = "Started at : " + started_at
             LOGGER.info(info_msg)
 
@@ -159,7 +159,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                 raise ContainerRuntimeError(msg)
 
             LOGGER.info("...Calculated")
-            finished_at = datetime.now().isoformat()
+            finished_at = get_utcnow()
             info_msg = "Finished at : " + finished_at
             LOGGER.info(info_msg)
 
@@ -197,7 +197,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "score": score_result["score"],
@@ -209,7 +209,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "score": score_result["score"],
@@ -224,8 +224,8 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                 signal.signal(signal.SIGTERM, signal.SIG_IGN)
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-            started_at = started_at if started_at is not None else datetime.now().isoformat()
-            finished_at = finished_at if finished_at is not None else datetime.now().isoformat()
+            started_at = started_at if started_at is not None else get_utcnow()
+            finished_at = finished_at if finished_at is not None else get_utcnow()
             error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
             LOGGER.exception("Error occurred while calculating score.")
             LOGGER.info("Saving Failed Score...")
@@ -235,7 +235,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": error_msg,
@@ -248,7 +248,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
                     "error_message": error_msg,
