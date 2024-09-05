@@ -124,6 +124,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
                 "objective": evaluation["objective"],
                 "constraint": evaluation["constraint"],
                 "info": evaluation["info"],
+                "feasible": evaluation["feasible"],
             }
             LOGGER.debug("Current: %s", current)
             history = make_history(
