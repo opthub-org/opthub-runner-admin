@@ -93,8 +93,8 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
         input_item (FailedScoreCreateParams): The input data to create a failed score.
     """
     score: FailedScoreSchema = {
-        "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
-        "Trial": f"Failed#{input_item["trial_no"]}",
+        "ID": f"Scores#{input_item['match_id']}#{input_item['participant_id']}",
+        "Trial": f"Failed#{input_item['trial_no']}",
         "TrialNo": input_item["trial_no"],
         "ResourceType": "Score",
         "MatchID": input_item["match_id"],

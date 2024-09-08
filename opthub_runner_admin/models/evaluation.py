@@ -122,8 +122,8 @@ def save_failed_evaluation(
         dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
     """
     evaluation: FailedEvaluationSchema = {
-        "ID": f"Evaluations#{input_item["match_id"]}#{input_item['participant_id']}",
-        "Trial": f"Failed#{input_item["trial_no"]}",
+        "ID": f"Evaluations#{input_item['match_id']}#{input_item['participant_id']}",
+        "Trial": f"Failed#{input_item['trial_no']}",
         "TrialNo": input_item["trial_no"],
         "ResourceType": "Evaluation",
         "MatchID": input_item["match_id"],
