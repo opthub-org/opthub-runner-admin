@@ -70,8 +70,8 @@ def save_success_score(
         raise TypeError(msg)
 
     score_data: SuccessScoreSchema = {
-        "ID": f"Scores#{input_item["match_id"]}#{input_item["participant_id"]}",
-        "Trial": f"Success#{input_item["trial_no"]}",
+        "ID": f"Scores#{input_item['match_id']}#{input_item['participant_id']}",
+        "Trial": f"Success#{input_item['trial_no']}",
         "TrialNo": input_item["trial_no"],
         "ResourceType": "Score",
         "MatchID": input_item["match_id"],
