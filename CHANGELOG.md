@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.1...v0.3.2) (2024-09-05)
+
+
+### Bug Fixes
+
+* Unify timezone ([9f32d74](https://github.com/opthub-org/opthub-runner-admin/commit/9f32d7484c6c00596c463745b2963dd6b4650bd1))
+
 ## [0.3.1](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.0...v0.3.1) (2024-08-26)
 
 
