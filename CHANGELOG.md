@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.2...v0.3.3) (2024-09-08)
+
+
+### Bug Fixes
+
+* SyntaxError: f-string: unmatched '[' ([e46a2ec](https://github.com/opthub-org/opthub-runner-admin/commit/e46a2ec1d8003bd3a2bed34410b54db42bd3dfbe))
+
 ## [0.3.2](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.1...v0.3.2) (2024-09-05)
 
 
