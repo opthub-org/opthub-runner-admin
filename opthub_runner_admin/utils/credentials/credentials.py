@@ -182,6 +182,7 @@ class Credentials:
                 public_key,
                 algorithms=["RS256"],
                 options={"verify_signature": True},
+                leeway=10,
             )
         except Exception as e:
             raise AuthenticationError(AuthenticationErrorMessage.DECODE_JWT_TOKEN_FAILED) from e
