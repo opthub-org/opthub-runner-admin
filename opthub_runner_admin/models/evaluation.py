@@ -172,6 +172,6 @@ def fetch_success_evaluation_by_primary_key(
         "trial_no": evaluation["TrialNo"],
         "objective": decimal_to_float(evaluation["Objective"]),
         "constraint": decimal_to_float(evaluation["Constraint"]),
-        "info": evaluation["Info"],
+        "info": decimal_to_float(evaluation["Info"]),
         "feasible": evaluation["Feasible"],
     }
