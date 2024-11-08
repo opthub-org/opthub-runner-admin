@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.4...v0.3.5) (2024-11-08)
+
+
+### Bug Fixes
+
+* Apply decimal_to_float to info ([1701d22](https://github.com/opthub-org/opthub-runner-admin/commit/1701d22bdc714e46821479153fc9ff8171a06a56))
+
 ## [0.3.4](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.3...v0.3.4) (2024-09-08)
 
 
