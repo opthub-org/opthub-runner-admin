@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.5...v0.3.6) (2024-11-11)
+
+
+### Documentation
+
+* Update README.md and README_ja.md ([#72](https://github.com/opthub-org/opthub-runner-admin/issues/72)) ([4fa5224](https://github.com/opthub-org/opthub-runner-admin/commit/4fa5224daaafad116a89ba16536dbc76307e0846))
+
 ## [0.3.5](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.4...v0.3.5) (2024-11-08)
 
 
