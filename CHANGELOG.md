@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.7...v0.3.8) (2024-11-24)
+
+
+### Bug Fixes
+
+* Reset receipt_handle in _polling_sqs_message ([78ff010](https://github.com/opthub-org/opthub-runner-admin/commit/78ff0109a31c5e1656b5a19c6cf8977f8aa05162))
+
 ## [0.3.7](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.6...v0.3.7) (2024-11-24)
 
 
