@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.6...v0.3.7) (2024-11-24)
+
+
+### Bug Fixes
+
+* Add "continue" ([c57dee9](https://github.com/opthub-org/opthub-runner-admin/commit/c57dee940d99f504dbbd44b73cd9175c0e8605bb))
+
 ## [0.3.6](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.5...v0.3.6) (2024-11-11)
 
 
