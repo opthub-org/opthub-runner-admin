@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.9](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.8...v0.3.9) (2024-11-28)
+
+
+### Bug Fixes
+
+* Add max digit of DynamoDB ([d869364](https://github.com/opthub-org/opthub-runner-admin/commit/d86936418e2e01fff957c05a996cf86db068b26b))
+
 ## [0.3.8](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.7...v0.3.8) (2024-11-24)
 
 
