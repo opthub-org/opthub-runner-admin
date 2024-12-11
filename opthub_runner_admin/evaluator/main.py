@@ -10,16 +10,21 @@ from opthub_runner_admin.args import Args
 from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import EvaluatorSQS
-from opthub_runner_admin.models.evaluation import save_failed_evaluation, save_success_evaluation
+from opthub_runner_admin.models.evaluation import (
+    FailedEvaluationCreateParams,
+    save_failed_evaluation,
+    save_success_evaluation,
+)
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 from opthub_runner_admin.utils.time import get_utcnow
+from opthub_runner_admin.utils.truncate import truncate_text_center
 
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
+def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
     """The function that controls the evaluation process.
 
     Args:
@@ -189,40 +194,30 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_IGN)
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-            started_at = started_at if started_at is not None else get_utcnow()
-            finished_at = finished_at if finished_at is not None else get_utcnow()
-            error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
-            LOGGER.exception("Error occurred while evaluating solution.")
-            LOGGER.info("Saving Failed Evaluation...")
-            save_failed_evaluation(
-                dynamodb,
-                {
+            try:
+                started_at = started_at if started_at is not None else get_utcnow()
+                finished_at = finished_at if finished_at is not None else get_utcnow()
+                error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
+                admin_error_msg = format_exc()
+                LOGGER.exception("Error occurred while evaluating solution.")
+                LOGGER.info("Saving Failed Evaluation...")
+                failed_evaluation: FailedEvaluationCreateParams = {
                     "match_id": match_id,
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": error_msg,
-                    "admin_error_message": format_exc(),
-                },
-            )
-            LOGGER.debug(
-                "Evaluation to save: %s",
-                {
-                    "match_id": match_id,
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": get_utcnow(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": error_msg,
-                    "admin_error_message": format_exc(),
-                },
-            )
-            LOGGER.info("...Saved")
-            sqs.delete_message_from_queue()
+                    "error_message": truncate_text_center(error_msg, 16384),
+                    "admin_error_message": truncate_text_center(admin_error_msg, 16384),
+                }
+                LOGGER.debug("Evaluation to save: %s", failed_evaluation)
+                save_failed_evaluation(dynamodb, failed_evaluation)
+                LOGGER.info("...Saved")
+                sqs.delete_message_from_queue()
+            except Exception:
+                LOGGER.exception("Error occurred while handling failed evaluation.")
+                LOGGER.exception(format_exc())
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGINT, signal.SIG_DFL)

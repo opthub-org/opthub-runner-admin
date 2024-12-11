@@ -13,16 +13,17 @@ from opthub_runner_admin.lib.sqs import ScorerSQS
 from opthub_runner_admin.models.evaluation import fetch_success_evaluation_by_primary_key
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import fetch_match_by_id
-from opthub_runner_admin.models.score import save_failed_score, save_success_score
+from opthub_runner_admin.models.score import FailedScoreCreateParams, save_failed_score, save_success_score
 from opthub_runner_admin.scorer.cache import Cache
 from opthub_runner_admin.scorer.history import make_history, write_to_cache
 from opthub_runner_admin.utils.time import get_utcnow
+from opthub_runner_admin.utils.truncate import truncate_text_center
 from opthub_runner_admin.utils.zfill import zfill
 
 LOGGER = logging.getLogger(__name__)
 
 
-def calculate_score(args: Args) -> None:  # noqa: PLR0915
+def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
     """The function that controls the score calculation process.
 
     Args:
@@ -224,40 +225,30 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_IGN)
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-            started_at = started_at if started_at is not None else get_utcnow()
-            finished_at = finished_at if finished_at is not None else get_utcnow()
-            error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
-            LOGGER.exception("Error occurred while calculating score.")
-            LOGGER.info("Saving Failed Score...")
-            LOGGER.debug(
-                "Failed Score: %s",
-                {
+            try:
+                started_at = started_at if started_at is not None else get_utcnow()
+                finished_at = finished_at if finished_at is not None else get_utcnow()
+                error_msg = format_exc() if isinstance(error, ContainerRuntimeError) else "Internal Server Error"
+                admin_error_msg = format_exc()
+                failed_score: FailedScoreCreateParams = {
                     "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": get_utcnow(),
                     "started_at": started_at,
                     "finished_at": finished_at,
-                    "error_message": error_msg,
-                    "admin_error_message": format_exc(),
-                },
-            )
-            save_failed_score(
-                dynamodb,
-                {
-                    "match_id": match["id"],
-                    "participant_id": message["participant_id"],
-                    "trial_no": message["trial_no"],
-                    "created_at": get_utcnow(),
-                    "started_at": started_at,
-                    "finished_at": finished_at,
-                    "error_message": error_msg,
-                    "admin_error_message": format_exc(),
-                },
-            )
-            LOGGER.info("...Saved")
-            sqs.delete_message_from_queue()
+                    "error_message": truncate_text_center(error_msg, 16384),
+                    "admin_error_message": truncate_text_center(admin_error_msg, 16384),
+                }
+                LOGGER.exception("Error occurred while calculating score.")
+                LOGGER.info("Saving Failed Score...")
+                LOGGER.debug("Failed Score: %s", failed_score)
+                save_failed_score(dynamodb, failed_score)
+                LOGGER.info("...Saved")
+                sqs.delete_message_from_queue()
+            except Exception:
+                LOGGER.exception("Error occurred while handling failed score.")
+                LOGGER.exception(format_exc())
             if isinstance(error, KeyboardInterrupt):
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGINT, signal.SIG_DFL)
