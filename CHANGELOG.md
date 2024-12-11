@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.9](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.8...v0.3.9) (2024-11-28)
+
+
+### Bug Fixes
+
+* Add max digit of DynamoDB ([d869364](https://github.com/opthub-org/opthub-runner-admin/commit/d86936418e2e01fff957c05a996cf86db068b26b))
+
+## [0.3.8](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.7...v0.3.8) (2024-11-24)
+
+
+### Bug Fixes
+
+* Reset receipt_handle in _polling_sqs_message ([78ff010](https://github.com/opthub-org/opthub-runner-admin/commit/78ff0109a31c5e1656b5a19c6cf8977f8aa05162))
+
+## [0.3.7](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.6...v0.3.7) (2024-11-24)
+
+
+### Bug Fixes
+
+* Add "continue" ([c57dee9](https://github.com/opthub-org/opthub-runner-admin/commit/c57dee940d99f504dbbd44b73cd9175c0e8605bb))
+
 ## [0.3.6](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.5...v0.3.6) (2024-11-11)
 
 

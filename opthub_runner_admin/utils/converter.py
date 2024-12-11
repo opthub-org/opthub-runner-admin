@@ -5,6 +5,10 @@ import logging
 import math
 import sys
 
+# The maximum number of digits in DynamoDB.
+# https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html
+DYNAMODB_MAX_DIGITS = 38
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -85,5 +89,8 @@ def number_to_decimal(value: object) -> object:
     if isinstance(value, dict):
         return {k: number_to_decimal(v) for k, v in value.items()}
     if isinstance(value, float | int):
-        return decimal.Decimal(str(value))
+        with decimal.localcontext() as ctx:
+            ctx.prec = DYNAMODB_MAX_DIGITS
+            value = decimal.Decimal(str(value)).normalize()
+        return value
     return value

@@ -108,6 +108,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             LOGGER.exception("Error occurred while fetching problem data from DB.")
             if isinstance(error, DockerImageNotFoundError):
                 sys.exit(1)
+            continue
         try:
             started_at = None
             finished_at = None

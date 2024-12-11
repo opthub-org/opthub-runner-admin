@@ -115,6 +115,8 @@ class RunnerSQS:
         Returns:
             Message: The message from SQS.
         """
+        self.receipt_handle = None
+
         while True:
             self.start = time()
 

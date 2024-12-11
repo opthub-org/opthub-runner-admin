@@ -105,7 +105,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
             LOGGER.exception("Error occurred while fetching indicator data from DB.")
             if isinstance(error, DockerImageNotFoundError):
                 sys.exit(1)
-
+            continue
         try:
             started_at = None
             finished_at = None
