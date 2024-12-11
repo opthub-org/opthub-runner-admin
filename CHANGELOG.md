@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.9...v0.3.10) (2024-12-11)
+
+
+### Bug Fixes
+
+* 長すぎるエラーメッセージをtruncateするように ([b5b6687](https://github.com/opthub-org/opthub-runner-admin/commit/b5b6687b6ae00fa7e74844de4c6d6e3c21b02347))
+
 ## [0.3.9](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.8...v0.3.9) (2024-11-28)
 
 
