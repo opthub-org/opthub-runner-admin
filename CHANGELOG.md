@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.11](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.10...v0.3.11) (2024-12-13)
+
+
+### Bug Fixes
+
+* Change the position of write_to_cache ([abe0615](https://github.com/opthub-org/opthub-runner-admin/commit/abe06152a0528324097289acd85b3298a55258e6))
+
 ## [0.3.10](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.9...v0.3.10) (2024-12-11)
 
 
