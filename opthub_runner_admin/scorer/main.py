@@ -166,19 +166,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
             LOGGER.info(info_msg)
 
             LOGGER.info("Saving Score...")
-            write_to_cache(
-                cache,
-                match["id"],
-                evaluation["participant_id"],
-                {
-                    "trial_no": evaluation["trial_no"],
-                    "objective": evaluation["objective"],
-                    "constraint": evaluation["constraint"],
-                    "info": evaluation["info"],
-                    "feasible": evaluation["feasible"],
-                    "score": score_result["score"],
-                },
-            )
+
             LOGGER.debug(
                 "Trial written to cache: match_id: %s, participant_id: %s\n%s",
                 match["id"],
@@ -220,6 +208,24 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
             LOGGER.info("...Saved")
 
             sqs.delete_message_from_queue()
+
+            try:
+                write_to_cache(
+                    cache,
+                    match["id"],
+                    evaluation["participant_id"],
+                    {
+                        "trial_no": evaluation["trial_no"],
+                        "objective": evaluation["objective"],
+                        "constraint": evaluation["constraint"],
+                        "info": evaluation["info"],
+                        "feasible": evaluation["feasible"],
+                        "score": score_result["score"],
+                    },
+                )
+            except Exception:
+                msg = "Failed to write to cache."
+                LOGGER.warning(msg)
 
         except (Exception, KeyboardInterrupt) as error:
             if isinstance(error, KeyboardInterrupt):
