@@ -59,7 +59,7 @@ def execute_in_docker(
     )
     LOGGER.info("...Started: %s", container.name)
 
-    LOGGER.info("Send variable...")
+    LOGGER.info("Send stdin...")
     socket = container.attach_socket(params={"stdin": 1, "stream": 1, "stdout": 1, "stderr": 1})
 
     for line in std_in:
