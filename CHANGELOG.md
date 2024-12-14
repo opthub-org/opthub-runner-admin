@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.13](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.12...v0.3.13) (2024-12-14)
+
+
+### Bug Fixes
+
+* debug code for history ([c71dccc](https://github.com/opthub-org/opthub-runner-admin/commit/c71dccc79afb64d696b5d7e456d662565104400c))
+
+## [0.3.12](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.11...v0.3.12) (2024-12-14)
+
+
+### Bug Fixes
+
+* block duplicate trial no ([b330efc](https://github.com/opthub-org/opthub-runner-admin/commit/b330efc8fd724b838fd20e56d273d225223675ee))
+
 ## [0.3.11](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.10...v0.3.11) (2024-12-13)
 
 
