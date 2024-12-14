@@ -1,6 +1,6 @@
 """The module provides a class to handle the cache file for the score calculation."""
 
-import pickle
+import json
 from pathlib import Path
 from typing import TypedDict
 
@@ -74,10 +74,12 @@ class Cache:
             msg = "No file loaded."
             raise ValueError(msg)
 
-        self.__values.append(value)
         try:
-            with Path.open(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"), "wb") as file:
-                pickle.dump(self.__values, file)
+            with Path.open(self.__get_cache_path(), "a") as file:
+                file.write(json.dumps(value) + "\n")
+
+                self.__values.append(value)
+
         except Exception as e:
             raise CacheWriteError from e
 
@@ -105,17 +107,27 @@ class Cache:
         self.__values = []
 
         try:
-            if Path.exists(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl")):
-                with Path.open(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"), "rb") as file:
-                    self.__values = pickle.load(file)
+            if Path.exists(self.__get_cache_path()):
+                with Path.open(self.__get_cache_path(), "r") as file:
+                    for line in file:
+                        self.__values.append(json.loads(line))
         except Exception as e:
             raise CacheReadError from e
 
     def clear(self) -> None:
         """Clear the cache."""
-        if self.__loaded_filename is not None and not Path.exists(
-            Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"),
-        ):
-            Path.unlink(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"))
+        if self.__loaded_filename is not None and not Path.exists(self.__get_cache_path()):
+            Path.unlink(self.__get_cache_path())
         self.__loaded_filename = None
         self.__values = None
+
+    def __get_cache_path(self) -> Path:
+        """Get the file path of the loaded cache.
+
+        Returns:
+            Path: The file path of the loaded cache.
+        """
+        if self.__loaded_filename is None:
+            msg = "No file loaded."
+            raise ValueError(msg)
+        return Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".jsonl")

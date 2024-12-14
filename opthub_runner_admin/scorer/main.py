@@ -19,8 +19,8 @@ from opthub_runner_admin.models.score import (
     save_failed_score,
     save_success_score,
 )
-from opthub_runner_admin.scorer.cache import Cache
-from opthub_runner_admin.scorer.history import make_history, write_to_cache
+from opthub_runner_admin.scorer.cache import Cache, CacheWriteError
+from opthub_runner_admin.scorer.history import make_history
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
 from opthub_runner_admin.utils.zfill import zfill
@@ -186,6 +186,9 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
                 "feasible": evaluation["feasible"],
             }
             LOGGER.debug("Current: %s", current)
+
+            cache.load(match["id"] + "#" + evaluation["participant_id"])  # load cache to make history
+
             history = make_history(
                 match["id"],
                 evaluation["participant_id"],
@@ -268,10 +271,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
             sqs.delete_message_from_queue()
 
             try:
-                write_to_cache(
-                    cache,
-                    match["id"],
-                    evaluation["participant_id"],
+                cache.append(
                     {
                         "trial_no": evaluation["trial_no"],
                         "objective": evaluation["objective"],
@@ -280,8 +280,8 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
                         "feasible": evaluation["feasible"],
                         "score": score_result["score"],
                     },
-                )
-            except Exception:
+                )  # append trial scored in this iteration to the cache
+            except CacheWriteError:
                 msg = "Failed to write to cache."
                 LOGGER.warning(msg)
 
