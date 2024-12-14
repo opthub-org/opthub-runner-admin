@@ -56,7 +56,7 @@ def test_dynamodb() -> None:
             msg = "dynamodb.get_item(primary_key) != put_items[2]"
             raise ValueError(msg)
 
-        got_items = dynamodb.get_item_between_least_and_greatest(
+        got_items = dynamodb.get_items_between_least_and_greatest(
             "Solutions#Match#" + match_uuid + "#User#00010",
             "00002",
             "00004",

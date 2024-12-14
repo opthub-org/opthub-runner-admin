@@ -175,3 +175,40 @@ def fetch_success_evaluation_by_primary_key(
         "info": decimal_to_float(evaluation["Info"]),
         "feasible": evaluation["Feasible"],
     }
+
+
+def is_evaluation_exists(
+    dynamodb: DynamoDB,
+    match_id: str,
+    participant_id: str,
+    trial_no: str,
+) -> bool:
+    """Check if the evaluation exists in DynamoDB.
+
+    Args:
+        match_id (str): MatchID.
+        participant_id (str): ParticipantID.
+        trial_no (str): The trial number.
+        dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
+
+    Returns:
+        bool: True if the evaluation exists, False otherwise.
+    """
+    partition_key = f"Evaluations#{match_id}#{participant_id}"
+    if dynamodb.is_exist(
+        {
+            "ID": partition_key,
+            "Trial": "Success#" + trial_no,
+        },
+    ):
+        return True
+
+    if dynamodb.is_exist(
+        {
+            "ID": partition_key,
+            "Trial": "Failed#" + trial_no,
+        },
+    ):
+        return True
+
+    return False

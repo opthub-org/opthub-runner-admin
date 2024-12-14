@@ -51,12 +51,7 @@ class DynamoDB:
 
     def check_accessible(self) -> None:
         """Check if the table is accessible."""
-        try:
-            self.table.get_item(Key={"ID": "dummyID", "Trial": "dummyTrial"})
-        except Exception as e:
-            msg = "Failed to access DynamoDB."
-            LOGGER.exception(msg)
-            raise Exception from e
+        self.table.get_item(Key={"ID": "dummyID", "Trial": "dummyTrial"})
 
     def get_item(self, primary_key_value: PrimaryKey) -> dict[str, Any] | None:
         """Get item from DynamoDB.
@@ -69,6 +64,18 @@ class DynamoDB:
         """
         item: dict[str, Any] | None = self.table.get_item(Key=cast(dict[str, Any], primary_key_value)).get("Item")
         return item
+
+    def is_exist(self, primary_key_value: PrimaryKey) -> bool:
+        """Check if the item exists in DynamoDB.
+
+        Args:
+            primary_key_value (PrimaryKey): The primary key value.
+
+        Returns:
+            bool: True if the item exists, False otherwise.
+        """
+        item = self.get_item(primary_key_value)
+        return item is not None
 
     def put_item(self, item: Schema) -> None:
         """Put item to DynamoDB.
@@ -88,7 +95,7 @@ class DynamoDB:
             LOGGER.exception(msg)
             raise BotoCoreError from e
 
-    def get_item_between_least_and_greatest(
+    def get_items_between_least_and_greatest(
         self,
         partition_key: str,
         least_trial: str,
@@ -106,18 +113,30 @@ class DynamoDB:
         Returns:
             list[Any]: The items.
         """
-        if not attributes:
-            # get all attributes
-            response = self.table.query(
-                KeyConditionExpression=Key("ID").eq(partition_key) & Key("Trial").between(least_trial, greatest_trial),
-            )
-        else:
-            # get specific attributes
-            response = self.table.query(
-                KeyConditionExpression=Key("ID").eq(partition_key) & Key("Trial").between(least_trial, greatest_trial),
-                ProjectionExpression=",".join([f"#attr{i}" for i in range(len(attributes))]),
-                ExpressionAttributeNames={f"#attr{i}": attr for i, attr in enumerate(attributes)},
-            )
-        items: list[dict[str, Any]] = response["Items"]
+        items: list[dict[str, Any]] = []
+        last_evaluated_key: dict[str, Any] | None = None
+
+        while True:
+            query_kwargs: dict[str, Any] = {
+                "KeyConditionExpression": Key("ID").eq(partition_key)
+                & Key("Trial").between(least_trial, greatest_trial),
+            }
+
+            if last_evaluated_key:
+                query_kwargs["ExclusiveStartKey"] = last_evaluated_key
+
+            if attributes:
+                query_kwargs["ProjectionExpression"] = ",".join([f"#attr{i}" for i in range(len(attributes))])
+                query_kwargs["ExpressionAttributeNames"] = {f"#attr{i}": attr for i, attr in enumerate(attributes)}
+
+            response = self.table.query(**query_kwargs)
+
+            # Append fetched items
+            items.extend(response.get("Items", []))
+
+            # Check if there are more items to fetch
+            last_evaluated_key = response.get("LastEvaluatedKey")
+            if not last_evaluated_key:
+                break
 
         return items

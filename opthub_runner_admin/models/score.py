@@ -19,7 +19,7 @@ class SuccessScoreCreateParams(TypedDict):
     created_at (str): The time when the score to be calculated was created. ISOString format.
     started_at (str): The time when the calculation of the score started. ISOString format.
     finished_at (str): The time when the calculation of the score finished. ISOString format.
-    score (float): The score of the evaluation.
+    score (float): The score of the score.
     """
 
     match_id: str
@@ -107,3 +107,40 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
         "AdminErrorMessage": input_item["admin_error_message"],
     }
     dynamodb.put_item(score)
+
+
+def is_score_exists(
+    dynamodb: DynamoDB,
+    match_id: str,
+    participant_id: str,
+    trial_no: str,
+) -> bool:
+    """Check if the score exists in DynamoDB.
+
+    Args:
+        match_id (str): MatchID.
+        participant_id (str): ParticipantID.
+        trial_no (str): The trial number.
+        dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
+
+    Returns:
+        bool: True if the score exists, False otherwise.
+    """
+    partition_key = f"Scores#{match_id}#{participant_id}"
+    if dynamodb.is_exist(
+        {
+            "ID": partition_key,
+            "Trial": "Success#" + trial_no,
+        },
+    ):
+        return True
+
+    if dynamodb.is_exist(
+        {
+            "ID": partition_key,
+            "Trial": "Failed#" + trial_no,
+        },
+    ):
+        return True
+
+    return False

@@ -87,7 +87,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         return
 
     # fetch evaluations from the database
-    evaluations = dynamodb.get_item_between_least_and_greatest(
+    evaluations = dynamodb.get_items_between_least_and_greatest(
         f"Evaluations#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),
@@ -96,7 +96,7 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
     evaluations = cast(list[PartialEvaluation], evaluations)
 
     # fetch scores from the database
-    scores = dynamodb.get_item_between_least_and_greatest(
+    scores = dynamodb.get_items_between_least_and_greatest(
         f"Scores#{match_id}#{participant_id}",
         "Success#" + (zfill(int(loaded_trial_no) + 1, len(loaded_trial_no)) if loaded_trial_no is not None else ""),
         "Success#" + zfill(int(trial_no), len(trial_no)),

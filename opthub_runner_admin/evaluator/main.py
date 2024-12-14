@@ -9,14 +9,15 @@ from traceback import format_exc
 from opthub_runner_admin.args import Args
 from opthub_runner_admin.lib.docker_executor import execute_in_docker
 from opthub_runner_admin.lib.dynamodb import DynamoDB
-from opthub_runner_admin.lib.sqs import EvaluatorSQS
+from opthub_runner_admin.lib.sqs import EvaluationMessage, EvaluatorSQS
 from opthub_runner_admin.models.evaluation import (
     FailedEvaluationCreateParams,
+    is_evaluation_exists,
     save_failed_evaluation,
     save_success_evaluation,
 )
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
-from opthub_runner_admin.models.match import fetch_match_by_id
+from opthub_runner_admin.models.match import Match, fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
@@ -24,13 +25,15 @@ from opthub_runner_admin.utils.truncate import truncate_text_center
 LOGGER = logging.getLogger(__name__)
 
 
-def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
-    """The function that controls the evaluation process.
+def setup_sqs(args: Args) -> EvaluatorSQS:
+    """Set up the SQS instance.
 
     Args:
         args (Args): The arguments for the evaluation process.
+
+    Returns:
+        EvaluatorSQS: The SQS instance.
     """
-    # communication with Amazon SQS
     sqs = EvaluatorSQS(
         args["interval"],
         {
@@ -40,14 +43,21 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             "aws_secret_access_key": args["secret_access_key"],
         },
     )
-    try:
-        sqs.check_accessible()  # check if the queue is accessible
-    except Exception:
-        sys.exit(1)
-
+    sqs.check_accessible()  # check if the queue is accessible
     sqs.wake_up_visibility_extender()  # wake up the visibility extender
+    return sqs
 
-    # communication with DynamoDB
+
+def setup_dynamodb(args: Args) -> DynamoDB:
+    """Setup DynamoDB.
+
+    Args:
+        args (Args): Args
+
+    Returns:
+        DynamoDB: DynamoDB
+    """
+    # for communication with DynamoDB
     dynamodb = DynamoDB(
         {
             "region_name": args["region_name"],
@@ -56,10 +66,77 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             "table_name": args["table_name"],
         },
     )
+    dynamodb.check_accessible()  # check if the table is accessible
+    return dynamodb
+
+
+def get_message_from_queue(sqs: EvaluatorSQS) -> EvaluationMessage | None:
+    """Get message from the queue.
+
+    Args:
+        sqs (ScorerSQS): Scorer SQS
+
+    Returns:
+        ScoreMessage | None: Scorer Message
+    """
+    LOGGER.info("Finding Evaluation to calculate score...")
     try:
-        dynamodb.check_accessible()  # check if the table is accessible
-    except Exception:
+        message = sqs.get_message_from_queue()
+    except KeyboardInterrupt:
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        LOGGER.exception("Error occurred while fetching message from SQS.")
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(1)
+    except Exception:
+        LOGGER.exception("Error occurred while fetching message from SQS.")
+        return None
+    else:
+        LOGGER.debug("Message: %s", message)
+        LOGGER.info("...Found")
+        return message
+
+
+def get_match_from_message(message: EvaluationMessage) -> Match | None:
+    """Get match from message.
+
+    Args:
+        message (ScoreMessage): ScoreMessage
+
+    Returns:
+        Match: Match
+    """
+    match_id = "Match#" + message["match_id"]
+    LOGGER.info("Fetching indicator data from DB...")
+    try:
+        match = fetch_match_by_id(match_id)
+    except KeyboardInterrupt:
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        LOGGER.exception("Error occurred while fetching indicator data from DB.")
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        sys.exit(1)
+    except Exception as error:
+        LOGGER.exception("Error occurred while fetching indicator data from DB.")
+        if isinstance(error, DockerImageNotFoundError):
+            sys.exit(1)
+        return None
+    else:
+        LOGGER.debug("Match %s:\n%s", match_id, match)
+        LOGGER.info("...Fetched")
+        return match
+
+
+def evaluate(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
+    """The function that controls the evaluation process.
+
+    Args:
+        args (Args): The arguments for the evaluation process.
+    """
+    sqs = setup_sqs(args)
+    dynamodb = setup_dynamodb(args)
 
     n_evaluation = 0
 
@@ -67,48 +144,19 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
         n_evaluation += 1
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
-        try:
-            LOGGER.info("Finding Solution to evaluate...")
-            message = sqs.get_message_from_queue()
-            LOGGER.debug("Message: %s", message)
-            LOGGER.info("...Found")
-
-        except KeyboardInterrupt:
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Error occurred while fetching message from SQS.")
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            sys.exit(1)
-
-        except Exception:
-            LOGGER.exception("Error occurred while fetching message from SQS.")
+        message = get_message_from_queue(sqs)
+        if message is None:
             continue
 
-        try:
-            match_id = "Match#" + message["match_id"]
-
-            LOGGER.info("Fetching problem data from DB...")
-            match = fetch_match_by_id(match_id)
-
-            LOGGER.debug("Match %s:\n%s", match_id, match)
-            LOGGER.info("...Fetched")
-
-            if match["problem_docker_image"] is None or match["indicator_docker_image"] is None:
-                raise DockerImageNotFoundError
-        except KeyboardInterrupt:
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            LOGGER.exception("Error occurred while fetching problem data from DB.")
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            sys.exit(1)
-
-        except Exception as error:
-            LOGGER.exception("Error occurred while fetching problem data from DB.")
-            if isinstance(error, DockerImageNotFoundError):
-                sys.exit(1)
+        match = get_match_from_message(message)
+        if match is None:
             continue
+
+        if is_evaluation_exists(dynamodb, message["match_id"], message["participant_id"], message["trial_no"]):
+            LOGGER.warning("The evaluation already exists.")
+            sqs.delete_message_from_queue()
+            continue
+
         try:
             started_at = None
             finished_at = None
@@ -116,7 +164,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             LOGGER.info("Fetching Solution from DB...")
             solution = fetch_solution_by_primary_key(
                 dynamodb,
-                match_id,
+                match["id"],
                 message["participant_id"],
                 message["trial"],
             )
@@ -160,7 +208,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             save_success_evaluation(
                 dynamodb,
                 {
-                    "match_id": match_id,
+                    "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": get_utcnow(),
@@ -175,7 +223,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
             LOGGER.debug(
                 "Evaluation to save: %s",
                 {
-                    "match_id": match_id,
+                    "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": get_utcnow(),
@@ -203,7 +251,7 @@ def evaluate(args: Args) -> None:  # noqa: C901, PLR0915, PLR0912
                 LOGGER.exception("Error occurred while evaluating solution.")
                 LOGGER.info("Saving Failed Evaluation...")
                 failed_evaluation: FailedEvaluationCreateParams = {
-                    "match_id": match_id,
+                    "match_id": match["id"],
                     "participant_id": message["participant_id"],
                     "trial_no": message["trial_no"],
                     "created_at": get_utcnow(),
