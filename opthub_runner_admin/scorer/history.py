@@ -1,5 +1,6 @@
 """This module provides functions to manage the history of the trials."""
 
+import json
 from decimal import Decimal
 from typing import TypedDict, cast
 
@@ -107,24 +108,36 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
     # append the fetched evaluations and scores to the cache
     evaluation_index = 0
 
-    for score in scores:
-        if evaluations[evaluation_index]["TrialNo"] > score["TrialNo"]:
-            msg = "The evaluation and score do not match."
-            raise ValueError(msg)
-        while evaluations[evaluation_index]["TrialNo"] < score["TrialNo"]:
-            evaluation_index += 1
+    try:
+        for score in scores:
+            if evaluations[evaluation_index]["TrialNo"] > score["TrialNo"]:
+                msg = "The evaluation and score do not match."
+                raise ValueError(msg)
+            while evaluations[evaluation_index]["TrialNo"] < score["TrialNo"]:
+                evaluation_index += 1
 
-        evaluation = evaluations[evaluation_index]
+            evaluation = evaluations[evaluation_index]
 
-        current: Trial = {
-            "trial_no": evaluation["TrialNo"],
-            "objective": decimal_to_float(evaluation["Objective"]),
-            "constraint": decimal_to_float(evaluation["Constraint"]),
-            "info": decimal_to_float(evaluation["Info"]),
-            "feasible": evaluation["Feasible"],
-            "score": cast(float, decimal_to_float(score["Value"])),
-        }
-        cache.append(current)
+            current: Trial = {
+                "trial_no": evaluation["TrialNo"],
+                "objective": decimal_to_float(evaluation["Objective"]),
+                "constraint": decimal_to_float(evaluation["Constraint"]),
+                "info": decimal_to_float(evaluation["Info"]),
+                "feasible": evaluation["Feasible"],
+                "score": cast(float, decimal_to_float(score["Value"])),
+            }
+            cache.append(current)
+    except IndexError:
+        with open(f"Match#{match_id}#{participant_id}#{trial_no}.json", "w") as file:
+            json.dump(
+                {
+                    evaluations: evaluations,
+                    scores: scores,
+                },
+                file,
+                indent=4,
+            )
+        raise ValueError("The evaluation and score do not match.")
 
 
 def write_to_cache(
