@@ -77,8 +77,7 @@ class Cache:
         try:
             with Path.open(self.__get_cache_path(), "a") as file:
                 file.write(json.dumps(value) + "\n")
-
-                self.__values.append(value)
+            self.__values.append(value)
 
         except Exception as e:
             raise CacheWriteError from e
@@ -107,10 +106,11 @@ class Cache:
         self.__values = []
 
         try:
-            if Path.exists(self.__get_cache_path()):
-                with Path.open(self.__get_cache_path(), "r") as file:
-                    for line in file:
-                        self.__values.append(json.loads(line))
+            if not Path.exists(self.__get_cache_path()):
+                return
+            with Path.open(self.__get_cache_path(), "r") as file:
+                for line in file:
+                    self.__values.append(json.loads(line))
         except Exception as e:
             raise CacheReadError from e
 
