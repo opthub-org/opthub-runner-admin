@@ -1,6 +1,6 @@
 """The module provides a class to handle the cache file for the score calculation."""
 
-import pickle
+import json
 from pathlib import Path
 from typing import TypedDict
 
@@ -22,6 +22,22 @@ class Trial(TypedDict):
     info: object
     score: float
     feasible: bool | None
+
+
+class CacheWriteError(Exception):
+    """Exception raised for errors in writing to the cache."""
+
+    def __init__(self) -> None:
+        """Initialize the exception."""
+        super().__init__("Failed to write to the cache.")
+
+
+class CacheReadError(Exception):
+    """Exception raised for errors in writing to the cache."""
+
+    def __init__(self) -> None:
+        """Initialize the exception."""
+        super().__init__("Failed to read the cache.")
 
 
 class Cache:
@@ -54,11 +70,17 @@ class Cache:
         Raises:
             ValueError: If no file is loaded, an error occurs.
         """
-        if self.__values is None:
+        if self.__values is None or self.__loaded_filename is None:
             msg = "No file loaded."
             raise ValueError(msg)
 
-        self.__values.append(value)
+        try:
+            with Path.open(self.__get_cache_path(), "a") as file:
+                file.write(json.dumps(value) + "\n")
+            self.__values.append(value)
+
+        except Exception as e:
+            raise CacheWriteError from e
 
     def get_values(self) -> list[Trial]:
         """Get the values in the cache.
@@ -80,21 +102,32 @@ class Cache:
         if self.__loaded_filename is not None and filename == self.__loaded_filename:
             return
 
-        if self.__loaded_filename is not None:
-            with Path.open(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"), "wb") as file:
-                pickle.dump(self.__values, file)
-
         self.__loaded_filename = filename
         self.__values = []
-        if Path.exists(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl")):
-            with Path.open(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"), "rb") as file:
-                self.__values = pickle.load(file)
+
+        try:
+            if not Path.exists(self.__get_cache_path()):
+                return
+            with Path.open(self.__get_cache_path(), "r") as file:
+                for line in file:
+                    self.__values.append(json.loads(line))
+        except Exception as e:
+            raise CacheReadError from e
 
     def clear(self) -> None:
         """Clear the cache."""
-        if self.__loaded_filename is not None and not Path.exists(
-            Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"),
-        ):
-            Path.unlink(Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".pkl"))
+        if self.__loaded_filename is not None and not Path.exists(self.__get_cache_path()):
+            Path.unlink(self.__get_cache_path())
         self.__loaded_filename = None
         self.__values = None
+
+    def __get_cache_path(self) -> Path:
+        """Get the file path of the loaded cache.
+
+        Returns:
+            Path: The file path of the loaded cache.
+        """
+        if self.__loaded_filename is None:
+            msg = "No file loaded."
+            raise ValueError(msg)
+        return Path(self.__cache_dir_path) / Path(self.__loaded_filename + ".jsonl")

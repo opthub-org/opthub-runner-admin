@@ -63,7 +63,8 @@ def make_history(
 
     for hist in cache.get_values():
         if hist["trial_no"] > trial_no:
-            break
+            msg = "The trial number in the cache is greater than the requested trial number."
+            raise ValueError(msg)
 
         history.append(hist)
 
@@ -80,7 +81,6 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
         cache (Cache): The cache instance.
         dynamodb (DynamoDB): The DynamoDB instance.
     """
-    cache.load(match_id + "#" + participant_id)
     loaded_trial_no = cache.get_values()[-1]["trial_no"] if len(cache.get_values()) > 0 else None
 
     # If the loaded trial number is greater than or equal to the trial number, do nothing.
@@ -138,21 +138,3 @@ def load_up_to_trial_no(match_id: str, participant_id: str, trial_no: str, cache
                 indent=4,
             )
         raise ValueError("The evaluation and score do not match.")
-
-
-def write_to_cache(
-    cache: Cache,
-    match_id: str,
-    participant_id: str,
-    trial: Trial,
-) -> None:
-    """Write the trial to the cache.
-
-    Args:
-        cache (Cache): The cache instance.
-        match_id (str): The match ID.
-        participant_id (str): The participant ID.
-        trial (Trial): The trial to write to the cache.
-    """
-    cache.load(match_id + "#" + participant_id)
-    cache.append(trial)

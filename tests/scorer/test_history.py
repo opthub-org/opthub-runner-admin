@@ -9,7 +9,7 @@ import yaml
 
 from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.scorer.cache import Cache, Trial
-from opthub_runner_admin.scorer.history import make_history, write_to_cache
+from opthub_runner_admin.scorer.history import make_history
 
 if TYPE_CHECKING:
     from opthub_runner_admin.models.schema import FailedScoreSchema, SuccessEvaluationSchema, SuccessScoreSchema
@@ -100,30 +100,13 @@ def test_history_all_success() -> None:
         msg = "History is not correct."
         raise ValueError(msg)
 
-    write_to_cache(
-        cache,
-        "Match#" + match_uuid,
-        "Team#1",
-        {
-            "trial_no": "00007",
-            "objective": [7, 7],
-            "constraint": None,
-            "feasible": None,
-            "info": None,
-            "score": 7 / 10,
-        },
-    )
-    if cache.get_values() != expected_history[:7]:
-        msg = "Cache values are not correct."
-        raise ValueError(msg)
-
     history = make_history("Match#" + match_uuid, "Team#1", "00003", cache, dynamodb)
 
     if history != expected_history[:3]:
         msg = "History is not correct."
         raise ValueError(msg)
 
-    if cache.get_values() != expected_history[:7]:
+    if cache.get_values() != expected_history[:6]:
         msg = "Cache values are not correct."
         raise ValueError(msg)
 
