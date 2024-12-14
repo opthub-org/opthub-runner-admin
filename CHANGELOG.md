@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.14](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.13...v0.3.14) (2024-12-14)
+
+
+### Bug Fixes
+
+* change pickle into json lines ([680d227](https://github.com/opthub-org/opthub-runner-admin/commit/680d22758e9335bed97acbdd297d273f49c4b14f))
+
 ## [0.3.13](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.12...v0.3.13) (2024-12-14)
 
 
