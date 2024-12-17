@@ -4,17 +4,15 @@ import shelve
 
 from cryptography.fernet import Fernet
 
-from opthub_runner_admin.utils.credentials.utils import get_opthub_runner_dir
-
-FILE_NAME = "encryption_key"
+from opthub_runner_admin.utils.dir import get_opthub_runner_dir
 
 
 class CipherSuite:
     """Cipher suite class for encrypt."""
 
-    def __init__(self) -> None:
+    def __init__(self, process_name: str) -> None:
         """Initialize the credentials context with a persistent temporary file."""
-        self.file_path = get_opthub_runner_dir() / FILE_NAME
+        self.file_path = get_opthub_runner_dir() / f"{process_name}_encryption_key"
 
     def get(self) -> Fernet:
         """Get the Fernet cipher suite using the encryption key.

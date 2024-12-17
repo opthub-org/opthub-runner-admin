@@ -102,10 +102,11 @@ def get_message_from_queue(sqs: ScorerSQS) -> ScoreMessage | None:
         return message
 
 
-def get_match_from_message(message: ScoreMessage) -> Match | None:
+def get_match_from_message(process_name: str, message: ScoreMessage) -> Match | None:
     """Get match from message.
 
     Args:
+        process_name (str): The process name
         message (ScoreMessage): ScoreMessage
 
     Returns:
@@ -114,7 +115,7 @@ def get_match_from_message(message: ScoreMessage) -> Match | None:
     match_id = "Match#" + message["match_id"]
     LOGGER.info("Fetching indicator data from GraphQL...")
     try:
-        match = fetch_match_by_id(match_id)
+        match = fetch_match_by_id(process_name, match_id)
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -133,10 +134,11 @@ def get_match_from_message(message: ScoreMessage) -> Match | None:
         return match
 
 
-def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
+def calculate_score(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
     """The function that controls the score calculation process.
 
     Args:
+        process_name (str): The process name
         args (Args): The arguments.
     """
     sqs = setup_sqs(args)
@@ -155,7 +157,7 @@ def calculate_score(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
         if message is None:
             continue
 
-        match = get_match_from_message(message)
+        match = get_match_from_message(process_name, message)
         if match is None:
             continue
 

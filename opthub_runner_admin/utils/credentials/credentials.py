@@ -12,9 +12,8 @@ from jwcrypto import jwk  # type: ignore[import-untyped]
 
 from opthub_runner_admin.models.exception import AuthenticationError, AuthenticationErrorMessage
 from opthub_runner_admin.utils.credentials.cipher_suite import CipherSuite
-from opthub_runner_admin.utils.credentials.utils import get_opthub_runner_dir
+from opthub_runner_admin.utils.dir import get_opthub_runner_dir
 
-FILE_NAME = "credentials"
 CLIENT_ID = "7t7snlnn801j8mjsf97eaart1s"
 JWKS_URL = "https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_9TAMGx5NT/.well-known/jwks.json"
 
@@ -28,22 +27,24 @@ class Credentials:
     expire_at: str | None
     uid: str | None
     username: str | None
+    process_name: str
+    cipher_suite: CipherSuite
 
-    def __init__(self) -> None:
+    def __init__(self, process_name: str) -> None:
         """Initialize the credentials context with a persistent temporary file."""
-        self.file_path = get_opthub_runner_dir() / FILE_NAME
+        self.file_path = get_opthub_runner_dir() / f"{process_name}_credentials"
+        self.cipher_suite = CipherSuite(process_name)
 
     def load(self) -> None:
         """Load the credentials from the shelve file."""
         try:
-            cipher_suite = CipherSuite()
             with shelve.open(str(self.file_path)) as key_store:  # noqa: S301
                 # decrypt the credentials
-                self.access_token = cipher_suite.decrypt(key_store.get("access_token", b""))
-                self.refresh_token = cipher_suite.decrypt(key_store.get("refresh_token", b""))
-                self.expire_at = cipher_suite.decrypt(key_store.get("expire_at", b""))
-                self.uid = cipher_suite.decrypt(key_store.get("uid", b""))
-                self.username = cipher_suite.decrypt(key_store.get("username", b""))
+                self.access_token = self.cipher_suite.decrypt(key_store.get("access_token", b""))
+                self.refresh_token = self.cipher_suite.decrypt(key_store.get("refresh_token", b""))
+                self.expire_at = self.cipher_suite.decrypt(key_store.get("expire_at", b""))
+                self.uid = self.cipher_suite.decrypt(key_store.get("uid", b""))
+                self.username = self.cipher_suite.decrypt(key_store.get("username", b""))
                 key_store.close()
         except Exception as e:
             self.clear_credentials()
@@ -53,17 +54,16 @@ class Credentials:
 
     def update(self, access_token: str, refresh_token: str) -> None:
         """Update the credentials in the shelve file."""
-        cipher_suite = CipherSuite()
         with shelve.open(str(self.file_path)) as key_store:  # noqa: S301
             # encrypt the credentials
-            key_store["access_token"] = cipher_suite.encrypt(access_token)
-            key_store["refresh_token"] = cipher_suite.encrypt(refresh_token)
+            key_store["access_token"] = self.cipher_suite.encrypt(access_token)
+            key_store["refresh_token"] = self.cipher_suite.encrypt(refresh_token)
             # decode the access token to get the expire time, user id and user name
             public_key = self.get_jwks_public_key(access_token)
             token = self.decode_jwt_token(access_token, public_key)
-            key_store["expire_at"] = cipher_suite.encrypt(str(token.get("exp")))
-            key_store["uid"] = cipher_suite.encrypt(token.get("sub"))
-            key_store["username"] = cipher_suite.encrypt(token.get("username"))
+            key_store["expire_at"] = self.cipher_suite.encrypt(str(token.get("exp")))
+            key_store["uid"] = self.cipher_suite.encrypt(token.get("sub"))
+            key_store["username"] = self.cipher_suite.encrypt(token.get("username"))
             key_store.sync()
         self.access_token = access_token
         self.refresh_token = refresh_token

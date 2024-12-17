@@ -12,9 +12,9 @@ def test_fetch_match_response_by_match_uuid() -> None:
     username = ""
     password = ""
 
-    credentials = Credentials()
+    credentials = Credentials("main")
     credentials.cognito_login(username, password)
 
-    d = fetch_match_response_by_match_uuid(match_uuid)
+    d = fetch_match_response_by_match_uuid("main", match_uuid)
 
     print(d)

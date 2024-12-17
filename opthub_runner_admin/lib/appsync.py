@@ -48,33 +48,38 @@ class Response(TypedDict):
     indicatorPrivateEnvironments: list[NullableKeyValue]
 
 
-def get_gql_client() -> Client:
+def get_gql_client(process_name: str) -> Client:
     """Get the GraphQL client.
+
+    Args:
+        process_name: The process name
+        match_uuid: The match UUID.
 
     Returns:
         The GraphQL client.
     """
-    credentials = Credentials()
+    credentials = Credentials(process_name)
     credentials.load()
     if credentials.access_token is None:
         msg = "Please login first."
-        raise Exception(msg)
+        raise ValueError(msg)
     headers = {"Authorization": f"Bearer {credentials.access_token}"}
     transport = AIOHTTPTransport(url=API_ENDPOINT_URL, headers=headers)
     return Client(transport=transport, fetch_schema_from_transport=True)
 
 
-def fetch_match_response_by_match_uuid(match_uuid: str) -> Response:
+def fetch_match_response_by_match_uuid(process_name: str, match_uuid: str) -> Response:
     """Fetch match by MatchUUID using GraphQL.
 
     Args:
+        process_name: The process name
         match_uuid: The match UUID.
 
 
     Returns:
         The match.
     """
-    client = get_gql_client()
+    client = get_gql_client(process_name)
     variables = {"id": match_uuid}
 
     query = gql("""query getMatch(

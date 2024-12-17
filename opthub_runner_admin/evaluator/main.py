@@ -98,10 +98,11 @@ def get_message_from_queue(sqs: EvaluatorSQS) -> EvaluationMessage | None:
         return message
 
 
-def get_match_from_message(message: EvaluationMessage) -> Match | None:
+def get_match_by_message(process_name: str, message: EvaluationMessage) -> Match | None:
     """Get match from message.
 
     Args:
+        process_name (str): The process name
         message (ScoreMessage): ScoreMessage
 
     Returns:
@@ -110,7 +111,7 @@ def get_match_from_message(message: EvaluationMessage) -> Match | None:
     match_id = "Match#" + message["match_id"]
     LOGGER.info("Fetching problem data from GraphQL...")
     try:
-        match = fetch_match_by_id(match_id)
+        match = fetch_match_by_id(process_name, match_id)
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -129,7 +130,7 @@ def get_match_from_message(message: EvaluationMessage) -> Match | None:
         return match
 
 
-def evaluate(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
+def evaluate(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
     """The function that controls the evaluation process.
 
     Args:
@@ -148,7 +149,7 @@ def evaluate(args: Args) -> None:  # noqa: PLR0915, C901, PLR0912
         if message is None:
             continue
 
-        match = get_match_from_message(message)
+        match = get_match_by_message(process_name, message)
         if match is None:
             continue
 

@@ -54,9 +54,9 @@ def load_config(ctx: click.Context, param: click.Parameter, config_file: str) ->
     return cast(dict[str, Any], config)
 
 
-def auth(username: str, password: str) -> None:
+def auth(process_name: str, username: str, password: str) -> None:
     """Sign in."""
-    credentials = Credentials()
+    credentials = Credentials(process_name)
     try:
         credentials.cognito_login(username, password)
         click.echo("Successfully signed in.")
@@ -127,6 +127,7 @@ def run(
     command: list[str],
 ) -> None:
     """The entrypoint of CLI."""
+    process_name = click.prompt("Process Name", type=str)
     # Show the message to the user and ask for the username and password
     click.echo(
         click.style("Note: Make sure to authenticate using the competition administrator's account.", fg="yellow"),
@@ -153,7 +154,7 @@ def run(
 
     check_docker()
 
-    auth(username, password)
+    auth(process_name, username, password)
 
     log_level = log_level if log_level is not None else ctx.default_map["log_level"]
 
@@ -162,11 +163,11 @@ def run(
     if args["mode"] == "evaluator":
         from opthub_runner_admin.evaluator.main import evaluate
 
-        evaluate(args)
+        evaluate(process_name, args)
     elif args["mode"] == "scorer":
         from opthub_runner_admin.scorer.main import calculate_score
 
-        calculate_score(args)
+        calculate_score(process_name, args)
     else:
         msg = f"Invalid mode: {args['mode']}"
         raise ValueError(msg)

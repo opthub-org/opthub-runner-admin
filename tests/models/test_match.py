@@ -12,7 +12,7 @@ def test_fetch_match_by_id() -> None:
 
     match_uuid = "5a3fcd7d-3b7e-4a97-bac3-0531cfca538e"
 
-    credentials = Credentials()
+    credentials = Credentials("main")
     credentials.cognito_login(username, password)
-    match = fetch_match_by_id("Match#" + match_uuid)
+    match = fetch_match_by_id("main", "Match#" + match_uuid)
     print(match)

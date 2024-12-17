@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import TypedDict
 
+from opthub_runner_admin.utils.dir import get_opthub_runner_dir
+
 
 class Trial(TypedDict):
     """The type of the trial. Conforming to Docker input by using snake case.
@@ -49,12 +51,9 @@ class Cache:
         self.__values: list[Trial] | None = None  # values in the cache
 
         # Create a directory for the cache
-        home_dir = Path.home()
+        opthub_runner_admin_dir = get_opthub_runner_dir()
 
-        # .opthub_runner_adminディレクトリのパスを作成
-        opthub_runner_admin_dir = home_dir / ".opthub_runner_admin"
-
-        # ディレクトリの存在をチェック
+        # check if the cache directory exists
         if not opthub_runner_admin_dir.exists():
             Path.mkdir(opthub_runner_admin_dir)
         self.__cache_dir_path = Path(opthub_runner_admin_dir) / "cache"

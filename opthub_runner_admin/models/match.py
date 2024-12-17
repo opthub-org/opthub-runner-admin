@@ -22,7 +22,7 @@ class Match(TypedDict):
     problem_environments: dict[str, str]
 
 
-def fetch_match_by_id(match_id: str) -> Match:
+def fetch_match_by_id(process_name: str, match_id: str) -> Match:
     """Fetch the match by GraphQL.
 
     Args:
@@ -36,7 +36,7 @@ def fetch_match_by_id(match_id: str) -> Match:
         raise ValueError(msg)
 
     match_uuid = match_id[6:]
-    response = fetch_match_response_by_match_uuid(match_uuid)
+    response = fetch_match_response_by_match_uuid(process_name, match_uuid)
 
     problem_environments: dict[str, str] = {}
     for public_keyvalue in response["problemPublicEnvironments"]:
