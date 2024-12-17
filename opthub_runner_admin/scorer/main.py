@@ -112,7 +112,7 @@ def get_match_from_message(message: ScoreMessage) -> Match | None:
         Match: Match
     """
     match_id = "Match#" + message["match_id"]
-    LOGGER.info("Fetching indicator data from DB...")
+    LOGGER.info("Fetching indicator data from GraphQL...")
     try:
         match = fetch_match_by_id(match_id)
     except KeyboardInterrupt:

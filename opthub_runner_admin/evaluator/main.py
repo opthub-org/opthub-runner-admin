@@ -79,7 +79,7 @@ def get_message_from_queue(sqs: EvaluatorSQS) -> EvaluationMessage | None:
     Returns:
         ScoreMessage | None: Scorer Message
     """
-    LOGGER.info("Finding Evaluation to calculate score...")
+    LOGGER.info("Finding Solution to evaluate...")
     try:
         message = sqs.get_message_from_queue()
     except KeyboardInterrupt:
@@ -108,18 +108,18 @@ def get_match_from_message(message: EvaluationMessage) -> Match | None:
         Match: Match
     """
     match_id = "Match#" + message["match_id"]
-    LOGGER.info("Fetching indicator data from DB...")
+    LOGGER.info("Fetching problem data from GraphQL...")
     try:
         match = fetch_match_by_id(match_id)
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        LOGGER.exception("Error occurred while fetching indicator data from DB.")
+        LOGGER.exception("Error occurred while fetching problem data from DB.")
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(1)
     except Exception as error:
-        LOGGER.exception("Error occurred while fetching indicator data from DB.")
+        LOGGER.exception("Error occurred while fetching problem data from DB.")
         if isinstance(error, DockerImageNotFoundError):
             sys.exit(1)
         return None
