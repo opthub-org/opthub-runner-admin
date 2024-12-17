@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.15](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.14...v0.3.15) (2024-12-17)
+
+
+### Bug Fixes
+
+* debug for log message ([d8de77e](https://github.com/opthub-org/opthub-runner-admin/commit/d8de77e6c4a5c5fa434970547bff954a379fa2ab))
+* Splitting the credentials file among processes ([f16dc29](https://github.com/opthub-org/opthub-runner-admin/commit/f16dc293e1c8033eb085d8c82a9a72a958e19de3))
+
 ## [0.3.14](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.13...v0.3.14) (2024-12-14)
 
 
