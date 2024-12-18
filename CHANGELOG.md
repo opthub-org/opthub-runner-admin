@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.16](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.15...v0.3.16) (2024-12-18)
+
+
+### Bug Fixes
+
+* Bugfix for visibility timeout extender ([2d22a25](https://github.com/opthub-org/opthub-runner-admin/commit/2d22a2591f16fc296c6a7bc7d813cf661189d252))
+
 ## [0.3.15](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.14...v0.3.15) (2024-12-17)
 
 
