@@ -153,7 +153,7 @@ class RunnerSQS:
 
             current_time = time()
 
-            if current_time - self.start < current_visibility_timeout - 4:
+            if current_time - self.start < current_visibility_timeout - 8:
                 sleep(1)
                 continue
 
@@ -178,6 +178,8 @@ class RunnerSQS:
                     LOGGER.warning("Can not extend visibility since no message handled.")
                 else:
                     raise botocore.exceptions.ParamValidationError from e
+            finally:
+                sleep(1)
 
 
 class EvaluatorSQS(RunnerSQS):

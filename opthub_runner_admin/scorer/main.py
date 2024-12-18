@@ -151,6 +151,11 @@ def calculate_score(process_name: str, args: Args) -> None:  # noqa: PLR0915, C9
 
     while True:
         n_score += 1
+
+        if args["num"] > 0 and n_score > args["num"]:
+            LOGGER.info("Reached the maximum number of scores.")
+            break
+
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
         message = get_message_from_queue(sqs)

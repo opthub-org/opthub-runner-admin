@@ -96,6 +96,14 @@ signal.signal(signal.SIGTERM, signal_handler)
     default=None,
     help="Timeout to process a query.",
 )
+@click.option(
+    "-n",
+    "--num",
+    envvar="OPTHUB_NUM",
+    type=click.IntRange(min=0),
+    default=0,
+    help="The maximum number of trials to process.",
+)
 @click.option("--rm", envvar="OPTHUB_REMOVE", default=None, is_flag=True, help="Remove containers after exit.")
 @click.option(
     "--log_level",
@@ -120,6 +128,7 @@ def run(
     ctx: click.Context,
     interval: int,
     timeout: int,
+    num: int,
     rm: bool,
     log_level: str,
     config: str,
@@ -141,6 +150,7 @@ def run(
     args: Args = {
         "interval": interval if interval is not None else ctx.default_map["interval"],
         "timeout": timeout if timeout is not None else ctx.default_map["timeout"],
+        "num": num if num is not None else ctx.default_map["num"],
         "rm": rm if rm is not None else ctx.default_map["rm"],
         "evaluator_queue_url": ctx.default_map["evaluator_queue_url"],
         "scorer_queue_url": ctx.default_map["scorer_queue_url"],

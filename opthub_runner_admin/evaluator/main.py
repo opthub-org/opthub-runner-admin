@@ -143,6 +143,11 @@ def evaluate(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR
 
     while True:
         n_evaluation += 1
+
+        if args["num"] > 0 and n_evaluation > args["num"]:
+            LOGGER.info("Reached the maximum number of evaluations.")
+            break
+
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
         message = get_message_from_queue(sqs)

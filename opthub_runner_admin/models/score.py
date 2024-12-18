@@ -111,14 +111,14 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
 
 def is_score_exists(
     dynamodb: DynamoDB,
-    match_id: str,
+    match_uuid: str,
     participant_id: str,
     trial_no: str,
 ) -> bool:
     """Check if the score exists in DynamoDB.
 
     Args:
-        match_id (str): MatchID.
+        match_uuid (str): MatchID.
         participant_id (str): ParticipantID.
         trial_no (str): The trial number.
         dynamodb (DynamoDB): Dynamo DB Wrapper object to communicate with Dynamo DB.
@@ -126,7 +126,7 @@ def is_score_exists(
     Returns:
         bool: True if the score exists, False otherwise.
     """
-    partition_key = f"Scores#{match_id}#{participant_id}"
+    partition_key = f"Scores#Match#{match_uuid}#{participant_id}"
     if dynamodb.is_exist(
         {
             "ID": partition_key,
