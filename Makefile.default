@@ -1,7 +1,7 @@
 .PHONY: evaluator scorer stop-evaluator stop-scorer
 
-EVALUATOR_PARALLEL_NUM := 5
-SCORER_PARALLEL_NUM := 5
+EVALUATOR_PARALLEL_NUM := (Your evaluator parallel num)
+SCORER_PARALLEL_NUM :=  (Your scorer parallel num)
 
 USERNAME := (Your username)
 PASSWORD := (Your password)
@@ -12,7 +12,11 @@ evaluator:
 	fi; \
 	for i in $$(seq 1 $(EVALUATOR_PARALLEL_NUM)); do \
 		tmux new-window -t evaluator:$$i -n opthub-evaluator-$$i; \
+		tmux send-keys -t evaluator:$$i "newgrp docker" C-m; \
+        sleep 1; \
 		tmux send-keys -t evaluator:$$i "opthub-runner evaluator" C-m; \
+		sleep 1; \
+		tmux send-keys -t evaluator:$$i "evaluator_$$i" C-m; \
 		sleep 1; \
 		tmux send-keys -t evaluator:$$i "$(USERNAME)" C-m; \
 		sleep 1; \
@@ -25,7 +29,11 @@ scorer:
 	fi; \
 	for i in $$(seq 1 $(SCORER_PARALLEL_NUM)); do \
 		tmux new-window -t scorer:$$i -n opthub-scorer-$$i; \
+		tmux send-keys -t scorer:$$i "newgrp docker" C-m; \
+        sleep 1; \
 		tmux send-keys -t scorer:$$i "opthub-runner scorer" C-m; \
+		sleep 1; \
+		tmux send-keys -t scorer:$$i "scorer_$$i" C-m; \
 		sleep 1; \
 		tmux send-keys -t scorer:$$i "$(USERNAME)" C-m; \
 		sleep 1; \
