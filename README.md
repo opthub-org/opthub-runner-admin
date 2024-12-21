@@ -80,6 +80,7 @@ The following table lists the options to include in the YAML file, along with th
 | timeout | int | 43200 | Timeout for evaluation and score calculation using Docker Image. |
 | rm | bool | True | Whether to remove the Docker container after evaluation and score calculation. True is recommended except for debugging. If set to False, the Docker containers created during evaluation and scoring will not be removed, accumulating over time. |
 | log_level | [DEBUG, INFO, WARNING, ERROR, CRITICAL] | INFO | Log level to output. |
+| force | bool | False | Whether to forcibly create a new flag file. |
 | evaluator_queue_url | path | - | Amazon SQS queue URL used by the Evaluator. |
 | scorer_queue_url | path | - | Amazon SQS queue URL used by the Scorer. |
 | access_key_id | str | - | AWS Access Key ID. |

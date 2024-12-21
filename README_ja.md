@@ -80,6 +80,7 @@ Password: (your password)
 | timeout | int | 43200 | Docker Imageを使った解評価・スコア計算の制限時間 |
 | rm | bool | True | 解評価・スコア計算後にDocker Containerを削除するかどうか。デバッグ時以外はTrueを推奨します。Falseに設定すると、解評価・スコア計算の際に作成されたDocker Containerが削除されず、蓄積していくので注意してください。 |
 | log_level | [DEBUG, INFO, WARNING, ERROR, CRITICAL] | INFO | 出力するログのレベル |
+| force | bool | False | フラグファイルを強制的に新規作成するか |
 | evaluator_queue_url | path | - | Evaluatorが用いるSQSのキューURL |
 | scorer_queue_url | path | - | Scorerが用いるSQSのキューURL |
 | access_key_id | str | - | AWS Access Key ID |

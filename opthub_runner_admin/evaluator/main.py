@@ -19,6 +19,7 @@ from opthub_runner_admin.models.evaluation import (
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import Match, fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
+from opthub_runner_admin.utils.process import is_stop_flag_set
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
 
@@ -147,6 +148,11 @@ def evaluate(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR
         if args["num"] > 0 and n_evaluation > args["num"]:
             LOGGER.info("Reached the maximum number of evaluations.")
             break
+
+        if is_stop_flag_set(process_name):
+            msg = f"Stop flag detected. Stop Evaluator on the process {process_name}."
+            LOGGER.info(msg)
+            sys.exit(0)
 
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 

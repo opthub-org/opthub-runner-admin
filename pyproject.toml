@@ -31,6 +31,7 @@ dependencies = [
     "cryptography >= 42.0.7",
     "jwcrypto >= 1.5.6",
     "requests >= 2.31.0",
+    "filelock >= 3.16.1",
 ]
 
 [project.urls]
@@ -66,6 +67,7 @@ pyjwt = "^2.8.0"
 cryptography = "^42.0.7"
 jwcrypto = "^1.5.6"
 requests = "^2.31.0"
+filelock = "^3.16.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.3.3"
@@ -104,4 +106,6 @@ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry.scripts]
-opthub-runner = "opthub_runner_admin.main:run"
+opthub-runner-start = "opthub_runner_admin.main:run"
+opthub-runner-stop = "opthub_runner_admin.main:stop"
+

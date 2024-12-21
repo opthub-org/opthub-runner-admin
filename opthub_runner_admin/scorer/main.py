@@ -21,6 +21,7 @@ from opthub_runner_admin.models.score import (
 )
 from opthub_runner_admin.scorer.cache import Cache, CacheWriteError
 from opthub_runner_admin.scorer.history import make_history
+from opthub_runner_admin.utils.process import is_stop_flag_set
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
 from opthub_runner_admin.utils.zfill import zfill
@@ -155,6 +156,10 @@ def calculate_score(process_name: str, args: Args) -> None:  # noqa: PLR0915, C9
         if args["num"] > 0 and n_score > args["num"]:
             LOGGER.info("Reached the maximum number of scores.")
             break
+        if is_stop_flag_set(process_name):
+            msg = f"Stop flag detected. Stop Scorer on the process {process_name}."
+            LOGGER.info(msg)
+            sys.exit(0)
 
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 

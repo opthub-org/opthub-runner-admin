@@ -13,6 +13,7 @@ from botocore.exceptions import ClientError
 
 from opthub_runner_admin.utils.credentials.credentials import Credentials
 from opthub_runner_admin.utils.docker import check_docker
+from opthub_runner_admin.utils.process import create_flag_file
 
 if TYPE_CHECKING:
     from opthub_runner_admin.args import Args
@@ -42,7 +43,16 @@ def set_log_level(log_level: str) -> None:
 
 
 def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> dict[str, Any]:
-    """Load the configuration file."""
+    """Load the configuration file.
+
+    Args:
+        ctx (click.Context): The click context.
+        param (click.Parameter): The click parameter.
+        config_file (str): The configuration file.
+
+    Returns:
+        dict[str, Any]: The configuration.
+    """
     if not Path(config_file).exists():
         msg = f"Configuration file not found: {config_file}"
         raise FileNotFoundError(msg)
@@ -55,7 +65,13 @@ def load_config(ctx: click.Context, param: click.Parameter, config_file: str) ->
 
 
 def auth(process_name: str, username: str, password: str) -> None:
-    """Sign in."""
+    """Sign in.
+
+    Args:
+        process_name (str): The process name.
+        username (str): The username.
+        password (str): The password.
+    """
     credentials = Credentials(process_name)
     try:
         credentials.cognito_login(username, password)
@@ -79,7 +95,7 @@ def auth(process_name: str, username: str, password: str) -> None:
 signal.signal(signal.SIGTERM, signal_handler)
 
 
-@click.command(help="OptHub Runner.")
+@click.command(help="Start OptHub Runner.")
 @click.option(
     "-i",
     "--interval",
@@ -113,6 +129,14 @@ signal.signal(signal.SIGTERM, signal_handler)
     help="Log level.",
 )
 @click.option(
+    "-f",
+    "--force",
+    envvar="OPTHUB_FORCE",
+    type=bool,
+    default=False,
+    help="Force to update the flag file.",
+)
+@click.option(
     "-c",
     "--config",
     envvar="OPTHUB_RUNNER_CONFIG",
@@ -131,6 +155,7 @@ def run(
     num: int,
     rm: bool,
     log_level: str,
+    force: bool,
     config: str,
     mode: str,
     command: list[str],
@@ -169,6 +194,8 @@ def run(
     log_level = log_level if log_level is not None else ctx.default_map["log_level"]
 
     set_log_level(log_level)
+
+    create_flag_file(process_name, force)
 
     if args["mode"] == "evaluator":
         from opthub_runner_admin.evaluator.main import evaluate
