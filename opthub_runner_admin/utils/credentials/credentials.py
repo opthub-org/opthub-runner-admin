@@ -14,9 +14,6 @@ from opthub_runner_admin.models.exception import AuthenticationError, Authentica
 from opthub_runner_admin.utils.credentials.cipher_suite import CipherSuite
 from opthub_runner_admin.utils.dir import get_opthub_runner_dir
 
-CLIENT_ID = "7t7snlnn801j8mjsf97eaart1s"
-JWKS_URL = "https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_9TAMGx5NT/.well-known/jwks.json"
-
 
 class Credentials:
     """The credentials class. To store and manage the credentials."""
@@ -30,10 +27,20 @@ class Credentials:
     process_name: str
     cipher_suite: CipherSuite
 
-    def __init__(self, process_name: str) -> None:
+    def __init__(self, process_name: str, dev: bool) -> None:
         """Initialize the credentials context with a persistent temporary file."""
         self.file_path = get_opthub_runner_dir() / f"{process_name}_credentials"
         self.cipher_suite = CipherSuite(process_name)
+        if dev:
+            from opthub_runner_admin.environments import CLIENT_ID_DEV, JWKS_URL_DEV
+
+            self.client_id = CLIENT_ID_DEV
+            self.jwks_url = JWKS_URL_DEV
+        else:
+            from opthub_runner_admin.environments import CLIENT_ID_PROD, JWKS_URL_PROD
+
+            self.client_id = CLIENT_ID_PROD
+            self.jwks_url = JWKS_URL_PROD
 
     def load(self) -> None:
         """Load the credentials from the shelve file."""
@@ -94,7 +101,7 @@ class Credentials:
             response = client.initiate_auth(
                 AuthFlow="REFRESH_TOKEN_AUTH",
                 AuthParameters={"REFRESH_TOKEN": self.refresh_token},
-                ClientId=CLIENT_ID,
+                ClientId=self.client_id,
             )
             access_token = response["AuthenticationResult"]["AccessToken"]
         except Exception as e:
@@ -114,7 +121,7 @@ class Credentials:
             response = client.initiate_auth(
                 AuthFlow="USER_PASSWORD_AUTH",
                 AuthParameters={"USERNAME": username, "PASSWORD": password},
-                ClientId=CLIENT_ID,
+                ClientId=self.client_id,
             )
             access_token = response["AuthenticationResult"]["AccessToken"]
             refresh_token = response["AuthenticationResult"]["RefreshToken"]
@@ -148,7 +155,7 @@ class Credentials:
             Any: public key
         """
         try:
-            response = requests.get(JWKS_URL, timeout=10)  # set timeout 10 seconds
+            response = requests.get(self.jwks_url, timeout=10)  # set timeout 10 seconds
             response.raise_for_status()
         except requests.RequestException as e:
             raise AuthenticationError(AuthenticationErrorMessage.GET_JWKS_PUBLIC_KEY_FAILED) from e

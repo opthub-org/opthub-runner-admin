@@ -39,15 +39,20 @@ def set_log_level(log_level: str) -> None:
 
     logging.basicConfig(level=level_num)
     gql_loglevel = max(level_num, logging.WARNING)
+    botocore_loglevel = max(level_num, logging.INFO)
+    urllib3_loglevel = max(level_num, logging.INFO)
+    boto3_loglevel = max(level_num, logging.INFO)
+
+    logging.getLogger("botocore").setLevel(botocore_loglevel)
+    logging.getLogger("urllib3").setLevel(urllib3_loglevel)
     logging.getLogger("gql").setLevel(gql_loglevel)
+    logging.getLogger("boto3").setLevel(boto3_loglevel)
 
 
-def load_config(ctx: click.Context, param: click.Parameter, config_file: str) -> dict[str, Any]:
+def load_config(config_file: str) -> dict[str, Any]:
     """Load the configuration file.
 
     Args:
-        ctx (click.Context): The click context.
-        param (click.Parameter): The click parameter.
         config_file (str): The configuration file.
 
     Returns:
@@ -57,22 +62,21 @@ def load_config(ctx: click.Context, param: click.Parameter, config_file: str) ->
         msg = f"Configuration file not found: {config_file}"
         raise FileNotFoundError(msg)
     with Path(config_file).open(encoding="utf-8") as file:
-        config: Args = yaml.safe_load(file)
-
-    ctx.default_map = cast(dict[str, Any], config)
+        config = yaml.safe_load(file)
 
     return cast(dict[str, Any], config)
 
 
-def auth(process_name: str, username: str, password: str) -> None:
+def auth(process_name: str, username: str, password: str, dev: bool) -> None:
     """Sign in.
 
     Args:
         process_name (str): The process name.
         username (str): The username.
         password (str): The password.
+        dev (bool): Whether to use the development environment.
     """
-    credentials = Credentials(process_name)
+    credentials = Credentials(process_name, dev)
     try:
         credentials.cognito_login(username, password)
         click.echo("Successfully signed in.")
@@ -97,52 +101,15 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 @click.command(help="Start OptHub Runner.")
 @click.option(
-    "-i",
-    "--interval",
-    envvar="OPTHUB_INTERVAL",
-    type=click.IntRange(min=1),
-    default=None,
-    help="Polling interval.",
-)
-@click.option(
-    "-t",
-    "--timeout",
-    envvar="OPTHUB_TIMEOUT",
-    type=click.IntRange(min=0),
-    default=None,
-    help="Timeout to process a query.",
-)
-@click.option(
-    "-n",
-    "--num",
-    envvar="OPTHUB_NUM",
-    type=click.IntRange(min=0),
-    default=0,
-    help="The maximum number of trials to process.",
-)
-@click.option("--rm", envvar="OPTHUB_REMOVE", default=None, is_flag=True, help="Remove containers after exit.")
-@click.option(
-    "--log_level",
-    envvar="OPTHUB_LOG_LEVEL",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-    default=None,
-    help="Log level.",
-)
-@click.option(
-    "-f",
-    "--force",
-    envvar="OPTHUB_FORCE",
-    type=bool,
-    default=False,
-    help="Force to update the flag file.",
+    "-d",
+    "--dev",
+    is_flag=True,
+    help="Use the development environment.",
 )
 @click.option(
     "-c",
     "--config",
-    envvar="OPTHUB_RUNNER_CONFIG",
-    type=click.Path(dir_okay=False),
-    default="config.yml",
-    callback=load_config,
+    type=str,
     help="Configuration file.",
 )
 @click.argument("mode", type=click.Choice(["evaluator", "scorer"]))
@@ -150,13 +117,8 @@ signal.signal(signal.SIGTERM, signal_handler)
 @click.pass_context
 def run(
     ctx: click.Context,
-    interval: int,
-    timeout: int,
-    num: int,
-    rm: bool,
-    log_level: str,
-    force: bool,
-    config: str,
+    dev: bool,
+    config: str | None,
     mode: str,
     command: list[str],
 ) -> None:
@@ -169,33 +131,34 @@ def run(
     username = click.prompt("Username", type=str)
     password = click.prompt("Password", type=str, hide_input=True)
 
-    if ctx.default_map is None:
-        msg = "Configuration file is not loaded."
-        raise ValueError(msg)
+    if config is None:
+        config = "config.yml" if not dev else "config.dev.yml"
+
+    config_params = load_config(config)
+
     args: Args = {
-        "interval": interval if interval is not None else ctx.default_map["interval"],
-        "timeout": timeout if timeout is not None else ctx.default_map["timeout"],
-        "num": num if num is not None else ctx.default_map["num"],
-        "rm": rm if rm is not None else ctx.default_map["rm"],
-        "evaluator_queue_url": ctx.default_map["evaluator_queue_url"],
-        "scorer_queue_url": ctx.default_map["scorer_queue_url"],
-        "access_key_id": ctx.default_map["access_key_id"],
-        "secret_access_key": ctx.default_map["secret_access_key"],
-        "region_name": ctx.default_map["region_name"],
-        "table_name": ctx.default_map["table_name"],
+        "interval": config_params["interval"],
+        "timeout": config_params["timeout"],
+        "num": config_params["num"],
+        "rm": config_params["rm"],
+        "evaluator_queue_url": config_params["evaluator_queue_url"],
+        "scorer_queue_url": config_params["scorer_queue_url"],
+        "access_key_id": config_params["access_key_id"],
+        "secret_access_key": config_params["secret_access_key"],
+        "region_name": config_params["region_name"],
+        "table_name": config_params["table_name"],
         "mode": mode,
         "command": command,
+        "dev": dev,
     }
 
     check_docker()
 
-    auth(process_name, username, password)
+    auth(process_name, username, password, dev)
 
-    log_level = log_level if log_level is not None else ctx.default_map["log_level"]
+    set_log_level(config_params["log_level"])
 
-    set_log_level(log_level)
-
-    create_flag_file(process_name, force)
+    create_flag_file(process_name, config_params["force"])
 
     if args["mode"] == "evaluator":
         from opthub_runner_admin.evaluator.main import evaluate

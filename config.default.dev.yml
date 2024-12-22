@@ -2,11 +2,11 @@ interval: 2
 timeout: 43200
 rm: True
 num: 0
-log_level: "INFO"
+log_level: "DEBUG"
 force: False
 # evaluator_queue_url:
 # scorer_queue_url:
 # access_key_id:
 # secret_access_key:
 # region_name:
-# table_name:
+# table_name: 

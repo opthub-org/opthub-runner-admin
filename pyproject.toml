@@ -107,5 +107,5 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry.scripts]
 opthub-runner-start = "opthub_runner_admin.main:run"
-opthub-runner-stop = "opthub_runner_admin.main:stop"
+opthub-runner-stop = "opthub_runner_admin.utils.process:stop"
 
