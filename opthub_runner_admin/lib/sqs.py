@@ -51,24 +51,23 @@ class ScoreMessage(TypedDict):
 class RunnerSQS:
     """The class to communicate with Amazon SQS."""
 
-    def __init__(self, interval: float, options: SQSOptions) -> None:
+    def __init__(self, options: SQSOptions) -> None:
         """Initialize the class.
 
         Args:
-            interval (float): The interval to fetch messages from SQS.
             options (SQSOptions): The options for SQS.
         """
-        self.interval = interval
-
         self.sqs = boto3.client(
             "sqs",
             region_name=options["region_name"],
             aws_access_key_id=options["aws_access_key_id"],
             aws_secret_access_key=options["aws_secret_access_key"],
-        )
+        )  # Create an SQS client
 
         self.queue_url = options["queue_url"]
-        self.receipt_handle: str | None = None
+        self.receipt_handle: str | None = (
+            None  # Receipt handle of the message (Used to delete the message or extend the visibility timeout)
+        )
 
     def check_accessible(self) -> None:
         """Check if the queue is accessible."""
@@ -89,14 +88,15 @@ class RunnerSQS:
         """Wake up the visibility extender."""
         # Launch a thread to extend the queue re-visibility.
         self.visibility_timeout_extender: Thread = Thread(
-            target=self.__extend_visibility_timeout,
+            target=self.extend_visibility_timeout,
             args=(),
         )
+
         # Set the thread as a daemon. When the main thread exits, the daemon thread will exit.
         self.visibility_timeout_extender.setDaemon(True)
 
         self.visibility_timeout_extender.start()
-        self.start: float | None = None
+        self.start: float | None = None  # The time when the message is received
 
     def delete_message_from_queue(self) -> None:
         """Delete the message from SQS."""
@@ -109,35 +109,33 @@ class RunnerSQS:
         self.receipt_handle = None
         self.start = None
 
-    def _polling_sqs_message(self) -> Message:
-        """Polling the message from SQS.
+    def receive_sqs_message(self) -> Message | None:
+        """Receive the message from SQS.
 
         Returns:
-            Message: The message from SQS.
+            Message | None: The message from SQS.
         """
         self.receipt_handle = None
 
-        while True:
-            self.start = time()
+        self.start = time()
 
-            response = self.sqs.receive_message(
-                QueueUrl=self.queue_url,
-                MaxNumberOfMessages=1,
-                WaitTimeSeconds=10,
-            )
+        response = self.sqs.receive_message(
+            QueueUrl=self.queue_url,
+            MaxNumberOfMessages=1,
+            WaitTimeSeconds=10,
+        )
 
-            messages = response.get("Messages", [])
+        messages = response.get("Messages", [])
 
-            if messages:
-                break
-            sleep(self.interval)
+        if not messages:  # No message in the queue
+            return None
 
         message: Message = {"receipt_handle": messages[0]["ReceiptHandle"], "body": messages[0]["Body"]}
         self.receipt_handle = messages[0]["ReceiptHandle"]
 
         return message
 
-    def __extend_visibility_timeout(self) -> None:
+    def extend_visibility_timeout(self) -> None:
         """Extend the visibility timeout of the message."""
         current_visibility_timeout = 8
 
@@ -185,13 +183,16 @@ class RunnerSQS:
 class EvaluatorSQS(RunnerSQS):
     """The class to communicate with Amazon SQS for evaluation."""
 
-    def get_message_from_queue(self) -> EvaluationMessage:
+    def get_message_from_queue(self) -> EvaluationMessage | None:
         """Get the message from SQS.
 
         Returns:
-            EvaluationMessage: The message from SQS for evaluation.
+            EvaluationMessage | None: The message from SQS for evaluation.
         """
-        message = self._polling_sqs_message()
+        message = self.receive_sqs_message()
+        if message is None:  # No message in the queue
+            return None
+
         body = json.loads(message["body"])
 
         evaluation_message: EvaluationMessage = {
@@ -207,13 +208,17 @@ class EvaluatorSQS(RunnerSQS):
 class ScorerSQS(RunnerSQS):
     """The class to communicate with Amazon SQS for scoring."""
 
-    def get_message_from_queue(self) -> ScoreMessage:
+    def get_message_from_queue(self) -> ScoreMessage | None:
         """Get the message from SQS.
 
         Returns:
-            ScoreMessage: The message from SQS for scoring.
+            ScoreMessage | None: The message from SQS for scoring.
         """
-        message = self._polling_sqs_message()
+        message = self.receive_sqs_message()
+
+        if message is None:  # No message in the queue
+            return None
+
         body = json.loads(message["body"])
 
         score_message: ScoreMessage = {

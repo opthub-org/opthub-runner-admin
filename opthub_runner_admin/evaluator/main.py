@@ -4,6 +4,7 @@ import json
 import logging
 import signal
 import sys
+from time import sleep
 from traceback import format_exc
 
 from opthub_runner_admin.args import Args
@@ -19,7 +20,7 @@ from opthub_runner_admin.models.evaluation import (
 from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerImageNotFoundError
 from opthub_runner_admin.models.match import Match, fetch_match_by_id
 from opthub_runner_admin.models.solution import fetch_solution_by_primary_key
-from opthub_runner_admin.utils.process import is_stop_flag_set
+from opthub_runner_admin.utils.process import delete_flag_file, is_stop_flag_set
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
 
@@ -36,7 +37,6 @@ def setup_sqs(args: Args) -> EvaluatorSQS:
         EvaluatorSQS: The SQS instance.
     """
     sqs = EvaluatorSQS(
-        args["interval"],
         {
             "queue_url": args["evaluator_queue_url"],
             "region_name": args["region_name"],
@@ -71,18 +71,38 @@ def setup_dynamodb(args: Args) -> DynamoDB:
     return dynamodb
 
 
-def get_message_from_queue(sqs: EvaluatorSQS) -> EvaluationMessage | None:
+def get_message_from_queue(sqs: EvaluatorSQS, interval: float, process_name: str) -> EvaluationMessage | None:
     """Get message from the queue.
 
     Args:
         sqs (ScorerSQS): Scorer SQS
+        interval (float): Polling interval.
+        process_name (str): The process name.
 
     Returns:
-        ScoreMessage | None: Scorer Message
+        EvaluationMessage: Evaluation message
     """
     LOGGER.info("Finding Solution to evaluate...")
     try:
-        message = sqs.get_message_from_queue()
+        # Poll the message from the queue
+        while True:
+            # Check if the stop flag is set while polling the message
+            if is_stop_flag_set(process_name):
+                msg = f"Stop flag detected. Stop Evaluator on the process {process_name}."
+                LOGGER.info(msg)
+                LOGGER.info("Deleting the stop flag file...")
+                delete_flag_file(process_name)
+                LOGGER.info("...Deleted")
+                sys.exit(0)
+
+            # Try to get the message from the queue
+            message = sqs.get_message_from_queue()
+
+            if message is not None:  # If the message is found, start to evaluate the solution
+                break
+
+            sleep(interval)
+
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -93,18 +113,19 @@ def get_message_from_queue(sqs: EvaluatorSQS) -> EvaluationMessage | None:
     except Exception:
         LOGGER.exception("Error occurred while fetching message from SQS.")
         return None
-    else:
+    else:  # If the message is found, return the message
         LOGGER.debug("Message: %s", message)
         LOGGER.info("...Found")
         return message
 
 
-def get_match_by_message(process_name: str, message: EvaluationMessage) -> Match | None:
+def get_match_by_message(process_name: str, message: EvaluationMessage, dev: bool) -> Match | None:
     """Get match from message.
 
     Args:
         process_name (str): The process name
         message (ScoreMessage): ScoreMessage
+        dev (bool): Whether to use the development environment
 
     Returns:
         Match: Match
@@ -112,7 +133,7 @@ def get_match_by_message(process_name: str, message: EvaluationMessage) -> Match
     match_id = "Match#" + message["match_id"]
     LOGGER.info("Fetching problem data from GraphQL...")
     try:
-        match = fetch_match_by_id(process_name, match_id)
+        match = fetch_match_by_id(process_name, match_id, dev)
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -149,18 +170,15 @@ def evaluate(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR
             LOGGER.info("Reached the maximum number of evaluations.")
             break
 
-        if is_stop_flag_set(process_name):
-            msg = f"Stop flag detected. Stop Evaluator on the process {process_name}."
-            LOGGER.info(msg)
-            sys.exit(0)
-
         LOGGER.info("==================== Evaluation: %d ====================", n_evaluation)
 
-        message = get_message_from_queue(sqs)
+        message = get_message_from_queue(sqs, args["interval"], process_name)
+
         if message is None:
             continue
 
-        match = get_match_by_message(process_name, message)
+        match = get_match_by_message(process_name, message, args["dev"])
+
         if match is None:
             continue
 

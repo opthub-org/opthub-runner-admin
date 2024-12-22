@@ -4,6 +4,7 @@ import json
 import logging
 import signal
 import sys
+from time import sleep
 from traceback import format_exc
 
 from opthub_runner_admin.args import Args
@@ -21,7 +22,7 @@ from opthub_runner_admin.models.score import (
 )
 from opthub_runner_admin.scorer.cache import Cache, CacheWriteError
 from opthub_runner_admin.scorer.history import make_history
-from opthub_runner_admin.utils.process import is_stop_flag_set
+from opthub_runner_admin.utils.process import delete_flag_file, is_stop_flag_set
 from opthub_runner_admin.utils.time import get_utcnow
 from opthub_runner_admin.utils.truncate import truncate_text_center
 from opthub_runner_admin.utils.zfill import zfill
@@ -40,7 +41,6 @@ def setup_sqs(args: Args) -> ScorerSQS:
     """
     # for communication with Amazon SQS
     sqs = ScorerSQS(
-        args["interval"],
         {
             "queue_url": args["scorer_queue_url"],
             "region_name": args["region_name"],
@@ -75,18 +75,38 @@ def setup_dynamodb(args: Args) -> DynamoDB:
     return dynamodb
 
 
-def get_message_from_queue(sqs: ScorerSQS) -> ScoreMessage | None:
+def get_message_from_queue(sqs: ScorerSQS, interval: float, process_name: str) -> ScoreMessage | None:
     """Get message from the queue.
 
     Args:
         sqs (ScorerSQS): Scorer SQS
+        interval (float): Interval to fetch message.
+        process_name (str): The process name.
 
     Returns:
         ScoreMessage | None: Scorer Message
     """
-    LOGGER.info("Finding Evaluation to calculate score...")
+    LOGGER.info("Finding Score Message from SQS...")
     try:
-        message = sqs.get_message_from_queue()
+        # Poll the message from the queue
+        while True:
+            # Check if the stop flag is set while polling the message
+            if is_stop_flag_set(process_name):
+                msg = f"Stop flag detected. Stop Scorer on the process {process_name}."
+                LOGGER.info(msg)
+                LOGGER.info("Deleting the stop flag file...")
+                delete_flag_file(process_name)
+                LOGGER.info("...Deleted")
+                sys.exit(0)
+
+            # Try to get the message from the queue
+            message = sqs.get_message_from_queue()
+
+            if message is not None:  # If the message is found, start to calculate the score
+                break
+
+            sleep(interval)
+
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -97,18 +117,19 @@ def get_message_from_queue(sqs: ScorerSQS) -> ScoreMessage | None:
     except Exception:
         LOGGER.exception("Error occurred while fetching message from SQS.")
         return None
-    else:
+    else:  # If the message is found, return the message
         LOGGER.debug("Message: %s", message)
         LOGGER.info("...Found")
         return message
 
 
-def get_match_from_message(process_name: str, message: ScoreMessage) -> Match | None:
+def get_match_from_message(process_name: str, message: ScoreMessage, dev: bool) -> Match | None:
     """Get match from message.
 
     Args:
         process_name (str): The process name
         message (ScoreMessage): ScoreMessage
+        dev (bool): Whether to use the development environment
 
     Returns:
         Match: Match
@@ -116,7 +137,7 @@ def get_match_from_message(process_name: str, message: ScoreMessage) -> Match | 
     match_id = "Match#" + message["match_id"]
     LOGGER.info("Fetching indicator data from GraphQL...")
     try:
-        match = fetch_match_by_id(process_name, match_id)
+        match = fetch_match_by_id(process_name, match_id, dev)
     except KeyboardInterrupt:
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -163,11 +184,11 @@ def calculate_score(process_name: str, args: Args) -> None:  # noqa: PLR0915, C9
 
         LOGGER.info("==================== Calculating score: %d ====================", n_score)
 
-        message = get_message_from_queue(sqs)
+        message = get_message_from_queue(sqs, args["interval"], process_name)
         if message is None:
             continue
 
-        match = get_match_from_message(process_name, message)
+        match = get_match_from_message(process_name, message, args["dev"])
         if match is None:
             continue
 
