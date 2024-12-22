@@ -32,10 +32,8 @@ def test_evaluator_sqs() -> None:
     )
 
     match_uuid = "dcc32372-f02d-19c7-866d-f9742d5372ca"
-    interval = 1.0
 
     sqs = EvaluatorSQS(
-        interval,
         SQSOptions(
             {
                 "queue_url": config["evaluator_queue_url"],
@@ -114,7 +112,6 @@ def test_scorer_sqs() -> None:
 
     interval = 1.0
     sqs = ScorerSQS(
-        interval,
         SQSOptions(
             {
                 "queue_url": config["scorer_queue_url"],
