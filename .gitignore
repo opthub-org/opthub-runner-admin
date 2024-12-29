@@ -3,3 +3,4 @@ __pycache__
 dist/
 config.yml
 config.dev.yml
+Makefile
