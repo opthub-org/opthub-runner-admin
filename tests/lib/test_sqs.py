@@ -141,6 +141,7 @@ def test_scorer_sqs() -> None:
                 "Constraint": 1,
                 "Info": {},
                 "Feasible": True,
+                "IgnoreStream": False,
             },
         )
         for i in range(3)
@@ -160,6 +161,7 @@ def test_scorer_sqs() -> None:
                 "ErrorMessage": "KeyboardInterrupt\n",
                 "AdminErrorMessage": "KeyboardInterrupt\n",
                 "TrialNo": str(i + 1).zfill(5),
+                "IgnoreStream": False,
             },
         )
         for i in range(3, 5)

@@ -67,6 +67,7 @@ def test_history_all_success() -> None:
             "Constraint": None,
             "Info": None,
             "Feasible": None,
+            "IgnoreStream": False,
         }
         put_item_score: SuccessScoreSchema = {
             "ID": "Scores#Match#" + match_uuid + "#Team#1",
@@ -80,6 +81,7 @@ def test_history_all_success() -> None:
             "FinishedAt": datetime.now().isoformat(),
             "Status": "Success",
             "Value": Decimal(str(i / 10)),
+            "IgnoreStream": False,
         }
         dynamodb.put_item(put_item_evaluation)
         dynamodb.put_item(put_item_score)
@@ -165,6 +167,7 @@ def test_history_not_all_success() -> None:
             "Constraint": None,
             "Info": None,
             "Feasible": None,
+            "IgnoreStream": False,
         }
 
         dynamodb.put_item(put_item_evaluation)
@@ -182,6 +185,7 @@ def test_history_not_all_success() -> None:
                 "FinishedAt": datetime.now().isoformat(),
                 "Status": "Success",
                 "Value": Decimal(str(i / 10)),
+                "IgnoreStream": False,
             }
             dynamodb.put_item(put_item_score_success)
         elif i in failed_trial_no:
@@ -198,6 +202,7 @@ def test_history_not_all_success() -> None:
                 "Status": "Failed",
                 "ErrorMessage": "TestErrorMessage",
                 "AdminErrorMessage": "TestAdminErrorMessage",
+                "IgnoreStream": False,
             }
             dynamodb.put_item(put_item_score_failed)
 

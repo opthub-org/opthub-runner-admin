@@ -76,7 +76,10 @@ def test_dynamodb() -> None:
             raise ValueError(msg)
     finally:
         for i in range(5):
-            dynamodb.table.delete_item(Key={"ID": put_items[i]["ID"], "Trial": put_items[i]["Trial"]})
+            dynamodb.client.delete_item(
+                TableName=dynamodb.table_name,
+                Key={"ID": put_items[i]["ID"], "Trial": put_items[i]["Trial"]},
+            )
 
 
 def test_dynamodb_with_same_item() -> None:
@@ -147,4 +150,7 @@ def test_dynamodb_with_same_item() -> None:
 
     finally:
         for i in range(2):
-            dynamodb.table.delete_item(Key={"ID": put_items[i]["ID"], "Trial": put_items[i]["Trial"]})
+            dynamodb.client.delete_item(
+                TableName=dynamodb.table_name,
+                Key={"ID": put_items[i]["ID"], "Trial": put_items[i]["Trial"]},
+            )
