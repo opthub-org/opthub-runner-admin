@@ -13,7 +13,6 @@ from opthub_runner_admin.lib.dynamodb import DynamoDB
 from opthub_runner_admin.lib.sqs import EvaluationMessage, EvaluatorSQS
 from opthub_runner_admin.models.evaluation import (
     FailedEvaluationCreateParams,
-    is_evaluation_exists,
     save_failed_evaluation,
     save_success_evaluation,
 )
@@ -180,11 +179,6 @@ def evaluate(process_name: str, args: Args) -> None:  # noqa: PLR0915, C901, PLR
         match = get_match_by_message(process_name, message, args["dev"])
 
         if match is None:
-            continue
-
-        if is_evaluation_exists(dynamodb, message["match_id"], message["participant_id"], message["trial_no"]):
-            LOGGER.warning("The evaluation already exists.")
-            sqs.delete_message_from_queue()
             continue
 
         try:

@@ -16,7 +16,6 @@ from opthub_runner_admin.models.exception import ContainerRuntimeError, DockerIm
 from opthub_runner_admin.models.match import Match, fetch_match_by_id
 from opthub_runner_admin.models.score import (
     FailedScoreCreateParams,
-    is_score_exists,
     save_failed_score,
     save_success_score,
 )
@@ -190,11 +189,6 @@ def calculate_score(process_name: str, args: Args) -> None:  # noqa: PLR0915, C9
 
         match = get_match_from_message(process_name, message, args["dev"])
         if match is None:
-            continue
-
-        if is_score_exists(dynamodb, message["match_id"], message["participant_id"], message["trial_no"]):
-            LOGGER.warning("The score already exists.")
-            sqs.delete_message_from_queue()
             continue
 
         try:
