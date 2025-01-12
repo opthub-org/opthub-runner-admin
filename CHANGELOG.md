@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/opthub-org/opthub-runner-admin/compare/v0.4.0...v0.4.1) (2025-01-12)
+
+
+### Bug Fixes
+
+* poetry version ([a69343c](https://github.com/opthub-org/opthub-runner-admin/commit/a69343c2ff2d23801bf7cafa5d7a4fa61b3afddd))
+
 ## [0.4.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.16...v0.4.0) (2025-01-12)
 
 
