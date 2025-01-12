@@ -106,6 +106,7 @@ def save_success_evaluation(
         "Constraint": number_to_decimal(input_item["constraint"]),
         "Info": number_to_decimal(input_item["info"]),
         "Feasible": input_item["feasible"],
+        "IgnoreStream": False,
     }
 
     dynamodb.put_item(evaluation)
@@ -134,6 +135,7 @@ def save_failed_evaluation(
         "Status": "Failed",
         "ErrorMessage": input_item["error_message"],
         "AdminErrorMessage": input_item["admin_error_message"],
+        "IgnoreStream": False,
     }
     dynamodb.put_item(evaluation)
 

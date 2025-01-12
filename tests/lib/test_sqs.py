@@ -32,10 +32,8 @@ def test_evaluator_sqs() -> None:
     )
 
     match_uuid = "dcc32372-f02d-19c7-866d-f9742d5372ca"
-    interval = 1.0
 
     sqs = EvaluatorSQS(
-        interval,
         SQSOptions(
             {
                 "queue_url": config["evaluator_queue_url"],
@@ -114,7 +112,6 @@ def test_scorer_sqs() -> None:
 
     interval = 1.0
     sqs = ScorerSQS(
-        interval,
         SQSOptions(
             {
                 "queue_url": config["scorer_queue_url"],
@@ -144,6 +141,7 @@ def test_scorer_sqs() -> None:
                 "Constraint": 1,
                 "Info": {},
                 "Feasible": True,
+                "IgnoreStream": False,
             },
         )
         for i in range(3)
@@ -163,6 +161,7 @@ def test_scorer_sqs() -> None:
                 "ErrorMessage": "KeyboardInterrupt\n",
                 "AdminErrorMessage": "KeyboardInterrupt\n",
                 "TrialNo": str(i + 1).zfill(5),
+                "IgnoreStream": False,
             },
         )
         for i in range(3, 5)

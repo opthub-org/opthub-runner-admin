@@ -2,4 +2,5 @@ __pycache__
 .DS_Store
 dist/
 config.yml
+config.dev.yml
 Makefile

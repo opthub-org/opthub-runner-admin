@@ -7,8 +7,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 
 from opthub_runner_admin.utils.credentials.credentials import Credentials
 
-API_ENDPOINT_URL = "https://tf5tepcpn5bori46x5cyxh3ehe.appsync-api.ap-northeast-1.amazonaws.com/graphql"
-
 
 class KeyValue(TypedDict):
     """The type of the KeyValue."""
@@ -48,38 +46,48 @@ class Response(TypedDict):
     indicatorPrivateEnvironments: list[NullableKeyValue]
 
 
-def get_gql_client(process_name: str) -> Client:
+def get_gql_client(process_name: str, dev: bool) -> Client:
     """Get the GraphQL client.
 
     Args:
         process_name: The process name
-        match_uuid: The match UUID.
+        dev: Whether to use the development environment.
 
     Returns:
         The GraphQL client.
     """
-    credentials = Credentials(process_name)
+    credentials = Credentials(process_name, dev)
     credentials.load()
     if credentials.access_token is None:
         msg = "Please login first."
         raise ValueError(msg)
     headers = {"Authorization": f"Bearer {credentials.access_token}"}
-    transport = AIOHTTPTransport(url=API_ENDPOINT_URL, headers=headers)
+    if dev:
+        from opthub_runner_admin.environments import API_ENDPOINT_URL_DEV
+
+        api_endpoint_url = API_ENDPOINT_URL_DEV
+    else:
+        from opthub_runner_admin.environments import API_ENDPOINT_URL_PROD
+
+        api_endpoint_url = API_ENDPOINT_URL_PROD
+
+    transport = AIOHTTPTransport(url=api_endpoint_url, headers=headers)
     return Client(transport=transport, fetch_schema_from_transport=True)
 
 
-def fetch_match_response_by_match_uuid(process_name: str, match_uuid: str) -> Response:
+def fetch_match_response_by_match_uuid(process_name: str, match_uuid: str, dev: bool) -> Response:
     """Fetch match by MatchUUID using GraphQL.
 
     Args:
         process_name: The process name
         match_uuid: The match UUID.
+        dev: Whether to use the development environment.
 
 
     Returns:
         The match.
     """
-    client = get_gql_client(process_name)
+    client = get_gql_client(process_name, dev)
     variables = {"id": match_uuid}
 
     query = gql("""query getMatch(

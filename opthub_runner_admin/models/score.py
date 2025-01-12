@@ -81,6 +81,7 @@ def save_success_score(
         "FinishedAt": input_item["finished_at"],
         "Status": "Success",
         "Value": score,
+        "IgnoreStream": False,
     }
     dynamodb.put_item(score_data)
 
@@ -105,6 +106,7 @@ def save_failed_score(dynamodb: DynamoDB, input_item: FailedScoreCreateParams) -
         "Status": "Failed",
         "ErrorMessage": input_item["error_message"],
         "AdminErrorMessage": input_item["admin_error_message"],
+        "IgnoreStream": False,
     }
     dynamodb.put_item(score)
 

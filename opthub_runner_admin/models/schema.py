@@ -35,6 +35,7 @@ class SuccessEvaluationSchema(TypedDict):
     Constraint: object | None
     Info: object | None
     Feasible: bool | None
+    IgnoreStream: Literal[False]
 
 
 class FailedEvaluationSchema(TypedDict):
@@ -52,6 +53,15 @@ class FailedEvaluationSchema(TypedDict):
     Status: Literal["Failed"]
     ErrorMessage: str
     AdminErrorMessage: str
+    IgnoreStream: Literal[False]
+
+
+class FlagEvaluationSchema(TypedDict):
+    """The type of the flag evaluation."""
+
+    ID: str
+    Trial: str
+    IgnoreStream: Literal[True]
 
 
 class SuccessScoreSchema(TypedDict):
@@ -68,6 +78,7 @@ class SuccessScoreSchema(TypedDict):
     FinishedAt: str
     Status: Literal["Success"]
     Value: Decimal
+    IgnoreStream: Literal[False]
 
 
 class FailedScoreSchema(TypedDict):
@@ -85,6 +96,16 @@ class FailedScoreSchema(TypedDict):
     Status: Literal["Failed"]
     ErrorMessage: str
     AdminErrorMessage: str
+    IgnoreStream: Literal[False]
+
+
+class FlagScoreSchema(TypedDict):
+    """The type of the flag score."""
+
+    ID: str
+    Trial: str
+    IgnoreStream: Literal[True]
 
 
 Schema = SolutionSchema | SuccessEvaluationSchema | FailedEvaluationSchema | SuccessScoreSchema | FailedScoreSchema
+FlagSchema = FlagEvaluationSchema | FlagScoreSchema

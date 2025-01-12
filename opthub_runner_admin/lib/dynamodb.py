@@ -4,10 +4,11 @@ import logging
 from typing import Any, TypedDict, cast
 
 import boto3
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.types import TypeSerializer
 from botocore.exceptions import BotoCoreError
 
-from opthub_runner_admin.models.schema import Schema
+from opthub_runner_admin.models.schema import FlagSchema, Schema
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +50,15 @@ class DynamoDB:
         self.table_name = options["table_name"]
         self.table = self.dynamoDB.Table(self.table_name)
 
+        self.client = boto3.client(
+            service_name="dynamodb",
+            region_name=options["region_name"],
+            aws_access_key_id=options["aws_access_key_id"],
+            aws_secret_access_key=options["aws_secret_access_key"],
+        )
+
+        self.serializer = TypeSerializer()
+
     def check_accessible(self) -> None:
         """Check if the table is accessible."""
         self.table.get_item(Key={"ID": "dummyID", "Trial": "dummyTrial"})
@@ -84,12 +94,31 @@ class DynamoDB:
             item (Schema): The item to put.
         """
         try:
-            self.table.put_item(
-                Item=cast(dict[str, Any], item),
-                ConditionExpression=Attr("ID").not_exists() & Attr("Trial").not_exists(),
+            flag_item: FlagSchema = {
+                "ID": item["ID"],
+                "Trial": item["TrialNo"],
+                "IgnoreStream": True,
+            }
+            serialized_item = {key: self.serializer.serialize(value) for key, value in item.items()}
+            serialized_flag_item = {key: self.serializer.serialize(value) for key, value in flag_item.items()}
+
+            self.client.transact_write_items(
+                TransactItems=[
+                    {
+                        "Put": {
+                            "TableName": self.table_name,
+                            "Item": serialized_item,
+                        },
+                    },
+                    {
+                        "Put": {
+                            "TableName": self.table_name,
+                            "Item": serialized_flag_item,
+                            "ConditionExpression": "attribute_not_exists(ID)",
+                        },
+                    },
+                ],
             )
-        except self.table.meta.client.exceptions.ConditionalCheckFailedException:
-            LOGGER.warning("The item already exists.")
         except BotoCoreError as e:
             msg = "Failed to put item to DynamoDB."
             LOGGER.exception(msg)

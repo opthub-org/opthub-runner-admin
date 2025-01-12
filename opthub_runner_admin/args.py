@@ -11,6 +11,7 @@ class Args(TypedDict):
     num: int
     rm: bool
     mode: str
+    dev: bool
     command: list[str]
 
     evaluator_queue_url: str
