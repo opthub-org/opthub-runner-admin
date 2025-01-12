@@ -27,7 +27,7 @@ runs:
       shell: bash
       run: |
         echo "Installing Poetry..."
-        curl -sSL https://install.python-poetry.org | python3 -
+        curl -sSL https://install.python-poetry.org | python3 - --version 1.8.3
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Install dependencies
