@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.5.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.4.0...v0.5.0) (2025-01-12)
+
+
+### Features
+
+* accessibility validation for SQS and DynamoDB ([417d1cd](https://github.com/opthub-org/opthub-runner-admin/commit/417d1cdf14745ef61921d4f1c04f6240127d147f))
+* Change error handling method ([#48](https://github.com/opthub-org/opthub-runner-admin/issues/48)) ([b29b20d](https://github.com/opthub-org/opthub-runner-admin/commit/b29b20de6359f72c5a29b8e3e3386610b24c4a8d))
+* Change to more secure credentials ([#52](https://github.com/opthub-org/opthub-runner-admin/issues/52)) ([8e203a8](https://github.com/opthub-org/opthub-runner-admin/commit/8e203a830e9b5d45c781f500d2c4dd8a0fc8a1fb))
+* Check if docker is running and accessible ([#57](https://github.com/opthub-org/opthub-runner-admin/issues/57)) ([6f37581](https://github.com/opthub-org/opthub-runner-admin/commit/6f37581018f8b82b37551cbce657eec731095f14))
+* dev mode ([180d785](https://github.com/opthub-org/opthub-runner-admin/commit/180d7857c030910c9f936399dd1eef14f7a39380))
+* Put Flag Item to DynamoDB ([0aac521](https://github.com/opthub-org/opthub-runner-admin/commit/0aac521838a0b5975c167a7f3fbedc68c9b4bce1))
+* Safely terminate the process ([36ebb01](https://github.com/opthub-org/opthub-runner-admin/commit/36ebb01706a84aae82381f77061114186921d5d6))
+
+
+### Bug Fixes
+
+* Add "continue" ([c57dee9](https://github.com/opthub-org/opthub-runner-admin/commit/c57dee940d99f504dbbd44b73cd9175c0e8605bb))
+* Add max digit of DynamoDB ([d869364](https://github.com/opthub-org/opthub-runner-admin/commit/d86936418e2e01fff957c05a996cf86db068b26b))
+* Apply decimal_to_float to info ([1701d22](https://github.com/opthub-org/opthub-runner-admin/commit/1701d22bdc714e46821479153fc9ff8171a06a56))
+* block duplicate trial no ([b330efc](https://github.com/opthub-org/opthub-runner-admin/commit/b330efc8fd724b838fd20e56d273d225223675ee))
+* Bugfix for visibility timeout extender ([2d22a25](https://github.com/opthub-org/opthub-runner-admin/commit/2d22a2591f16fc296c6a7bc7d813cf661189d252))
+* change pickle into json lines ([680d227](https://github.com/opthub-org/opthub-runner-admin/commit/680d22758e9335bed97acbdd297d273f49c4b14f))
+* Change Python version (3.12.1 -&gt; >=3.10, &lt; 4.0) ([18e4a27](https://github.com/opthub-org/opthub-runner-admin/commit/18e4a27a6b3df21be965f833816fb7616629b1cf))
+* Change the position of write_to_cache ([abe0615](https://github.com/opthub-org/opthub-runner-admin/commit/abe06152a0528324097289acd85b3298a55258e6))
+* change timing of writing cache ([a990726](https://github.com/opthub-org/opthub-runner-admin/commit/a990726b025f11b4e3a8cd77c3c69b52d08f1f7c))
+* debug code for history ([c71dccc](https://github.com/opthub-org/opthub-runner-admin/commit/c71dccc79afb64d696b5d7e456d662565104400c))
+* debug for log message ([d8de77e](https://github.com/opthub-org/opthub-runner-admin/commit/d8de77e6c4a5c5fa434970547bff954a379fa2ab))
+* Delete default value of evaluator_queue_name ([a1c08ed](https://github.com/opthub-org/opthub-runner-admin/commit/a1c08ed1f24990dca62129512fc506848a66b528))
+* Error handling when authentication fails and the Docker image ca… ([#64](https://github.com/opthub-org/opthub-runner-admin/issues/64)) ([15814ea](https://github.com/opthub-org/opthub-runner-admin/commit/15814ea47f19867c93cf39ad033917958af57804))
+* Fix `For Contributors` in Japanese ([c22b588](https://github.com/opthub-org/opthub-runner-admin/commit/c22b588e2aa17654734db8f160f57ff545f8951b))
+* Fix exit status ([#53](https://github.com/opthub-org/opthub-runner-admin/issues/53)) ([b5514cd](https://github.com/opthub-org/opthub-runner-admin/commit/b5514cdc614623dcb4c80e6417b9104d1bcf1710))
+* Fix For Contributors in README.md (English version). ([478be07](https://github.com/opthub-org/opthub-runner-admin/commit/478be07c0256adc8a2da1a6a184035f60081a3a4))
+* Modify Python version ([4e62d65](https://github.com/opthub-org/opthub-runner-admin/commit/4e62d65a764f21f2afea9ab1660657660e022cfd))
+* Polling in main.py ([d960f10](https://github.com/opthub-org/opthub-runner-admin/commit/d960f10ea4cc8e986673f36687808362ce4a7361))
+* Reset receipt_handle in _polling_sqs_message ([78ff010](https://github.com/opthub-org/opthub-runner-admin/commit/78ff0109a31c5e1656b5a19c6cf8977f8aa05162))
+* Splitting the credentials file among processes ([f16dc29](https://github.com/opthub-org/opthub-runner-admin/commit/f16dc293e1c8033eb085d8c82a9a72a958e19de3))
+* SyntaxError: f-string: unmatched '[' ([bf0f7eb](https://github.com/opthub-org/opthub-runner-admin/commit/bf0f7eb27ddf0d0ef3df4f4c4d8d43e3586c23db))
+* SyntaxError: f-string: unmatched '[' ([e46a2ec](https://github.com/opthub-org/opthub-runner-admin/commit/e46a2ec1d8003bd3a2bed34410b54db42bd3dfbe))
+* Unify timezone ([9f32d74](https://github.com/opthub-org/opthub-runner-admin/commit/9f32d7484c6c00596c463745b2963dd6b4650bd1))
+* Use local images ([725426b](https://github.com/opthub-org/opthub-runner-admin/commit/725426b125657c5fbcf867953ead2027a6a99773))
+* 長すぎるエラーメッセージをtruncateするように ([b5b6687](https://github.com/opthub-org/opthub-runner-admin/commit/b5b6687b6ae00fa7e74844de4c6d6e3c21b02347))
+
+
+### Documentation
+
+* Modify README.md and README_ja.md ([d6cb02c](https://github.com/opthub-org/opthub-runner-admin/commit/d6cb02c26d3bc98f314dbeccc5cd4d4ea1f59906))
+* Modify README.md and README_ja.md ([9c1a7ab](https://github.com/opthub-org/opthub-runner-admin/commit/9c1a7ab38ca56af0363beb71260a9a8d5ff6f82c))
+* Update README.md and README_ja.md ([#72](https://github.com/opthub-org/opthub-runner-admin/issues/72)) ([4fa5224](https://github.com/opthub-org/opthub-runner-admin/commit/4fa5224daaafad116a89ba16536dbc76307e0846))
+
 ## [0.4.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.16...v0.4.0) (2025-01-12)
 
 
