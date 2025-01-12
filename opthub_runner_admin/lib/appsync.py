@@ -1,14 +1,11 @@
 """This module contains functions to interact with AppSync API."""
 
-import logging
 from typing import TypedDict
 
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 
 from opthub_runner_admin.utils.credentials.credentials import Credentials
-
-LOGGER = logging.getLogger(__name__)
 
 
 class KeyValue(TypedDict):
