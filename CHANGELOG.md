@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.16...v0.4.0) (2025-01-12)
+
+
+### Features
+
+* dev mode ([180d785](https://github.com/opthub-org/opthub-runner-admin/commit/180d7857c030910c9f936399dd1eef14f7a39380))
+* Put Flag Item to DynamoDB ([0aac521](https://github.com/opthub-org/opthub-runner-admin/commit/0aac521838a0b5975c167a7f3fbedc68c9b4bce1))
+* Safely terminate the process ([36ebb01](https://github.com/opthub-org/opthub-runner-admin/commit/36ebb01706a84aae82381f77061114186921d5d6))
+
+
+### Bug Fixes
+
+* Polling in main.py ([d960f10](https://github.com/opthub-org/opthub-runner-admin/commit/d960f10ea4cc8e986673f36687808362ce4a7361))
+
 ## [0.3.16](https://github.com/opthub-org/opthub-runner-admin/compare/v0.3.15...v0.3.16) (2024-12-18)
 
 
